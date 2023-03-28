@@ -1,42 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Part 1: Rooster emoji -->
     <TextView
         android:id="@+id/rooster_emoji"
         android:layout_width="128dp"
         android:layout_height="128dp"
         android:text="🐓"
         android:textSize="80sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/sunrise_button"
-        app:layout_constraintVertical_bias="0.3"/>
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:layout_alignParentTop="true"/>
 
-    <Button
-        android:id="@+id/sunrise_button"
-        android:layout_width="wrap_content"
+    <!-- Part 2: Latitude, Longitude and Nearest City -->
+    <LinearLayout
+        android:id="@+id/location_info_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sunrise (HH:MM)"
-        android:onClick="setSunriseAlarm"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/dawn_button"
-        app:layout_constraintVertical_bias="0.5"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="32dp"
+        android:layout_below="@id/rooster_emoji"
+        android:layout_above="@id/buttons_layout"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true">
 
-    <Button
-        android:id="@+id/dawn_button"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/location_latitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Latitude: "
+            android:textSize="24sp"/>
+
+        <TextView
+            android:id="@+id/location_longitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Longitude: "
+            android:textSize="24sp"/>
+
+        <TextView
+            android:id="@+id/city_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nearest City: "
+            android:textSize="24sp"/>
+
+    </LinearLayout>
+
+    <!-- Part 3: Dawn and Sunrise buttons -->
+    <LinearLayout
+        android:id="@+id/buttons_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Dawn (HH:MM)"
-        android:onClick="setDawnAlarm"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_bias="0.7"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="32dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <Button
+            android:id="@+id/sunrise_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sunrise (HH:MM)"
+            android:onClick="setSunriseAlarm"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/dawn_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dawn (HH:MM)"
+            android:onClick="setDawnAlarm"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
