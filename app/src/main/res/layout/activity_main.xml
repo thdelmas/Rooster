@@ -11,11 +11,12 @@
         android:layout_height="128dp"
         android:text="🐓"
         android:textSize="80sp"
+        android:gravity="center"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="32dp"
         android:layout_alignParentTop="true"/>
 
-    <!-- Part 2: Latitude, Longitude and Nearest City -->
+    <!-- Part 2: Latitude, Longitude, Altitude, Time, and Nearest Place -->
     <LinearLayout
         android:id="@+id/location_info_layout"
         android:layout_width="match_parent"
@@ -27,28 +28,113 @@
         android:layout_above="@id/buttons_layout"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/altitude_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Altitude: "
+                android:textSize="24sp"/>
+
+            <TextView
+                android:id="@+id/location_altitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="24sp"/>
+
+        </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
 
         <TextView
-            android:id="@+id/location_latitude"
+            android:id="@+id/latitude_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Latitude: "
             android:textSize="24sp"/>
 
         <TextView
-            android:id="@+id/location_longitude"
+            android:id="@+id/location_latitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="24sp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/longitude_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Longitude: "
             android:textSize="24sp"/>
 
         <TextView
-            android:id="@+id/city_info"
+            android:id="@+id/location_longitude"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Nearest City: "
+            android:text=""
             android:textSize="24sp"/>
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/time_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time: "
+            android:textSize="24sp"/>
+
+        <TextView
+            android:id="@+id/location_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="24sp"/>
+
+    </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/place_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nearest place: "
+                android:textSize="24sp"/>
+
+            <TextView
+                android:id="@+id/location_place"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="24sp"/>
+
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Part 3: Dawn and Sunrise buttons -->
@@ -77,8 +163,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Dawn (HH:MM)"
-            android:onClick="setDawnAlarm"
-            android:layout_marginBottom="16dp"/>
+            android:onClick="setDawnAlarm"/>
 
     </LinearLayout>
 
