@@ -14,12 +14,18 @@ import androidx.core.app.ActivityCompat;
 
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
     private SpaceTimeStamp spaceTimeStamp;
     private OpenWeatherData openWeatherData;
+    private TextView altitudeTextView;
+    private TextView latitudeTextView;
+    private TextView longitudeTextView;
+    private TextView timeTextView;
+    private TextView placeTextView;
     private static final int REQUEST_LOCATION_PERMISSION = 1;
 
     @Override
@@ -31,7 +37,8 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // initialize the SpaceTimeStamp object
-            spaceTimeStamp = new SpaceTimeStamp(this);
+            this.spaceTimeStamp = new SpaceTimeStamp(this);
+            updateLayoutInfo(this.openWeatherData, this.spaceTimeStamp);
         } else {
             // request location permissions
             ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
@@ -54,11 +61,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openWeatherDataCallBack() {
-        Log.e("SUNRISE:", String.valueOf(this.openWeatherData.getSunrise()));
-        setSunriseAlarm(this.openWeatherData.getSunrise());
-        return ;
+    private void updateLayoutInfo(OpenWeatherData data, SpaceTimeStamp timeStamp) {
+        altitudeTextView = findViewById(R.id.location_altitude);
+        latitudeTextView = findViewById(R.id.location_latitude);
+        longitudeTextView = findViewById(R.id.location_longitude);
+        timeTextView = findViewById(R.id.location_time);
+        placeTextView = findViewById(R.id.location_place);
+        altitudeTextView.setText(String.valueOf(spaceTimeStamp.getAltitude()));
+        latitudeTextView.setText(String.valueOf(spaceTimeStamp.getLatitude()));
+        longitudeTextView.setText(String.valueOf(spaceTimeStamp.getLongitude()));
+        timeTextView.setText(String.valueOf(spaceTimeStamp.getTime()));
+        //placeTextView.setText(String.valueOf(openWeatherData.getPlaceName()));
     }
+
 
     private void setSunriseAlarm(long timeInMillis) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
