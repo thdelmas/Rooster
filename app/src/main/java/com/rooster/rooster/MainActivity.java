@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SpaceTimeStamp spaceTimeStamp;
     private OpenWeatherData openWeatherData;
+    private Button setAlarmButton;
     private TextView altitudeTextView;
     private TextView latitudeTextView;
     private TextView longitudeTextView;
@@ -84,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         longitudeTextView = findViewById(R.id.location_longitude);
         timeTextView = findViewById(R.id.location_time);
         placeTextView = findViewById(R.id.location_place);
+        setAlarmButton = findViewById(R.id.set_alarm);
+
         altitudeTextView.setText(String.valueOf(spaceTimeStamp.getAltitude()));
         latitudeTextView.setText(String.valueOf(spaceTimeStamp.getLatitude()));
         longitudeTextView.setText(String.valueOf(spaceTimeStamp.getLongitude()));
@@ -93,12 +97,16 @@ public class MainActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getDefault());
         String formattedTime = sdf.format(date);
-
         timeTextView.setText(formattedTime);
         placeTextView.setText(String.valueOf(openWeatherData.getPlaceName()));
+        // Convert timestamp to human-readable time with HH:mm format
+        Date sunrise = new Date(openWeatherData.getSunrise() * 1000);
+        SimpleDateFormat sdfSunrise = new SimpleDateFormat("HH:mm");
+        sdfSunrise.setTimeZone(TimeZone.getDefault());
+        String formattedSunrise = sdfSunrise.format(sunrise);
+        setAlarmButton.setText(formattedSunrise);
+        setAlarmButton.setOnClickListener(v -> setSunriseAlarm(openWeatherData.getSunrise()));
     }
-
-
 
     private void setSunriseAlarm(long timeInMillis) {
         AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -112,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     // Schedule exact alarms
                     AlarmManager.AlarmClockInfo alarm = new AlarmManager.AlarmClockInfo(timeInMillis, pendingIntent);
                     alarmManager.setAlarmClock(alarm, pendingIntent);
+                    Log.e("Alarm", "set!");
                 } else {
                     // Ask users to grant the permission in the corresponding settings page
                     startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
