@@ -17,6 +17,10 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 public class MainActivity extends AppCompatActivity {
 
     private SpaceTimeStamp spaceTimeStamp;
@@ -38,7 +42,13 @@ public class MainActivity extends AppCompatActivity {
                 || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // initialize the SpaceTimeStamp object
             this.spaceTimeStamp = new SpaceTimeStamp(this);
-            updateLayoutInfo(this.openWeatherData, this.spaceTimeStamp);
+            this.openWeatherData = new OpenWeatherData(this.spaceTimeStamp, new OpenWeatherData.WeatherDataCallback() {
+                @Override
+                public void onWeatherDataReceived(OpenWeatherData weatherData) {
+                    // handle weather data when received
+                    updateLayoutInfo(openWeatherData, spaceTimeStamp);
+                }
+            });
         } else {
             // request location permissions
             ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
@@ -52,7 +62,14 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // location permissions granted, initialize the SpaceTimeStamp object
-                spaceTimeStamp = new SpaceTimeStamp(this);
+                this.spaceTimeStamp = new SpaceTimeStamp(this);
+                this.openWeatherData = new OpenWeatherData(this.spaceTimeStamp, new OpenWeatherData.WeatherDataCallback() {
+                    @Override
+                    public void onWeatherDataReceived(OpenWeatherData weatherData) {
+                        // handle weather data when received
+                        updateLayoutInfo(openWeatherData, spaceTimeStamp);
+                    }
+                });
             } else {
                 // location permissions not granted, show a message and finish the activity
                 Toast.makeText(this, "Location permissions not granted", Toast.LENGTH_SHORT).show();
@@ -70,9 +87,17 @@ public class MainActivity extends AppCompatActivity {
         altitudeTextView.setText(String.valueOf(spaceTimeStamp.getAltitude()));
         latitudeTextView.setText(String.valueOf(spaceTimeStamp.getLatitude()));
         longitudeTextView.setText(String.valueOf(spaceTimeStamp.getLongitude()));
-        timeTextView.setText(String.valueOf(spaceTimeStamp.getTime()));
-        //placeTextView.setText(String.valueOf(openWeatherData.getPlaceName()));
+
+        // Convert timestamp to human-readable date and time
+        Date date = new Date(spaceTimeStamp.getTime() * 1000);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getDefault());
+        String formattedTime = sdf.format(date);
+
+        timeTextView.setText(formattedTime);
+        placeTextView.setText(String.valueOf(openWeatherData.getPlaceName()));
     }
+
 
 
     private void setSunriseAlarm(long timeInMillis) {
