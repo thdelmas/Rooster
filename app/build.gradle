@@ -4,16 +4,17 @@ plugins {
 
 android {
     namespace 'com.rooster.rooster'
-    compileSdk 32
+
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.rooster.rooster"
-        minSdk 22
-        targetSdk 32
+        minSdkVersion 22
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -22,17 +23,30 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    // Enable Jetifier to migrate third-party libraries to AndroidX
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core-ktx:1.6.0'
+            force 'com.google.android.gms:play-services-location:18.0.0'
+        }
+    }
+    // Enable Jetifier to migrate third-party libraries to AndroidX
+    // and to handle legacy support libraries in dependencies
 }
 
 dependencies {
-
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
+    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'com.google.android.gms:play-services-location:18.0.0'
+    implementation 'com.android.support:support-compat:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test:runner:1.4.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
