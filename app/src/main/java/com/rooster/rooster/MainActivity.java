@@ -1,136 +1,109 @@
 package com.rooster.rooster;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import java.util.Date;
-import java.util.TimeZone;
 
 public class MainActivity extends AppCompatActivity {
-
-    private SpaceTimeStamp spaceTimeStamp;
-    private OpenWeatherData openWeatherData;
-    private Button setAlarmButton;
-    private TextView altitudeTextView;
-    private TextView latitudeTextView;
-    private TextView longitudeTextView;
-    private TextView timeTextView;
-    private TextView placeTextView;
-    private static final int REQUEST_LOCATION_PERMISSION = 1;
+    private Context mcontext;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private Button syncGPSButton;
+    private SpaceTimePosition spaceTimePosition = null;
+    private OpenWeatherData openWeatherData = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // check if location permissions are granted
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // initialize the SpaceTimeStamp object
-            this.spaceTimeStamp = new SpaceTimeStamp(this);
-            this.openWeatherData = new OpenWeatherData(this.spaceTimeStamp, new OpenWeatherData.WeatherDataCallback() {
-                @Override
-                public void onWeatherDataReceived(OpenWeatherData weatherData) {
-                    // handle weather data when received
-                    updateLayoutInfo(openWeatherData, spaceTimeStamp);
-                }
-            });
-        } else {
-            // request location permissions
-            ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
-        }
+        mcontext = this.getApplicationContext();
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
     }
 
-    // handle the result of the location permission request
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        Log.e("Checkpoint", "Permission result");
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            Log.e("Checkpoint", "Permission result 2");
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // location permissions granted, initialize the SpaceTimeStamp object
-                this.spaceTimeStamp = new SpaceTimeStamp(this);
-                this.openWeatherData = new OpenWeatherData(this.spaceTimeStamp, new OpenWeatherData.WeatherDataCallback() {
+                Log.e("Checkpoint", "Permission result 3");
+                // User granted the permission
+                Toast.makeText(this, "Location permission granted", Toast.LENGTH_SHORT).show();
+                syncGPSButton = findViewById(R.id.get_location);
+                syncGPSButton.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onWeatherDataReceived(OpenWeatherData weatherData) {
-                        // handle weather data when received
-                        updateLayoutInfo(openWeatherData, spaceTimeStamp);
+                    public void onClick(View v) {
+                        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                            // Permission is already granted
+                            Toast.makeText(MainActivity.this, "Location permission granted", Toast.LENGTH_SHORT).show();
+
+                            // Request location updates
+                            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
+                                @Override
+                                public void onLocationChanged(Location location) {
+                                    // Do something with the retrieved location
+                                    if (openWeatherData != null) {
+                                        return;
+                                    }
+                                    double altitude = location.getAltitude();
+                                    double latitude = location.getLatitude();
+                                    double longitude = location.getLongitude();
+                                    Date time = new Date();
+                                    TextView altitudeTextview = findViewById(R.id.location_altitude);
+                                    TextView latitudeTextview = findViewById(R.id.location_latitude);
+                                    TextView longitudeTextview = findViewById(R.id.location_longitude);
+                                    TextView timeTextview = findViewById(R.id.location_time);
+                                    spaceTimePosition = new SpaceTimePosition(altitude, latitude, longitude, time);
+                                    altitudeTextview.setText(String.valueOf(altitude));
+                                    latitudeTextview.setText(String.valueOf(latitude));
+                                    longitudeTextview.setText(String.valueOf(longitude));
+                                    timeTextview.setText(String.valueOf(time));
+                                    getOWData(spaceTimePosition);
+                                }
+
+                                @Override
+                                public void onStatusChanged(String provider, int status, Bundle extras) {
+                                }
+
+                                @Override
+                                public void onProviderEnabled(String provider) {
+                                }
+
+                                @Override
+                                public void onProviderDisabled(String provider) {
+                                }
+                            });
+                        } else {
+                            // Permission is not yet granted, request it from the user
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                    LOCATION_PERMISSION_REQUEST_CODE);
+                        }
+                    }
+
+                    private void getOWData(SpaceTimePosition spaceTimePosition) {
+                        OpenWeatherData openWeatherData = new OpenWeatherData(mcontext, spaceTimePosition, findViewById(R.id.location_place), findViewById(R.id.set_alarm));
                     }
                 });
             } else {
-                // location permissions not granted, show a message and finish the activity
-                Toast.makeText(this, "Location permissions not granted", Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        }
-    }
-
-    private void updateLayoutInfo(OpenWeatherData data, SpaceTimeStamp timeStamp) {
-        altitudeTextView = findViewById(R.id.location_altitude);
-        latitudeTextView = findViewById(R.id.location_latitude);
-        longitudeTextView = findViewById(R.id.location_longitude);
-        timeTextView = findViewById(R.id.location_time);
-        placeTextView = findViewById(R.id.location_place);
-        setAlarmButton = findViewById(R.id.set_alarm);
-
-        altitudeTextView.setText(String.valueOf(spaceTimeStamp.getAltitude()));
-        latitudeTextView.setText(String.valueOf(spaceTimeStamp.getLatitude()));
-        longitudeTextView.setText(String.valueOf(spaceTimeStamp.getLongitude()));
-
-        // Convert timestamp to human-readable date and time
-        Date date = new Date(spaceTimeStamp.getTime() * 1000);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sdf.setTimeZone(TimeZone.getDefault());
-        String formattedTime = sdf.format(date);
-        timeTextView.setText(formattedTime);
-        placeTextView.setText(String.valueOf(openWeatherData.getPlaceName()));
-        // Convert timestamp to human-readable time with HH:mm format
-        Date sunrise = new Date(openWeatherData.getSunrise() * 1000);
-        SimpleDateFormat sdfSunrise = new SimpleDateFormat("HH:mm");
-        sdfSunrise.setTimeZone(TimeZone.getDefault());
-        String formattedSunrise = sdfSunrise.format(sunrise);
-        setAlarmButton.setText(formattedSunrise);
-        setAlarmButton.setOnClickListener(v -> setSunriseAlarm(openWeatherData.getSunrise()));
-    }
-
-    private void setSunriseAlarm(long timeInMillis) {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager != null) {
-
-            Intent intent = new Intent(this, AlarmReceiver.class);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 123, intent, PendingIntent.FLAG_IMMUTABLE);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    // Schedule exact alarms
-                    AlarmManager.AlarmClockInfo alarm = new AlarmManager.AlarmClockInfo(timeInMillis, pendingIntent);
-                    alarmManager.setAlarmClock(alarm, pendingIntent);
-                    Log.e("Alarm", "set!");
-                } else {
-                    // Ask users to grant the permission in the corresponding settings page
-                    startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM));
-                }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
-            } else {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
+                // User denied the permission
+                Toast.makeText(mcontext, "Location permission denied", Toast.LENGTH_SHORT).show();
             }
         }
     }
 }
-

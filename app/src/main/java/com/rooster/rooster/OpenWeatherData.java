@@ -1,7 +1,15 @@
 package com.rooster.rooster;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,26 +19,33 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
-public class OpenWeatherData {
-    private SpaceTimeStamp spaceTimeStamp;
-    private WeatherDataCallback callback;
+public class OpenWeatherData extends MainActivity {
+    private Context mContext;
+    private SpaceTimePosition spaceTimePosition;
     public String placeName;
     public Long sunrise;
     private OnDataReceivedListener listener;
+    private TextView placeNameView;
+    private Button setAlarmSunrise;
 
-    public OpenWeatherData(SpaceTimeStamp spaceTimeStamp, WeatherDataCallback callback) {
-        this.spaceTimeStamp = spaceTimeStamp;
-        this.callback = callback;
+    public OpenWeatherData(Context context, SpaceTimePosition spaceTimeStamp, TextView placeView, Button setAlarm) {
+        this.mContext = context;
+        this.spaceTimePosition = spaceTimeStamp;
+        this.placeNameView = placeView;
+        this.setAlarmSunrise = setAlarm;
         String apiKey = "76fd89af987189f1a3f1aa84bc06fff1";
-        String apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + this.spaceTimeStamp.getLatitude() + "&lon=" + this.spaceTimeStamp.getLongitude() + "&appid=" + apiKey + "&units=metric";
-        Log.e("URL", apiUrl);
+        String apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + this.spaceTimePosition.getLatitude() + "&lon=" + this.spaceTimePosition.getLongitude() + "&appid=" + apiKey + "&units=metric";
         // Make the API call using AsyncTask
-        new WeatherApiTask().execute(apiUrl);
+        WeatherApiTask task = new WeatherApiTask();
+        task.execute(apiUrl);
     }
 
-    public SpaceTimeStamp getSpaceTimeStamp() {
-        return spaceTimeStamp;
+    public SpaceTimePosition getSpaceTimeStamp() {
+        return spaceTimePosition;
     }
 
     public Long getSunrise() {
@@ -49,6 +64,9 @@ public class OpenWeatherData {
     protected class WeatherApiTask extends AsyncTask<String, Void, String> {
 
         private String jsonResponse;
+
+        public WeatherApiTask() {
+        }
 
         @Override
         protected String doInBackground(String... params) {
@@ -76,16 +94,24 @@ public class OpenWeatherData {
             try {
                 JSONObject jsonObject = new JSONObject(jsonResponse);
                 JSONObject sys = jsonObject.getJSONObject("sys");
-                placeName = jsonObject.getString("name");
-                sunrise = sys.getLong("sunrise");
-                if (callback != null) {
-                    callback.onWeatherDataReceived(OpenWeatherData.this);
-                }
+                String placeName = jsonObject.getString("name");
+                long sunrise = sys.getLong("sunrise");
+                placeNameView.setText(placeName);
+                Date date = new Date(sunrise * 1000L); // convert seconds to milliseconds
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                String formattedTime = sdf.format(date);
+                setAlarmSunrise.setText(formattedTime);
+                setAlarmSunrise.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        long sunrise2 = (System.currentTimeMillis()/1000) + 60;
+                        AlarmHandler.setAlarmClock(mContext, sunrise2 * 1000L);
+                    }
+                });
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-
     }
 
     public void setOnDataReceivedListener(OnDataReceivedListener listener) {
@@ -101,7 +127,7 @@ public class OpenWeatherData {
                 String jsonResponse = "";
                 try {
                     String apiKey = "76fd89af987189f1a3f1aa84bc06fff1";
-                    String apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + spaceTimeStamp.getLatitude() + "&lon=" + spaceTimeStamp.getLongitude() + "&appid=" + apiKey + "&units=metric";
+                    String apiUrl = "https://api.openweathermap.org/data/2.5/weather?lat=" + spaceTimePosition.getLatitude() + "&lon=" + spaceTimePosition.getLongitude() + "&appid=" + apiKey + "&units=metric";
                     URL url = new URL(apiUrl);
                     HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                     urlConnection.setRequestMethod("GET");
@@ -137,8 +163,8 @@ public class OpenWeatherData {
         void onDataReceived();
     }
 
-    // Callback interface for notifying when weather data is received
-    public interface WeatherDataCallback {
-        void onWeatherDataReceived(OpenWeatherData weatherData);
+    class WeatherDataCallback {
     }
+
+    // Callback interface for notifying when weather data is received
 }
