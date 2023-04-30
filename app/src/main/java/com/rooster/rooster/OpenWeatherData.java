@@ -22,6 +22,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class OpenWeatherData extends MainActivity {
     private Context mContext;
@@ -96,16 +97,24 @@ public class OpenWeatherData extends MainActivity {
                 JSONObject sys = jsonObject.getJSONObject("sys");
                 String placeName = jsonObject.getString("name");
                 long sunrise = sys.getLong("sunrise");
+                sunrise *= 1000;
                 placeNameView.setText(placeName);
-                Date date = new Date(sunrise * 1000L); // convert seconds to milliseconds
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-                String formattedTime = sdf.format(date);
-                setAlarmSunrise.setText(formattedTime);
+                Date date = new Date(sunrise);
+
+                // Add 24 hours to the date
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(date);
+                calendar.add(Calendar.HOUR_OF_DAY, 24);
+                Date newDate = calendar.getTime();
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault());
+                String formattedDate = sdf.format(newDate);
+                Log.e("SET BUTTON ALARM - ", formattedDate);
+                setAlarmSunrise.setText("Wake me at sunrise\n("+ formattedDate+")");
                 setAlarmSunrise.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        long sunrise2 = (System.currentTimeMillis()/1000) + 60;
-                        AlarmHandler.setAlarmClock(mContext, sunrise2 * 1000L);
+                        AlarmHandler.setAlarmClock(mContext, newDate);
                     }
                 });
             } catch (JSONException e) {

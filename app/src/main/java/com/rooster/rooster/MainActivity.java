@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Location permission granted", Toast.LENGTH_SHORT).show();
 
                             // Request location updates
-                            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationListener() {
+                            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, new LocationListener() {
                                 @Override
                                 public void onLocationChanged(Location location) {
                                     // Do something with the retrieved location

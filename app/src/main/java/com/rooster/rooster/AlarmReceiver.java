@@ -11,14 +11,16 @@ import android.net.Uri;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.io.IOException;
+
 public class AlarmReceiver extends BroadcastReceiver {
 
     private static final String TAG = "AlarmReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String alarmName = intent.getStringExtra("ALARM_NAME");
-        Log.d(TAG, "Received alarm: " + String.valueOf(intent));
+        String alarmName = intent.getStringExtra("label");
+        Log.d(TAG, "Received alarm: " + alarmName);
 
         // Create a wake lock to wake up the screen
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -30,14 +32,19 @@ public class AlarmReceiver extends BroadcastReceiver {
     }
 
     public void playSound(Context context) {
-        MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.rooster);
-
-        mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .build());
-
-        mediaPlayer.start();
+        Uri soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/raw/roostersong");
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        try {
+            Log.e("PLaying", "Rooster");
+            mediaPlayer.setDataSource(context, soundUri);
+            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-
 }
