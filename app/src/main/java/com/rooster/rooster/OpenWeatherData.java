@@ -101,10 +101,12 @@ public class OpenWeatherData extends MainActivity {
                 placeNameView.setText(placeName);
                 Date date = new Date(sunrise);
 
-                // Add 24 hours to the date
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(date);
-                calendar.add(Calendar.HOUR_OF_DAY, 24);
+                if (calendar.getTimeInMillis() < System.currentTimeMillis()) {
+                    // Add 24 hours to the date if date is in the past
+                    calendar.add(Calendar.HOUR_OF_DAY, 24);
+                }
                 Date newDate = calendar.getTime();
 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault());
