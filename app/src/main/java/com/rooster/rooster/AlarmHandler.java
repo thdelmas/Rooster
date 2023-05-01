@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -32,5 +33,6 @@ public class AlarmHandler {
             alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
         }
         Log.d("AlarmHandler",  alarmName + " has been set @ " + formattedDate);
+        Toast.makeText(context,"The alarm has been set to\n" + formattedDate, Toast.LENGTH_LONG).show();
     }
 }
