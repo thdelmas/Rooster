@@ -168,19 +168,11 @@
         android:layout_alignParentEnd="true">
 
         <Button
-            android:id="@+id/get_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sync GPS"
-            android:onClick="getGlobalPosition"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
             android:id="@+id/set_alarm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sunrise (HH:MM)"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="21dp"/>
 
     </LinearLayout>
 </RelativeLayout>
