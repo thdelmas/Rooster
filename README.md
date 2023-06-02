@@ -28,7 +28,7 @@ No specific configuration is required for Rooster. However, make sure to allow t
 
 ## Support
 
-For support or assistance with Rooster, please visit our website at [www.roosterapp.com](https://www.roosterapp.com) or contact our support team at support@roosterapp.com.
+For support or assistance with Rooster, please open an issue or send a mail to [mia@ack.ninja](mailto:mia@ack.ninja)
 
 ## Contributing
 
