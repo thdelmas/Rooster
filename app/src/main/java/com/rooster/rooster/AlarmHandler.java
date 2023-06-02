@@ -35,4 +35,20 @@ public class AlarmHandler {
         Log.d("AlarmHandler",  alarmName + " has been set @ " + formattedDate);
         Toast.makeText(context,"The alarm has been set to\n" + formattedDate, Toast.LENGTH_LONG).show();
     }
+    public static void unsetAlarmClock(Context context) {
+        String alarmName = "Sunrise";
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        int requestCode = alarmName.hashCode(); // Use alarm name hashcode as unique identifier
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE);
+
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent);
+            pendingIntent.cancel();
+            Log.d("AlarmHandler", alarmName + " alarm has been canceled");
+            Toast.makeText(context, alarmName + " alarm has been canceled", Toast.LENGTH_LONG).show();
+        } else {
+            Log.d("AlarmHandler", "No " + alarmName + " alarm to cancel");
+        }
+    }
 }

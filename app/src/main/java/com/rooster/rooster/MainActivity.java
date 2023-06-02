@@ -1,6 +1,7 @@
 package com.rooster.rooster;
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -25,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private Button syncGPSButton;
     private SpaceTimePosition spaceTimePosition = null;
     private OpenWeatherData openWeatherData = null;
+    SharedPreferences prefs;
+    boolean isAlarmSet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +35,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mcontext = this.getApplicationContext();
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        prefs = this.getSharedPreferences("com.rooster.rooster", Context.MODE_PRIVATE);
+        isAlarmSet = prefs.getBoolean("isAlarmSet", false);
+
+        final Button setAlarmButton = findViewById(R.id.set_alarm);
+        if (isAlarmSet) {
+            setAlarmButton.setText("Tap to unset alarm");
+        }
     }
 
     @Override

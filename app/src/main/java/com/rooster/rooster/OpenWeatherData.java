@@ -3,6 +3,7 @@ package com.rooster.rooster;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -32,6 +33,9 @@ public class OpenWeatherData extends MainActivity {
     private OnDataReceivedListener listener;
     private TextView placeNameView;
     private Button setAlarmSunrise;
+
+    SharedPreferences prefs;
+    boolean isAlarmSet;
 
     public OpenWeatherData(Context context, SpaceTimePosition spaceTimeStamp, TextView placeView, Button setAlarm) {
         this.mContext = context;
@@ -112,11 +116,24 @@ public class OpenWeatherData extends MainActivity {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.getDefault());
                 String formattedDate = sdf.format(newDate);
                 Log.e("SET BUTTON ALARM - ", formattedDate);
+                prefs = mContext.getSharedPreferences("com.rooster.rooster", Context.MODE_PRIVATE);
+                isAlarmSet = prefs.getBoolean("isAlarmSet", false);
                 setAlarmSunrise.setText("Wake me at sunrise\n("+ formattedDate+")");
                 setAlarmSunrise.setOnClickListener(new View.OnClickListener() {
-                    @Override
                     public void onClick(View v) {
-                        AlarmHandler.setAlarmClock(mContext, newDate);
+                        if (!isAlarmSet) {
+                            // Compute the sunrise time here and call setAlarmClock
+                            Date sunriseTime = newDate; // Fill in this line to calculate sunrise time
+                            AlarmHandler.setAlarmClock(mContext, sunriseTime);
+                            setAlarmSunrise.setText("Tap to unset the alarm");
+                            isAlarmSet = true;
+                            prefs.edit().putBoolean("isAlarmSet", true).apply();
+                        } else {
+                            AlarmHandler.unsetAlarmClock(mContext);
+                            setAlarmSunrise.setText("Tap to set the alarm");
+                            isAlarmSet = false;
+                            prefs.edit().putBoolean("isAlarmSet", false).apply();
+                        }
                     }
                 });
             } catch (JSONException e) {
