@@ -86,8 +86,4 @@ class MyService : Service() {
         }
         return notificationBuilder.build()
     }
-    private fun updateUI(placeName: String, sunriseTime: String) {
-        placeNameTextView?.text = "Place: $placeName"
-        sunriseTimeTextView?.text = "Sunrise Time: $sunriseTime"
-    }
 }

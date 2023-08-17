@@ -49,12 +49,10 @@ class AlarmReceiver : BroadcastReceiver() {
                     mediaPlayer.start()
                     mediaPlayer.setOnCompletionListener {
                         mediaPlayer.release()
-                        wakeLock.release()
                     }
                 }
             } else {
-                Log.d(TAG, "Alarm not enabled for today")
-                wakeLock.release()
+                Log.w(TAG, "Alarm not enabled for today")
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error playing sound", e)

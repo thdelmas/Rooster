@@ -21,9 +21,17 @@ class OpenWeatherAPI(private val context: Context) {
             try {
                 response = URL(apiUrl).readText()
                 val placeName = parsePlaceName(response)
-                val sunriseTime = parseSunriseTime(response) ?: run {
+                var sunriseTime = parseSunriseTime(response) ?: run {
                     Log.e("Rooster OpenWeather","Sunrise time is not in the response.")
                     return@launch
+                }
+                Log.e("Rooster OpenWeather", "Sunrise at $sunriseTime")
+                var i = 0
+                while (sunriseTime < currentTimeMillis) {
+                    i += 1
+                    Log.d("OpenWeatherAPI", "Sunrise time is in the past for $placeName.")
+                    Log.w("OpenWeatherAPI", "Adding 24H ($i)")
+                    sunriseTime += ((24*60)*60)*1000
                 }
                 if (sunriseTime > currentTimeMillis) {
                     setSunriseAlarm(sunriseTime) // Convert to milliseconds
@@ -53,6 +61,7 @@ class OpenWeatherAPI(private val context: Context) {
     private fun parseSunriseTime(response: String): Long? {
         return try {
             val jsonResponse = JSONObject(response)
+            Log.w("Rooster", jsonResponse.toString())
             val sysObject = jsonResponse.optJSONObject("sys")
             val sunriseTimestamp = sysObject?.optLong("sunrise") ?: 0
             sunriseTimestamp * 1000

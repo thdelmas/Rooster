@@ -6,10 +6,13 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.icu.util.Calendar
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
@@ -20,7 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 
-class MainActivity() : ComponentActivity() {
+class MainActivity() : ComponentActivity(), LocationListener {
     private val coarseLocationPermissionRequestCode = 1001
     private var mondayCheckBox: CheckBox? = null
     private var tuesdayCheckBox: CheckBox? = null
@@ -29,10 +32,13 @@ class MainActivity() : ComponentActivity() {
     private var fridayCheckBox: CheckBox? = null
     private var saturdayCheckBox: CheckBox? = null
     private var sundayCheckBox: CheckBox? = null
+    private lateinit var locationListener: LocationListener
+    private lateinit var locationManager: LocationManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        locationListener = this
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         setContentView(R.layout.activity_main)
         mondayCheckBox = findViewById(R.id.mondayCheckBox);
         tuesdayCheckBox = findViewById(R.id.tuesdayCheckBox);
@@ -73,8 +79,32 @@ class MainActivity() : ComponentActivity() {
             } else {
                 sunriseEditText.setText("Sunrise: Not available")
             }
-
             startMyService()
+        }
+    }
+
+    fun onGetCoordinatesButtonClicked(v: View) {
+        // Check for location permission and request if necessary
+        Log.w("Rooster", "Requesting GPS")
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                coarseLocationPermissionRequestCode
+            )
+        } else {
+            // Request location updates every 10 seconds with high accuracy
+            Log.w("Rooster", "Requesting GPS Updates")
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                3000,
+                0f, // Minimum distance between updates (set to 0 for any movement)
+                locationListener
+            )
         }
     }
 
@@ -82,7 +112,6 @@ class MainActivity() : ComponentActivity() {
         val serviceIntent = Intent(this, MyService::class.java)
         startService(serviceIntent)
     }
-        // Check if fine location permission is granted
         private fun isCoarseLocationPermissionGranted(): Boolean {
             return ContextCompat.checkSelfPermission(
                 this,
@@ -99,46 +128,24 @@ class MainActivity() : ComponentActivity() {
             )
         }
 
-        fun getCoordinates(view: View) {
-            var coordinatesEditText = findViewById<EditText>(R.id.coordinatesEditText)
-            if (isCoarseLocationPermissionGranted()) {
-                // Get the current location of the device
-                try {
-                    val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-                    val location =
-                        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-
-                    // Display the latitude and longitude to the user
-                    if (location != null) {
-                        val latitude = location.latitude
-                        val longitude = location.longitude
-                        Toast.makeText(
-                            this,
-                            "Your coordinates are: $latitude, $longitude",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        Log.w("Rooster GPS", "New coordinates: $latitude, $longitude")
-                        coordinatesEditText.setText("Coordinates:\nLat: $latitude\nLon: $longitude")
-                        // Save coordinates to SharedPreferences
-                        saveCoordinatesToPrefs(latitude, longitude)
-                        startMyService()
-                    } else {
-                        Toast.makeText(this, "Unable to get your coordinates", Toast.LENGTH_SHORT)
-                            .show()
-                        Log.e("Rooster GPS", "Unable to get your coordinates")
-                    }
-                } catch (e: Exception) {
-                    // Handle the exception
-                    Toast.makeText(this, "Unable to get your coordinates", Toast.LENGTH_SHORT)
-                        .show()
-                    Log.e("Rooster GPS", "Unable to get your coordinates")
-                }
-            } else {
-                // Permission is not granted, request it
-                requestCoarseLocationPermission()
-            }
+    fun refreshSunrise(v: View) {
+        val sharedPrefs = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
+        val storedSunriseTime = sharedPrefs.getLong("sunriseTimestamp", 0)
+        val storedPlaceName = sharedPrefs.getString("locationName", "")
+        val sunriseEditText = findViewById<EditText>(R.id.sunriseTimeEditText)
+        val locationEditText = findViewById<EditText>(R.id.locationNameEditText)
+        if (storedSunriseTime > 0) {
+            val calendar = Calendar.getInstance()
+            calendar.setTimeInMillis(storedSunriseTime)
+            val dateFormat = SimpleDateFormat("hh:mm a\n(EEE, MMM dd, yyyy)", Locale.getDefault())
+            val formattedSunriseTime = dateFormat.format(calendar.time)
+            sunriseEditText.setText("Sunrise:\n\n$formattedSunriseTime")
+        }
+        if (storedPlaceName != "") {
+            locationEditText.setText("Location:\n$storedPlaceName")
         }
 
+    }
     private fun saveCoordinatesToPrefs(latitude: Double, longitude: Double) {
         val sunriseEditText = findViewById<EditText>(R.id.sunriseTimeEditText)
         val locationEditText = findViewById<EditText>(R.id.locationNameEditText)
@@ -207,5 +214,29 @@ class MainActivity() : ComponentActivity() {
         fridayCheckBox?.isChecked = sharedPrefs.getBoolean("Friday", false)
         saturdayCheckBox?.isChecked = sharedPrefs.getBoolean("Saturday", false)
         sundayCheckBox?.isChecked = sharedPrefs.getBoolean("Sunday", false)
+    }
+
+    override fun onLocationChanged(location: Location) {
+        // Handle the new location update here
+        Log.w("Rooster Location", "Received GPS")
+        val latitude = location.latitude
+        val longitude = location.longitude
+        saveCoordinatesToPrefs(latitude, longitude)
+        locationManager.removeUpdates(locationListener)
+    }
+
+    override fun onProviderEnabled(provider: String) {
+        // Called when the provider (e.g., GPS) is enabled
+    }
+
+    override fun onProviderDisabled(provider: String) {
+        // Called when the provider (e.g., GPS) is disabled
+    }
+
+    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+        // Called when the status of the provider changes
+    }
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }

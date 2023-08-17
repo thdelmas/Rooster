@@ -16,15 +16,10 @@ class AlarmHelper(private val context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, AlarmReceiver::class.java)
         val requestCode = 0
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-        )
 
         if (alarmManager.canScheduleExactAlarms()) {
             // Create and set the alarm only if the pendingIntent doesn't exist
+            intent.putExtra("label", "Rooster")
             val newPendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_MUTABLE)
             val triggerAtMillis = sunriseTimeMillis
             val calendar = Calendar.getInstance()
