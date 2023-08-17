@@ -1,4 +1,4 @@
-package com.rooster.myapplication
+package com.rooster.rooster
 
 import OpenWeatherAPI
 import android.app.*

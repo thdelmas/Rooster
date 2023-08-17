@@ -1,4 +1,4 @@
-package com.rooster.myapplication
+package com.rooster.rooster
 
 import android.Manifest
 import android.content.Context
@@ -12,10 +12,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat

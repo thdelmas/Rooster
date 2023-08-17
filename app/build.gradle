@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.rooster.myapplication'
+    namespace 'com.rooster.rooster'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.rooster.myapplication"
+        applicationId "com.rooster.rooster"
         minSdk 24
         targetSdk 33
         versionCode 1

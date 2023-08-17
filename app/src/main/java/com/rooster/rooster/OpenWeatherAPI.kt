@@ -1,7 +1,7 @@
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.rooster.myapplication.AlarmHelper
+import com.rooster.rooster.AlarmHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

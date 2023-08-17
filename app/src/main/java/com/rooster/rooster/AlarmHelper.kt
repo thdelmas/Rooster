@@ -1,4 +1,4 @@
-package com.rooster.myapplication
+package com.rooster.rooster
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -7,7 +7,6 @@ import android.content.Intent
 import android.icu.util.Calendar
 import android.util.Log
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 class AlarmHelper(private val context: Context) {

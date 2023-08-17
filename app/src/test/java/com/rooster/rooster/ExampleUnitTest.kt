@@ -1,4 +1,4 @@
-package com.rooster.myapplication
+package com.rooster.rooster
 
 import org.junit.Test
 

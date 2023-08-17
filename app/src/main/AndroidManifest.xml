@@ -40,7 +40,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="com.rooster.myapplication.ALARM_RECEIVER" />
+                <action android:name="com.rooster.rooster.ALARM_RECEIVER" />
             </intent-filter>
         </receiver>
     </application>

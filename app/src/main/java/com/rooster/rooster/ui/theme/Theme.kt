@@ -1,4 +1,4 @@
-package com.rooster.myapplication.ui.theme
+package com.rooster.rooster.ui.theme
 
 import android.app.Activity
 import android.os.Build
