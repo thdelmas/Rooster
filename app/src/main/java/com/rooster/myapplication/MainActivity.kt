@@ -10,21 +10,39 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+
 
 class MainActivity() : ComponentActivity() {
     private val coarseLocationPermissionRequestCode = 1001
+    private var mondayCheckBox: CheckBox? = null
+    private var tuesdayCheckBox: CheckBox? = null
+    private var wednesdayCheckBox: CheckBox? = null
+    private var thursdayCheckBox: CheckBox? = null
+    private var fridayCheckBox: CheckBox? = null
+    private var saturdayCheckBox: CheckBox? = null
+    private var sundayCheckBox: CheckBox? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
+        mondayCheckBox = findViewById(R.id.mondayCheckBox);
+        tuesdayCheckBox = findViewById(R.id.tuesdayCheckBox);
+        wednesdayCheckBox = findViewById(R.id.wednesdayCheckBox);
+        thursdayCheckBox = findViewById(R.id.thursdayCheckBox);
+        fridayCheckBox = findViewById(R.id.fridayCheckBox);
+        saturdayCheckBox = findViewById(R.id.saturdayCheckBox);
+        sundayCheckBox = findViewById(R.id.sundayCheckBox);
+
+        loadCheckboxStates()
         Log.w("Rooster", "MainActivity Started")
         val savedCoordinatesWithSunrise = getSavedCoordinatesFromPrefs()
         if (savedCoordinatesWithSunrise != null) {
@@ -154,5 +172,40 @@ class MainActivity() : ComponentActivity() {
         val sharedPrefs: SharedPreferences =
             getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
         return sharedPrefs.getString("locationName", null)
+    }
+
+    fun onCheckboxClicked(view: View) {
+        Log.e("AAAAAA", "HHHHHHH")
+        if (view is CheckBox) {
+            val isChecked = view.isChecked
+            when (view.id) {
+                R.id.mondayCheckBox -> saveCheckboxState("Monday", isChecked)
+                R.id.tuesdayCheckBox -> saveCheckboxState("Tuesday", isChecked)
+                R.id.wednesdayCheckBox -> saveCheckboxState("Wednesday", isChecked)
+                R.id.thursdayCheckBox -> saveCheckboxState("Thursday", isChecked)
+                R.id.fridayCheckBox -> saveCheckboxState("Friday", isChecked)
+                R.id.saturdayCheckBox -> saveCheckboxState("Saturday", isChecked)
+                R.id.sundayCheckBox -> saveCheckboxState("Sunday", isChecked)
+            }
+        }
+    }
+
+    private fun saveCheckboxState(day: String, isChecked: Boolean) {
+        val sharedPrefs: SharedPreferences = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
+        val editor: SharedPreferences.Editor = sharedPrefs.edit()
+        Log.w("Rooster", "Change $day activation")
+        editor.putBoolean(day, isChecked)
+        editor.apply()
+    }
+
+    private fun loadCheckboxStates() {
+        val sharedPrefs: SharedPreferences = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
+        mondayCheckBox?.isChecked = sharedPrefs.getBoolean("Monday", false)
+        tuesdayCheckBox?.isChecked = sharedPrefs.getBoolean("Tuesday", false)
+        wednesdayCheckBox?.isChecked = sharedPrefs.getBoolean("Wednesday", false)
+        thursdayCheckBox?.isChecked = sharedPrefs.getBoolean("Thursday", false)
+        fridayCheckBox?.isChecked = sharedPrefs.getBoolean("Friday", false)
+        saturdayCheckBox?.isChecked = sharedPrefs.getBoolean("Saturday", false)
+        sundayCheckBox?.isChecked = sharedPrefs.getBoolean("Sunday", false)
     }
 }

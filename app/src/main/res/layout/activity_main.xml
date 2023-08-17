@@ -27,49 +27,56 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Monday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/tuesdayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tuesday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/wednesdayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Wednesday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/thursdayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Thursday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/fridayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Friday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/saturdayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Saturday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
         <CheckBox
             android:id="@+id/sundayCheckBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Sunday"
-            android:textColor="#ff9853" />
+            android:textColor="#ff9853"
+            android:onClick="onCheckboxClicked"/>
 
     </LinearLayout>
     <LinearLayout
