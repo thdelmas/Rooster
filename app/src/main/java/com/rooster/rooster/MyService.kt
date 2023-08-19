@@ -29,14 +29,13 @@ class MyService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.w("Rooster Service", "Service Started")
-
         startForeground(NOTIFICATION_ID, createNotification())
         startServiceExecution()
     }
 
     private fun startServiceExecution() {
         Log.d("Rooster Service", "Running Loop")
-        serviceHandler.postDelayed(serviceRunnable, 42000) // Start after 42 Seconds
+        serviceHandler.postDelayed(serviceRunnable, 4200) // Start after 4.2 Seconds
     }
 
     override fun onDestroy() {
