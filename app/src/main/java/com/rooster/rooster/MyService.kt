@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 class MyService : Service() {
 
     private val SERVICE_RUN_INTERVAL: Long = (((4 * 60) + 20) * 60) * 1000 // ((Hours * 60) + Minutes) * 60 = Seconds
+    //private val SERVICE_RUN_INTERVAL: Long = (((0 * 60) + 2) * 60) * 1000 // ((Hours * 60) + Minutes) * 60 = Seconds
     private val NOTIFICATION_ID = 1
     private var placeNameTextView: TextView? = null
     private var sunriseTimeTextView: TextView? = null

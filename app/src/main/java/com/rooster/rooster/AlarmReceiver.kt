@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.PowerManager
 import android.util.Log
 import java.io.IOException
+import java.util.Timer
+import java.util.TimerTask
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -24,7 +26,7 @@ class AlarmReceiver : BroadcastReceiver() {
         )
 
         try {
-            wakeLock.acquire(5000)
+            wakeLock.acquire(60000)
 
             val dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
             val dayKey = getDayKey(dayOfWeek) // Function to get the corresponding key for the current day
@@ -46,10 +48,16 @@ class AlarmReceiver : BroadcastReceiver() {
                         prepare()
                     }
 
+                    // Start the media player in loop mode
+                    mediaPlayer.isLooping = true
                     mediaPlayer.start()
-                    mediaPlayer.setOnCompletionListener {
-                        mediaPlayer.release()
-                    }
+
+                    // Stop the media player after 60 seconds
+                    Timer().schedule(object : TimerTask() {
+                        override fun run() {
+                            mediaPlayer.release()
+                        }
+                    }, 15000)
                 }
             } else {
                 Log.w(TAG, "Alarm not enabled for today")
