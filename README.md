@@ -53,7 +53,7 @@ We welcome any contributions, suggestions or feedbacks. Don't hesitate to share 
 
 ## License
 
-Rooster is licensed under the MIT License.
+Rooster is licensed under the GPLv3 License.
 
 ## Acknowledgments
 Thanks to:
