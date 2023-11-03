@@ -8,15 +8,14 @@
 
 ## Features
 
-- 🌅 Wakes you up naturally: Rise with the sun and embrace the day's potential.
-- 📍 Location-based sunrise time: No need to manually input times. Rooster fetches sunrise times based on your location.
-- 📅 Choose your wake-up days: Select which days of the week Rooster should work its magic.
-- 🎨 Aesthetic orange design: Immerse yourself in a warm and inviting visual experience.
-- ⏰ Multiple Alarms: Set multiple alarms with different modes and relative times like Dawn, Sunrise, Sunset, etc.
-- 🔄 Background Daily GPS Synchronization: Your GPS coordinates are now synchronized in the background for accurate sunrise data.
-- 🔄 Background Daily Sun Times Synchronization: Sun times are also updated daily in the background.
-- 📆 Time Picker: Enjoy the improved time picker for setting your alarms.
-- 📜 Dropdown UI: A more intuitive dropdown user interface for enhanced usability.
+- 🌅 **Wakes you up naturally**: Rise with the sun and embrace the day's potential.
+- 📍 **Location-based sunrise time**: No need to manually input times. Rooster fetches sunrise times based on your location.
+- 📅 **Choose your wake-up days**: Select which days of the week Rooster should work its magic.
+- 🎨 **Aesthetic astral design**: Immerse yourself in a warm and inviting visual experience.
+- ⏰ **Multiple Alarms**: Set multiple alarms with different modes and relative times like Dawn, Sunrise, Sunset, etc.
+- 🔄 **Auto GPS Synchronization**: Your GPS coordinates are now synchronized in the background for accurate sunrise data.
+- 🔄 **Auto Sun Times Synchronization**: Sun times are also updated daily in the background.
+
 
 ## How to use
 
