@@ -21,7 +21,7 @@
 4. 📆 Customize your wake-up schedule by choosing the days you want Rooster to activate.
 
 ## Sustainable Development Goals
-> Rooster is committed to supporting the United Nations' SDG
+> Rooster is committed to supporting the United Nations' SDG N.3
 
 ### SDG 3: Good Health and Well-Being
 

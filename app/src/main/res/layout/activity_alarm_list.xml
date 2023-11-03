@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/night">
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/alarmListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+    <Button
+        android:id="@+id/addAlarmButton"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:background="@drawable/add_alarm_button"
+        android:gravity="center"
+        android:textSize="50dp"
+        android:textAlignment="center"
+        android:padding="2dp"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="21dp"/>
+
+</RelativeLayout>

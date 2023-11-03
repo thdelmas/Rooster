@@ -4,175 +4,70 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <ImageView
-        android:id="@+id/logoImageView"
-        android:layout_width="126dp"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="126dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="12dp"
-        android:src="@mipmap/ic_launcher_foreground"
-        />
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:id="@id/topBanner">
 
-    <TextView
-        android:id="@+id/daysOfWeekTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/logoImageView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="12dp"
-        android:text="Days of Week"
-        android:textColor="#ff9853"
-        android:textSize="18sp" />
+        <ImageButton
+            android:id="@+id/alarmButton"
+            android:layout_width="126dp"
+            android:layout_height="126dp"
+            android:src="@drawable/alarm"
+            android:layout_alignParentStart="true"
+            android:background="@color/black"/>
 
-    <LinearLayout
-        android:id="@+id/daysOfWeekLayout"
+        <ImageView
+            android:id="@+id/logoImageView"
+            android:layout_width="126dp"
+            android:layout_height="126dp"
+            android:layout_centerInParent="true"
+            android:src="@mipmap/ic_launcher_foreground" />
+
+        <ImageButton
+            android:id="@+id/settingsButton"
+            android:layout_width="126dp"
+            android:layout_height="126dp"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/ic_settings"
+            android:background="@color/black"/>
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/progress_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/daysOfWeekTitle"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal">
+        android:layout_below="@+id/topBanner"
+        android:layout_centerInParent="true"
+        android:padding="21dp"
+        android:layout_marginBottom="126dp">
 
+        <!--progress bar implementation-->
+        <ProgressBar
+            android:id="@+id/progress_cycle"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/circular_shape"
+            android:indeterminate="false"
+            android:progressDrawable="@drawable/circle_progress_bar"
+            android:textAlignment="center" />
 
-    <Button
-            android:id="@+id/mondayButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="M"
-        android:textColor="#ff9853"
-        android:onClick="onDaysClicked"
-        android:background="@drawable/rounded_button"
-        android:layout_marginEnd="2dp"
-        android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/tuesdayButton"
-            android:layout_width="0dp"
+        <!--Text implementation in center of the progress bar-->
+        <TextView
+            android:id="@+id/progress_text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="T"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/wednesdayButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="W"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/thursdayButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="T"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/fridayButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="F"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/saturdayButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="S"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-
-        <Button
-            android:id="@+id/sundayButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="S"
-            android:textColor="#ff9853"
-            android:onClick="onDaysClicked"
-            android:background="@drawable/rounded_button"
-            android:layout_marginEnd="2dp"
-            android:textStyle="bold"/>
-    </LinearLayout>
-
-
-    <LinearLayout
-android:id="@+id/coordinatesLayout"
-android:layout_width="match_parent"
-android:layout_height="wrap_content"
-android:layout_below="@id/daysOfWeekLayout"
-android:layout_centerHorizontal="true"
-android:layout_marginTop="24dp"
-android:orientation="vertical">
-
-<EditText
-    android:id="@+id/coordinatesEditText"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="GPS Coordinates"
-    android:textColor="#ff9853"
-    android:gravity="center_horizontal" />
-
-<EditText
-    android:id="@+id/locationNameEditText"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Location"
-    android:textColor="#ff9853"
-    android:gravity="center_horizontal" />
-
-<EditText
-    android:id="@+id/sunriseTimeEditText"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="6dp"
-    android:text="Sunrise Time"
-    android:textColor="#ff9853"
-    android:gravity="center_horizontal" />
-
-<Button
-    android:id="@+id/getCoordinatesButton"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Get Coordinates from GPS"
-    android:textColor="#000"
-    android:backgroundTint="#ff9853"
-    android:onClick="onGetCoordinatesButtonClicked"
-    android:layout_gravity="center_horizontal" />
-
-<Button
-    android:id="@+id/refreshSunriseButton"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Refresh Sunrise"
-    android:layout_marginTop="12dp"
-    android:textColor="#000"
-    android:backgroundTint="#ff9853"
-    android:layout_gravity="center_horizontal"
-    android:onClick="refreshSunrise"/>
-</LinearLayout>
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text="--:--"
+            android:textColor="@color/primary"
+            android:textSize="63sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
 </RelativeLayout>

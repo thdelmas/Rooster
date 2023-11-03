@@ -1,7 +1,13 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <corners android:radius="400sp" />
     <stroke
-        android:width="2dp"
-        android:color="#53baff" />
-    <solid android:color="#ff9853" /> <!-- Set your desired background color here -->
+        android:width="2sp"
+        android:height="2sp"
+        android:color="@color/primary" />
+    <gradient
+        android:startColor="@color/primary"
+        android:gradientRadius="45dp"
+        android:endColor="@color/night"
+        android:type="radial"
+        android:useLevel="false" />
 </shape>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="1dp">
+
+    <TextView
+        android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+        android:text="Repeats On"
+        android:textSize="17dp"
+        android:textColor="@color/primary"/>
+
+    <LinearLayout
+        android:id="@+id/daysOfWeekLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:paddingVertical="12dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/sundayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="S"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/mondayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="M"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/tuesdayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="T"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/wednesdayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="W"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/thursdayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="T"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/fridayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="F"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/saturdayButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="S"
+            android:textColor="#ff9853"
+            android:background="@drawable/rounded_button"
+            android:layout_marginHorizontal="3dp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <!-- Vibrate Checkbox -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="6dp">
+
+
+    <CheckBox
+        android:id="@+id/checkBoxVibrate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:textColor="@color/primary"
+        android:scaleX="1.4"
+        android:scaleY="1.4"
+        android:checked="true"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Vibrate"
+            android:textColor="@color/primary"
+            android:textSize="18dp"
+            android:paddingHorizontal="6dp"
+            android:gravity="center"/>
+    </LinearLayout>
+    <!-- Delete Button -->
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:paddingVertical="6dp">
+    <ImageButton
+        android:id="@+id/buttonDelete"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="Delete"
+        android:src="@drawable/bin"
+        android:onClick="deleteAlarm"
+        android:background="@color/black"
+        android:textColor="@color/primary"/>
+
+        <TextView
+            android:id="@+id/buttonDeleteText"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Delete"
+            android:textColor="@color/primary"
+            android:textSize="18dp"
+            android:paddingHorizontal="6dp"
+            android:gravity="center"/>
+    </LinearLayout>
+</LinearLayout>

@@ -1,273 +1,217 @@
 package com.rooster.rooster
 
-import android.Manifest
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.graphics.PorterDuff
-import android.icu.util.Calendar
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
+import android.icu.text.SimpleDateFormat
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
-import android.view.View
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.ImageButton
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.Calendar
+import java.util.Date
+import android.Manifest
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.os.Looper
+import android.provider.Settings
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.datatransport.Priority
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 
 
-class MainActivity() : ComponentActivity(), LocationListener {
-    private val coarseLocationPermissionRequestCode = 1001
-    private var mondayButton: Button? = null
-    private var tuesdayButton: Button? = null
-    private var wednesdayButton: Button? = null
-    private var thursdayButton: Button? = null
-    private var fridayButton: Button? = null
-    private var saturdayButton: Button? = null
-    private var sundayButton: Button? = null
-    private lateinit var locationListener: LocationListener
-    private lateinit var locationManager: LocationManager
+class MainActivity() : ComponentActivity() {
+    private val REQUEST_CODE_PERMISSIONS = 4
+    val coarseLocationPermissionRequestCode = 1
+    val notificationPermissionRequestCode = 2
+    val fullScreenIntentPermissionRequestCode = 3
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        locationListener = this
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         setContentView(R.layout.activity_main)
-        mondayButton = findViewById(R.id.mondayButton);
-        tuesdayButton = findViewById(R.id.tuesdayButton);
-        wednesdayButton = findViewById(R.id.wednesdayButton);
-        thursdayButton = findViewById(R.id.thursdayButton);
-        fridayButton = findViewById(R.id.fridayButton);
-        saturdayButton = findViewById(R.id.saturdayButton);
-        sundayButton = findViewById(R.id.sundayButton);
+        getPermissions()
+        linkButtons()
+        refreshCycle()
+    }
 
-        loadDaysStates()
-        Log.w("Rooster", "MainActivity Started")
-        val savedCoordinatesWithSunrise = getSavedCoordinatesFromPrefs()
-        if (savedCoordinatesWithSunrise != null) {
-            val latitude = savedCoordinatesWithSunrise.first
-            val longitude = savedCoordinatesWithSunrise.second
-            val sunriseTimestamp = savedCoordinatesWithSunrise.third
-            val coordinatesEditText = findViewById<EditText>(R.id.coordinatesEditText)
-            val sunriseEditText = findViewById<EditText>(R.id.sunriseTimeEditText)
-            val locationEditText = findViewById<EditText>(R.id.locationNameEditText)
+    private fun getPermissions() {
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(applicationContext)) {
+                // Overlay permission is not granted, show a pop-up to request it
+                showOverlayPermissionPopup()
+            }
+        }
 
-            // Update the EditText field with the saved coordinates
-            coordinatesEditText.setText("GPS Coordinates\nLa: $latitude\nLo: $longitude")
-            if (sunriseTimestamp > 0) {
-                // Convert the sunrise timestamp to a human-readable format
-                val calendar = Calendar.getInstance()
-                calendar.setTimeInMillis(sunriseTimestamp)
-                val dateFormat = SimpleDateFormat("hh:mm a\n(EEE, MMM dd, yyyy)", Locale.getDefault())
-                val formattedSunriseTime = dateFormat.format(calendar.time)
-                sunriseEditText.setText("Sunrise\n$formattedSunriseTime")
-                val locationName = getLocationNameFromPrefs()
-                if (!locationName.isNullOrEmpty()) {
-                    locationEditText.setText("Location\n$locationName")
-                } else {
-                    locationEditText.setText("Location\nNot available")
-                }
+        requestFullScreenIntentPermission(this) { granted ->
+            if (granted) {
+                // Full screen intent permission is granted, so show the PopTime dialog
+                Log.e("Rooster", "Full Screen Permission Granted")
             } else {
-                sunriseEditText.setText("Sunrise\nNot available")
+                // Full screen intent permission is not granted
+                Log.e("Rooster", "Full Screen Not Permission Granted")
             }
-            startMyService()
         }
-    }
+        val permissionsToRequest = arrayOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.USE_FULL_SCREEN_INTENT,
+            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.WAKE_LOCK,
+            Manifest.permission.SCHEDULE_EXACT_ALARM,
+            Manifest.permission.FOREGROUND_SERVICE
+            )
 
-    fun onGetCoordinatesButtonClicked(v: View) {
-        // Check for location permission and request if necessary
-        Log.w("Rooster", "Requesting GPS")
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        val grantedPermissions = permissionsToRequest.filter {
+            ActivityCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (grantedPermissions.size < permissionsToRequest.size) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                coarseLocationPermissionRequestCode
-            )
-            Toast.makeText(this, "Please enable GPS and try again", Toast.LENGTH_LONG).show()
-        } else {
-            // Request location updates every 10 seconds with high accuracy
-            Log.w("Rooster", "Requesting GPS Updates")
-            locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                3000,
-                0f, // Minimum distance between updates (set to 0 for any movement)
-                locationListener
+                permissionsToRequest.filter { !grantedPermissions.contains(it) }.toTypedArray(),
+                REQUEST_CODE_PERMISSIONS
             )
         }
     }
 
-    private fun startMyService() {
-        val serviceIntent = Intent(this, MyService::class.java)
-        startService(serviceIntent)
-    }
-        private fun isCoarseLocationPermissionGranted(): Boolean {
-            return ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        }
+    fun requestFullScreenIntentPermission(activity: Activity, callback: (Boolean) -> Unit) {
+        // Check if full screen intent permission is granted
+        val granted = ActivityCompat.checkSelfPermission(
+            activity,
+            Manifest.permission.USE_FULL_SCREEN_INTENT
+        ) == PackageManager.PERMISSION_GRANTED
 
-        // Request fine location permission
-        private fun requestCoarseLocationPermission() {
+        // If full screen intent permission is not granted, request it
+        if (!granted) {
             ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                coarseLocationPermissionRequestCode
+                activity,
+                arrayOf(Manifest.permission.USE_FULL_SCREEN_INTENT),
+                0
             )
-        }
-
-    fun refreshSunrise(v: View) {
-        val sharedPrefs = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        val storedSunriseTime = sharedPrefs.getLong("sunriseTimestamp", 0)
-        val storedPlaceName = sharedPrefs.getString("locationName", "")
-        val sunriseEditText = findViewById<EditText>(R.id.sunriseTimeEditText)
-        val locationEditText = findViewById<EditText>(R.id.locationNameEditText)
-        if (storedSunriseTime > 0) {
-            val calendar = Calendar.getInstance()
-            calendar.setTimeInMillis(storedSunriseTime)
-            val dateFormat = SimpleDateFormat("hh:mm a\n(EEE, MMM dd, yyyy)", Locale.getDefault())
-            val formattedSunriseTime = dateFormat.format(calendar.time)
-            sunriseEditText.setText("Sunrise\n$formattedSunriseTime")
-        }
-        if (storedPlaceName != "") {
-            locationEditText.setText("Location\n$storedPlaceName")
-        }
-
-    }
-    private fun saveCoordinatesToPrefs(latitude: Double, longitude: Double) {
-        val sharedPrefs: SharedPreferences =
-            getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        val editor: SharedPreferences.Editor = sharedPrefs.edit()
-
-        val sunriseEditText = findViewById<EditText>(R.id.sunriseTimeEditText)
-        val locationEditText = findViewById<EditText>(R.id.locationNameEditText)
-        val coordinatesEditText = findViewById<EditText>(R.id.coordinatesEditText)
-
-        editor.putFloat("latitude", latitude.toFloat())
-        editor.putFloat("longitude", longitude.toFloat())
-
-        editor.putLong("sunriseTimestamp", 0)
-        editor.putString("locationName", "Unknown")
-        editor.apply()
-
-        coordinatesEditText.setText("GPS Coordinates\nLa: $latitude\nLo: $longitude")
-        sunriseEditText.setText("Sunrise: Unknown")
-        locationEditText.setText("Location: Unknown")
-    }
-
-    private fun getSavedCoordinatesFromPrefs(): Triple<Double, Double, Long>? {
-        val sharedPrefs: SharedPreferences =
-            getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        val latitude = sharedPrefs.getFloat("latitude", 0.0F).toDouble()
-        val longitude = sharedPrefs.getFloat("longitude", 0.0F).toDouble()
-        val sunriseTimestamp = sharedPrefs.getLong("sunriseTimestamp", 0L)
-
-        // Check if coordinates and sunrise time are valid
-        if (latitude == 0.0 && longitude == 0.0) {
-            return null
-        }
-        return Triple(latitude, longitude, sunriseTimestamp)
-    }
-
-    private fun getLocationNameFromPrefs(): String? {
-        val sharedPrefs: SharedPreferences =
-            getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        return sharedPrefs.getString("locationName", null)
-    }
-
-    fun onDaysClicked(view: View) {
-        if (view is Button) {
-            val day = when (view.id) {
-                R.id.mondayButton -> "Monday"
-                R.id.tuesdayButton -> "Tuesday"
-                R.id.wednesdayButton -> "Wednesday"
-                R.id.thursdayButton -> "Thursday"
-                R.id.fridayButton -> "Friday"
-                R.id.saturdayButton -> "Saturday"
-                R.id.sundayButton -> "Sunday"
-                else -> return
-            }
-            val isChecked = !view.isSelected
-            saveDaysState(day, isChecked)
-            view.isSelected = isChecked
-        }
-    }
-
-    private fun saveDaysState(day: String, isSelected: Boolean) {
-        val sharedPrefs: SharedPreferences = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        val editor: SharedPreferences.Editor = sharedPrefs.edit()
-        editor.putBoolean(day, isSelected)
-        editor.apply()
-        loadDaysStates()
-    }
-
-    private fun loadDaysStates() {
-        val sharedPrefs: SharedPreferences = getSharedPreferences("RoosterPrefs", Context.MODE_PRIVATE)
-        setButtonState(mondayButton, sharedPrefs.getBoolean("Monday", false))
-        setButtonState(tuesdayButton, sharedPrefs.getBoolean("Tuesday", false))
-        setButtonState(wednesdayButton, sharedPrefs.getBoolean("Wednesday", false))
-        setButtonState(thursdayButton, sharedPrefs.getBoolean("Thursday", false))
-        setButtonState(fridayButton, sharedPrefs.getBoolean("Friday", false))
-        setButtonState(saturdayButton, sharedPrefs.getBoolean("Saturday", false))
-        setButtonState(sundayButton, sharedPrefs.getBoolean("Sunday", false))
-    }
-
-    private fun setButtonState(button: Button?, isSelected: Boolean) {
-        button?.isSelected = isSelected
-        val textColor: Int
-        val bgDrawable: Int
-
-        if (isSelected) {
-            textColor = Color.parseColor("#000000")
-            bgDrawable = R.drawable.rounded_button_selected
         } else {
-            textColor = Color.parseColor("#ff9853")
-            bgDrawable = R.drawable.rounded_button
+            // Full screen intent permission is already granted
+            callback(true)
         }
-        button?.setTextColor(textColor)
-        button?.setBackgroundResource(bgDrawable)
     }
 
 
-
-    override fun onLocationChanged(location: Location) {
-        // Handle the new location update here
-        Log.w("Rooster Location", "Received GPS")
-        val latitude = location.latitude
-        val longitude = location.longitude
-        saveCoordinatesToPrefs(latitude, longitude)
-        locationManager.removeUpdates(locationListener)
-        // Restart My service here
-        val serviceIntent = Intent(this, MyService::class.java)
-        stopService(serviceIntent)
-        startService(serviceIntent)
+    private fun linkButtons() {
+        val settingsButton = findViewById<ImageButton>(R.id.settingsButton)
+        settingsButton.setOnClickListener {
+            val settingsActivity = Intent(applicationContext, SettingsActivity::class.java)
+            startActivity(settingsActivity);
+        }
+        val alarmsButton = findViewById<ImageButton>(R.id.alarmButton)
+        alarmsButton.setOnClickListener {
+            val alarmsListActivity = Intent(applicationContext, AlarmListActivity::class.java)
+            startActivity(alarmsListActivity);
+        }
     }
 
-    override fun onProviderEnabled(provider: String) {
-        // Called when the provider (e.g., GPS) is enabled
+    fun getPercentageOfDay(): Float {
+        val now = Calendar.getInstance()
+        val midnight = Calendar.getInstance()
+        midnight.set(Calendar.HOUR_OF_DAY, 0)
+        midnight.set(Calendar.MINUTE, 0)
+        midnight.set(Calendar.SECOND, 0)
+        midnight.set(Calendar.MILLISECOND, 0)
+
+        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / 1000).toFloat()
+        val secondsInDay = 24 * 60 * 60
+        val percentage = (totalSeconds / secondsInDay) * 100
+        return percentage.toFloat()
+    }
+    private fun refreshCycle() {
+        val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
+        val progressText = findViewById<TextView>(R.id.progress_text)
+        val handler = Handler()
+        val delayMillis = 1000
+        val maxProgress = 100
+
+        val updateRunnable = object : Runnable {
+            var i = 0
+
+            override fun run() {
+                val currentTime = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("HH:mm")
+                val formattedTime = sdf.format(Date(currentTime))
+                val percentage = getPercentageOfDay().toLong()
+                if (percentage <= maxProgress) {
+                    progressText.text = formattedTime
+                    progressBar.progress = percentage.toInt()
+                    handler.postDelayed(this, delayMillis.toLong())
+                } else {
+                    // Reset progress bar and text
+                    progressBar.progress = 0
+                    progressText.text = "00:00"
+                    // Start the loop again
+                    handler.postDelayed(this, delayMillis.toLong())
+                }
+            }
+        }
+
+        handler.post(updateRunnable)
     }
 
-    override fun onProviderDisabled(provider: String) {
-        // Called when the provider (e.g., GPS) is disabled
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        Log.e("Rooster", "Permission Callback")
+        // Get the fused location provider.
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // Request location updates.
+        val locationRequest = LocationRequest.create()
+        locationRequest.interval = 10000 // milliseconds
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        val intentLocationService = Intent(this, LocationUpdateService::class.java)
+        startService(intentLocationService)
+        val intentAstronomyService = Intent(this, AstronomyUpdateService::class.java)
+        startService(intentAstronomyService)
     }
 
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-        // Called when the status of the provider changes
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            Log.e("Rooster", "Location Callback")
+            super.onLocationResult(locationResult)
+            val location = locationResult.lastLocation
+            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit()
+                .putFloat("altitude", location.altitude.toFloat())
+                .putFloat("longitude", location.longitude.toFloat())
+                .putFloat("latitude", location.latitude.toFloat())
+                .apply()
+        }
     }
+
+    private fun showOverlayPermissionPopup() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Overlay Permission Required")
+        builder.setMessage("This app need permissions to:\n\n  - Display alarms\n\n  - Stop alarms")
+        builder.setPositiveButton("Open Settings") { dialog, which ->
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:" + applicationContext.packageName)
+            )
+            startActivityForResult(intent, 101)
+        }
+        builder.setNegativeButton("Cancel") { dialog, which ->
+            // Handle cancel button click if needed
+        }
+        builder.show()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
     }

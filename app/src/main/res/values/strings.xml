@@ -1,3 +1,23 @@
 <resources>
     <string name="app_name">Rooster</string>
+        <string name="alarm_mode_selector">Mode</string>
+        <string-array name="alarm_modes">
+            <item>Before</item>
+            <item>At</item>
+            <item>Between</item>
+            <item>After</item>
+        </string-array>
+    <string name="alarm_mode_item_selector">Relative</string>
+    <string-array name="alarm_relatives">
+        <item>Time</item>
+        <item>Astronomical Dawn</item>
+        <item>Nautical Dawn</item>
+        <item>Civil Dawn</item>
+        <item>Sunrise</item>
+        <item>Solar Noon</item>
+        <item>Sunset</item>
+        <item>Civil Dusk</item>
+        <item>Nautical Dusk</item>
+        <item>Astronomical Dusk</item>
+    </string-array>
 </resources>
