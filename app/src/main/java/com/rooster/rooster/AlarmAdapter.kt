@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Calendar
 
 
 class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmDbHelper) : RecyclerView.Adapter<AlarmAdapter.ViewHolder>() {
@@ -263,15 +264,16 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                     "Pick Time" -> {
                         TimePickerDialog(context, { _, hour, minute ->
                             val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
+                            val calendar = Calendar.getInstance()
+                            calendar.set(Calendar.HOUR_OF_DAY, hour)
+                            calendar.set(Calendar.MINUTE, minute)
                             if (index == 1) {
-                                alarm.time1 = (hour.toLong() * 60 + minute) * 60
+                                alarm.time1 = calendar.time.time
                             } else if (index == 2) {
-                                alarm.time2 = (hour.toLong() * 60 + minute) * 60
+                                alarm.time2 = calendar.time.time
                             }
                             alarm.enabled = true
                             swicthEnabled.isChecked = alarm.enabled
-                            Log.e("ALARM", alarm.getFormattedTime(alarm.time1).toString())
-                            Log.e("ALARM", alarm.getFormattedTime(alarm.time2).toString())
                             alarmDbHelper.updateAlarm(alarm)
                             arrangeLayout(context, container, alarm, alarm.mode, holder)
                         }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
