@@ -60,19 +60,11 @@ class Alarm(
         }
     }
     fun getFormattedTime(timeInSec: Long): CharSequence? {
-        val minutes = (timeInSec / 60) % 60
-        val hours = timeInSec / 3600
+        val fullDateFormat = SimpleDateFormat("HH:mm")
         val calendar = Calendar.getInstance()
-        if (hours < calendar.get(Calendar.HOUR_OF_DAY) ||
-            (hours.toInt() == calendar.get(Calendar.HOUR_OF_DAY) && minutes < calendar.get(Calendar.MINUTE))) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-        }
-        calendar.set(Calendar.HOUR_OF_DAY, hours.toInt())
-        calendar.set(Calendar.MINUTE, minutes.toInt())
-        calendar.set(Calendar.SECOND, 0)
-
-        val timeInHumanReadableFormat = SimpleDateFormat("HH:mm").format(calendar.time)
-        return timeInHumanReadableFormat
+        calendar.timeInMillis = timeInSec
+        var formattedDate = fullDateFormat.format(calendar.time)
+        return formattedDate
     }
 
     var extended: Boolean = false

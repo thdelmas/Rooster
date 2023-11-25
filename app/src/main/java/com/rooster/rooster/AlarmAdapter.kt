@@ -98,9 +98,9 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         // Time
         val pickRaw = container.findViewById<LinearLayout>(R.id.timePickRaw)
         pickRaw.setOnClickListener{
-            promptModePick(context, container, alarm)
+            promptModePick(context, container, alarm, holder)
         }
-        arrangeLayout(context, container, alarm, alarm.mode)
+        arrangeLayout(context, container, alarm, alarm.mode, holder)
 
 
         // Enabled
@@ -146,29 +146,45 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         }
     }
 
-    private fun promptModePick(context: Context, container: LinearLayout, alarm: Alarm) {
+    private fun promptModePick(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        holder: ViewHolder
+    ) {
         val dialog = AlertDialog.Builder(context)
             .setTitle("Choose Time Mode")
             .setItems(alarmModes) { dialog, which ->
                 // Update the alarm mode
                 alarm.mode = alarmModes[which]
                 alarmDbHelper.updateAlarm(alarm)
-                arrangeLayout(context, container, alarm, alarmModes[which])
+                arrangeLayout(context, container, alarm, alarmModes[which], holder)
             }
             .create()
         dialog.show()
     }
 
-    private fun arrangeLayout(context: Context, container: LinearLayout, alarm: Alarm, s: String) {
+    private fun arrangeLayout(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        s: String,
+        holder: ViewHolder
+    ) {
         when(s) {
-            "At" -> arrangeLayoutAt(context, container, alarm)
-            "After" -> arrangeLayoutAfterBefore(context, container, alarm)
-            "Before" -> arrangeLayoutAfterBefore(context, container, alarm)
-            "Between" -> arrangeLayoutBetween(context, container, alarm)
+            "At" -> arrangeLayoutAt(context, container, alarm, holder)
+            "After" -> arrangeLayoutAfterBefore(context, container, alarm, holder)
+            "Before" -> arrangeLayoutAfterBefore(context, container, alarm, holder)
+            "Between" -> arrangeLayoutBetween(context, container, alarm, holder)
         }
     }
 
-    private fun arrangeLayoutAt(context: Context, container: LinearLayout, alarm: Alarm) {
+    private fun arrangeLayoutAt(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        holder: ViewHolder
+    ) {
         cleanView(container)
 
         var tvTime1 = container.findViewById<TextView>(R.id.tvAlarmTime1)
@@ -177,7 +193,6 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         tvTime1.visibility = View.VISIBLE
 
         var time = alarm.getFormattedTime(alarm.calculatedTime)
-        Log.e("TTTTTTTTT", time.toString())
         if (alarm.relative1 != "Pick Time") {
             tvTime1.setText(alarm.relative1)
             tvCal.setText(time)
@@ -185,10 +200,10 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             tvCal.setText(time)
         }
         tvTime1.setOnClickListener {
-            promptRelativePick(context, container, alarm, 1)
+            promptRelativePick(context, container, alarm, 1, holder)
         }
         tvCal.setOnClickListener {
-            promptRelativePick(context, container, alarm, 1)
+            promptRelativePick(context, container, alarm, 1, holder)
         }
     }
 
@@ -229,7 +244,13 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         tvTime5.setOnClickListener {  }
     }
 
-    private fun promptRelativePick(context: Context, container: LinearLayout, alarm: Alarm, index: Int) {
+    private fun promptRelativePick(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        index: Int,
+        holder: ViewHolder
+    ) {
         val dialog = AlertDialog.Builder(context)
             .setTitle("Choose Time Mode")
             .setItems(alarmRelatives) { dialog, which ->
@@ -252,7 +273,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                             Log.e("ALARM", alarm.getFormattedTime(alarm.time1).toString())
                             Log.e("ALARM", alarm.getFormattedTime(alarm.time2).toString())
                             alarmDbHelper.updateAlarm(alarm)
-                            arrangeLayout(context, container, alarm, alarm.mode)
+                            arrangeLayout(context, container, alarm, alarm.mode, holder)
                         }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
                     }
                     else -> {
@@ -266,7 +287,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                         val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
                         swicthEnabled.isChecked = alarm.enabled
                         alarmDbHelper.updateAlarm(alarm)
-                        arrangeLayout(context, container, alarm, alarm.mode)
+                        arrangeLayout(context, container, alarm, alarm.mode, holder)
                         null
                     }
                 }
@@ -276,7 +297,12 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         dialog.show()
     }
 
-    private fun arrangeLayoutAfterBefore(context: Context, container: LinearLayout, alarm: Alarm) {
+    private fun arrangeLayoutAfterBefore(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        holder: ViewHolder
+    ) {
         cleanView(container)
         var tvTime1 = container.findViewById<TextView>(R.id.tvAlarmTime1)
         var tvTime2 = container.findViewById<TextView>(R.id.tvAlarmTime2)
@@ -310,25 +336,30 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 swicthEnabled.isChecked = alarm.enabled
                 Log.e("ALARM", alarm.getFormattedTime(alarm.time1).toString())
                 alarmDbHelper.updateAlarm(alarm)
-                arrangeLayout(context, container, alarm, alarm.mode)
+                arrangeLayout(context, container, alarm, alarm.mode, holder)
             }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
             picker.show()
         }
 
         tvTime3.setOnClickListener {
-            promptModePick(context, container, alarm)
+            promptModePick(context, container, alarm, holder)
         }
         tvTime4.setOnClickListener {
-            promptRelativePick(context, container, alarm, 2)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 2, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
         tvTime5.setOnClickListener {
-            promptRelativePick(context, container, alarm, 2)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 2, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
     }
 
-    private fun arrangeLayoutBetween(context: Context, container: LinearLayout, alarm: Alarm) {
+    private fun arrangeLayoutBetween(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        holder: ViewHolder
+    ) {
         cleanView(container)
         var tvTime0 = container.findViewById<TextView>(R.id.tvAlarmTime0)
         var tvTime1 = container.findViewById<TextView>(R.id.tvAlarmTime1)
@@ -370,25 +401,25 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         }
 
         tvTime1.setOnClickListener {
-            promptRelativePick(context, container, alarm, 1)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 1, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
 
         tvTime2.setOnClickListener {
-            promptRelativePick(context, container, alarm, 1)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 1, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
 
         tvTime3.setOnClickListener {
-            promptModePick(context, container, alarm)
+            promptModePick(context, container, alarm, holder)
         }
         tvTime4.setOnClickListener {
-            promptRelativePick(context, container, alarm, 2)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 2, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
         tvTime5.setOnClickListener {
-            promptRelativePick(context, container, alarm, 2)
-            arrangeLayout(context, container, alarm, alarm.mode)
+            promptRelativePick(context, container, alarm, 2, holder)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
         }
     }
 

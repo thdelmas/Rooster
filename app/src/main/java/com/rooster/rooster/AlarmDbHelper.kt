@@ -7,8 +7,10 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
+import android.os.Build
 import android.util.Log
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Date
 
@@ -18,7 +20,8 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     val context = context
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE alarms (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     label TEXT,
@@ -36,7 +39,8 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     friday BOOLEAN,
     saturday BOOLEAN,
     sunday BOOLEAN
-);""")
+);"""
+        )
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -106,8 +110,8 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
 
     fun updateAlarm(alarm: Alarm) {
         val db = writableDatabase
+        // Calculate the alarm time
         alarm.calculatedTime = calculateTime(alarm)
-        Log.e("TIME", alarm.time1.toString())
         Log.e("CALCULATED TIME", alarm.calculatedTime.toString())
         val values = ContentValues().apply {
             put("label", alarm.label)
@@ -137,6 +141,29 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     }
 
     private fun calculateTime(alarm: Alarm): Long {
+        // Check if the alarm time is less than 24 hours from now
+        alarm.calculatedTime = calculateTimeInner(alarm)
+        val currentDate = Calendar.getInstance()
+        val alarmDate = Calendar.getInstance()
+        alarmDate.timeInMillis = alarm.calculatedTime
+        val difference = alarmDate.timeInMillis - currentDate.timeInMillis
+
+        if (difference <= 86400000)
+        {
+            // If the alarm time is less than 24 hours from now, add today's date to the alarm time
+            alarm.calculatedTime = alarm.calculatedTime + 86400000
+        }
+
+        val calendar = Calendar.getInstance()
+        val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+        calendar.timeInMillis = alarm.calculatedTime
+        var formattedDate = fullDateFormat.format(calendar.time)
+        Log.d("CALCULATED TIME", "@ $formattedDate")
+        return alarm.calculatedTime
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun calculateTimeInner(alarm: Alarm): Long {
         var calculatedTime = 0L
         if (alarm.mode == "At") {
             if (alarm.relative1 == "Pick Time") {
@@ -160,6 +187,18 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
                 time2 = getRelativeTime(alarm.relative2)
             }
             calculatedTime = (time1 + time2) / 2
+            val calendar = Calendar.getInstance()
+
+            // Print the full date with the time
+            val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+
+            calendar.timeInMillis = time1
+            var formattedDate = fullDateFormat.format(calendar.time)
+            Log.d("TIME1", "@ $formattedDate")
+
+            calendar.timeInMillis = time2
+            formattedDate = fullDateFormat.format(calendar.time)
+            Log.d("TIME2", "@ $formattedDate")
             return calculatedTime
         } else if (alarm.mode == "After") {
             var time1 = getRelativeTime(alarm.relative2)
@@ -225,7 +264,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
 
          // Add the time difference to the local time to get GMT+0 time.
          val timeInMillisGMT = timeInMillis + timeDifferenceMillis
-        return timeInMillisGMT / 1000
+        return timeInMillisGMT
     }
 
     fun deleteAlarm(id: Long) {

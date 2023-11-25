@@ -18,18 +18,8 @@ import android.view.WindowManager
 
 class AlarmHandler {
     fun setAlarm(context: Context, alarm: Alarm) {
-        val minutes = (alarm.calculatedTime / 60) % 60
-        val hours = alarm.calculatedTime / 3600
         val calendar = Calendar.getInstance()
-        if (hours < calendar.get(Calendar.HOUR_OF_DAY) ||
-            (hours.toInt() == calendar.get(Calendar.HOUR_OF_DAY) && minutes < calendar.get(Calendar.MINUTE))) {
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-            Log.e("SET ALARM", "Plus 1 day")
-        }
-        calendar.set(Calendar.HOUR_OF_DAY, hours.toInt())
-        calendar.set(Calendar.MINUTE, minutes.toInt())
-        calendar.set(Calendar.SECOND, 0)
-
+        calendar.timeInMillis = alarm.calculatedTime
         val am = context!!.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context, AlarmclockReceiver::class.java)
@@ -39,8 +29,10 @@ class AlarmHandler {
         val pi = PendingIntent.getBroadcast(context, 0, intent,
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE)
 
-        val timeInHumanReadableFormat = SimpleDateFormat("HH:mm").format(calendar.time)
-        Log.d("SET INTENT", "Setting alarm at $timeInHumanReadableFormat")
+        val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+        val formattedDate = fullDateFormat.format(calendar.time)
+
+        Log.d("SET INTENT", "Setting alarm at $formattedDate")
 
         var triggerTime = calendar.timeInMillis
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
