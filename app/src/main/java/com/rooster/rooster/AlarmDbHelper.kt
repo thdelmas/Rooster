@@ -112,7 +112,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
         val db = writableDatabase
         // Calculate the alarm time
         alarm.calculatedTime = calculateTime(alarm)
-        Log.e("CALCULATED TIME", alarm.calculatedTime.toString())
+        Log.e("Update Alarm", alarm.calculatedTime.toString())
         val values = ContentValues().apply {
             put("label", alarm.label)
             put("mode", alarm.mode)
@@ -141,24 +141,13 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     }
 
     private fun calculateTime(alarm: Alarm): Long {
-        // Check if the alarm time is less than 24 hours from now
         alarm.calculatedTime = calculateTimeInner(alarm)
-        val currentDate = Calendar.getInstance()
-        val alarmDate = Calendar.getInstance()
-        alarmDate.timeInMillis = alarm.calculatedTime
-        val difference = alarmDate.timeInMillis - currentDate.timeInMillis
-
-        if (difference <= 86400000)
-        {
-            // If the alarm time is less than 24 hours from now, add today's date to the alarm time
-            alarm.calculatedTime = alarm.calculatedTime + 86400000
-        }
-
+        alarm.calculatedTime = addDays(alarm, alarm.calculatedTime)
         val calendar = Calendar.getInstance()
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
         calendar.timeInMillis = alarm.calculatedTime
         var formattedDate = fullDateFormat.format(calendar.time)
-        Log.d("CALCULATED TIME", "@ $formattedDate")
+        Log.d("Rooster", "Calculated time\n@ $formattedDate")
         return alarm.calculatedTime
     }
 
@@ -211,37 +200,43 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             calculatedTime = (time1 - time2)
             return calculatedTime
         }
-        calculatedTime = addDays(alarm, calculatedTime)
         return calculatedTime
     }
 
     private fun addDays(alarm: Alarm, calculatedTime: Long): Long {
-        val currentDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+        val currentDate = Calendar.getInstance()
+        var alarmDate = Calendar.getInstance()
+        alarmDate.timeInMillis = calculatedTime
 
+        while (alarmDate.timeInMillis <= currentDate.timeInMillis) {
+            alarmDate.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        val alarmDayOfWeek = alarmDate.get(Calendar.DAY_OF_WEEK) - 1// Adjust to zero-based indexing and sunday as 0
         val weekdays = listOf(
+            alarm.sunday,
             alarm.monday,
             alarm.tuesday,
             alarm.wednesday,
             alarm.thursday,
             alarm.friday,
-            alarm.saturday,
-            alarm.sunday
+            alarm.saturday
         )
         // Start searching from the current day and go up to 7 days (a full week)
+        Log.e("Day Check", alarmDayOfWeek.toString())
         for (i in 0 until 7) {
-            val dayToCheck = (currentDayOfWeek + i) % 7  // Ensure it wraps around the days of the week
+            Log.e("Day Check", i.toString())
+            val dayToCheck = (alarmDayOfWeek + i) % 7 // Ensure it wraps around the days of the week
             if (weekdays[dayToCheck]) {
                 // Calculate the difference in days between the current day and the day with a true value
-                val daysToAdd = (dayToCheck - currentDayOfWeek + 7) % 7
+                alarmDate.add(Calendar.DAY_OF_MONTH, i)
                 // Calculate the time difference in milliseconds and add it to calculatedTime
-                val millisecondsToAdd = daysToAdd * 24 * 60 * 60 * 1000
-                return calculatedTime + millisecondsToAdd
+                return alarmDate.timeInMillis
             }
         }
-
         // If no true value is found in the next 7 days, return the original calculatedTime
-        return calculatedTime
+        return alarmDate.timeInMillis
     }
+
 
     fun getRelativeTime(relative1: String): Long {
         val sharedPrefs = context.getSharedPreferences("rooster_prefs",

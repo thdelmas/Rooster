@@ -41,4 +41,9 @@ class AlarmListActivity() : ComponentActivity() {
         recyclerView.invalidate()
         fillAlarmList(alarmDbHelper)
     }
+
+    override fun onResume() {
+        super.onResume()
+        reloadAlarmList()
+    }
 }

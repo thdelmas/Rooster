@@ -17,7 +17,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
             val alarmId = intent.getStringExtra("alarm_id")!!
                 .toLong() // -1 is a default value if "alarm_id" is not found
-            Log.e("Alarmclokc Reciever", "Alarm id: $alarmId")
+            Log.e("Alarmclock Reciever", "Alarm id: $alarmId")
 
             // Create a notification channel.
             val notificationChannel =
