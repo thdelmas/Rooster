@@ -6,6 +6,8 @@
 
 **Rooster** is an Android app that helps you to rise and shine with the sun, naturally and refreshed, so you can start your day feeling your best.
 
+[![](https://dcbadge.vercel.app/api/server/WZUC4wE5MV)](https://discord.gg/WZUC4wE5MV)
+
 ## Features
 
 - 🌅 **Wakes you up naturally**: Rise with the sun and embrace the day's potential.
