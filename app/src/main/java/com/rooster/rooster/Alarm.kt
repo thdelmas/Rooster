@@ -2,6 +2,7 @@ package com.rooster.rooster
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
+import android.icu.util.TimeZone
 import android.util.Log
 import java.util.Date
 
@@ -65,6 +66,24 @@ class Alarm(
         calendar.timeInMillis = timeInSec
         var formattedDate = fullDateFormat.format(calendar.time)
         return formattedDate
+    }
+
+    fun getFormattedTimeDST(timeInSec: Long): CharSequence? {
+        val fullDateFormat = SimpleDateFormat("HH:mm")
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timeInSec // Convert seconds to milliseconds
+
+        // Retrieve the time zone of the input time
+        val timeZone = TimeZone.getTimeZone("GMT")
+        fullDateFormat.timeZone = timeZone
+
+        // Consider daylight saving time (DST)
+        // Adjust the calendar based on the input time zone's DST offset
+        if (timeZone.inDaylightTime(calendar.time)) {
+            val dstOffsetInMillis = timeZone.dstSavings
+            calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+        }
+        return fullDateFormat.format(calendar.time)
     }
 
     var extended: Boolean = false
