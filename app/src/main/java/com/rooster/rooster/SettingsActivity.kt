@@ -2,9 +2,15 @@ package com.rooster.rooster
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues.TAG
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.icu.util.TimeZone
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,27 +18,83 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import java.util.Calendar
 import java.util.Date
 
 
 class SettingsActivity: AppCompatActivity() {
+
+    private var locationManager: LocationManager? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTheme(androidx.appcompat.R.style.Theme_AppCompat);
         setContentView(R.layout.activity_settings)
-        //linkButtons()
+        linkButtons()
         updateValues()
     }
 
     private fun linkButtons() {
-        val astroDawnSettings = findViewById<RelativeLayout>(R.id.astroDawnSetting)
-        astroDawnSettings.setOnClickListener(object : View.OnClickListener {
+        val syncGPSButton = findViewById<TextView>(R.id.syncGpsTitle)
+        syncGPSButton.setOnClickListener(object : View.OnClickListener {
             override fun onClick(view: View) {
-                pickTime(view, "astroDawn")
+                Log.e(TAG, "Manual Sync GPS")
+                getLastKnownPosition()
             }
         })
     }
+
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001 // You can use any integer value
+
+    private fun getLastKnownPosition() {
+        // Check for location permission before requesting updates.
+        if (isLocationPermissionGranted()) {
+            // Permission is granted
+            requestLocationUpdates()
+        } else {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    private fun isLocationPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // Override onRequestPermissionsResult to handle the permission request result
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, start location updates
+                requestLocationUpdates()
+            } else {
+                // Permission denied, handle this case
+                Log.e("GPS Update", "Location permission denied")
+            }
+        }
+    }
+
+    // Method to start location updates
+    private fun requestLocationUpdates() {
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager?.requestLocationUpdates(
+            LocationManager.NETWORK_PROVIDER,
+            0, 0f, networkLocationListener
+        )
+    }
+
 
     fun pickTime(view: View, tgt: String) {
         // Request full screen intent permission
@@ -102,7 +164,7 @@ class SettingsActivity: AppCompatActivity() {
         for (i in astroSteps) {
             val tvId = getResources().getIdentifier("$i"+"Value", "id", getPackageName());
             timeInMillis = sharedPrefs.getLong(i, 0)
-            val formattedTime = sdf.format(Date(timeInMillis))
+            val formattedTime = getFormattedTime(timeInMillis)
             val tv = findViewById<TextView>(tvId)
             tv.text = formattedTime
         }
@@ -132,11 +194,43 @@ class SettingsActivity: AppCompatActivity() {
             val tv = findViewById<TextView>(tvId)
             tv.text = coordinate.toString()
         }
+    }
 
-        // Schedule the next update for one second from now
-        val handler = android.os.Handler()
-        handler.postDelayed({
+    private val networkLocationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            // Handle the network location update here.
+            Log.e("Network Location Update", location.toString())
+
+            // Store the altitude, longitude, and latitude in shared prefs.
+            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit()
+                .putFloat("altitude", location.altitude.toFloat())
+                .putFloat("longitude", location.longitude.toFloat())
+                .putFloat("latitude", location.latitude.toFloat())
+                .apply()
+
+            val intent = Intent(applicationContext, AstronomyUpdateService::class.java)
+            intent.putExtra("syncData", true)
+            startService(intent)
             updateValues()
-        }, 1000)
+        }
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+    }
+    fun getFormattedTime(timeInSec: Long): CharSequence? {
+        val fullDateFormat = SimpleDateFormat("HH:mm")
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timeInSec // Convert seconds to milliseconds
+
+        // Use the default time zone of the device
+        val defaultTimeZone = TimeZone.getDefault()
+        fullDateFormat.timeZone = defaultTimeZone
+
+        // Consider daylight saving time (DST)
+        if (defaultTimeZone.inDaylightTime(calendar.time)) {
+            val dstOffsetInMillis = defaultTimeZone.dstSavings
+            calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+        }
+
+        return fullDateFormat.format(calendar.time)
     }
 }
