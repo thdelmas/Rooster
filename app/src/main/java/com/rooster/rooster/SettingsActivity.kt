@@ -11,16 +11,15 @@ import android.icu.util.TimeZone
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import java.util.Calendar
-import java.util.Date
 
 
 class SettingsActivity: AppCompatActivity() {
@@ -232,5 +231,26 @@ class SettingsActivity: AppCompatActivity() {
         }
 
         return fullDateFormat.format(calendar.time)
+    }
+
+    fun redirectToGitHub(v: View?) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/thdelmas/Rooster"))
+        startActivity(intent)
+    }
+
+    // Function to redirect to LinkedIn
+    fun redirectToLinkedIn(v: View?) {
+        val intent = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://www.linkedin.com/in/th%C3%A9ophile-delmas-92275b16b/")
+        )
+        startActivity(intent)
+    }
+
+    // Function to redirect to Email
+    fun redirectToEmail(v: View?) {
+        val intent = Intent(Intent.ACTION_SENDTO)
+        intent.setData(Uri.parse("mailto:contact@theophile.world"))
+        startActivity(intent)
     }
 }
