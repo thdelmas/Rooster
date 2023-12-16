@@ -193,7 +193,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
 
         tvTime1.visibility = View.VISIBLE
 
-        var time = alarm.getFormattedTime(alarm.calculatedTime)
+        var time = alarm.getFormattedTime(alarm.calculatedTime, false)
         if (alarm.relative1 != "Pick Time") {
             tvTime1.setText(alarm.relative1)
             tvCal.setText(time)
@@ -312,18 +312,18 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         var tvTime4 = container.findViewById<TextView>(R.id.tvAlarmTime4)
         var tvTime5 = container.findViewById<TextView>(R.id.tvAlarmTime5)
         var tvTimeCalculated = container.findViewById<TextView>(R.id.calculatedTime)
-        tvTimeCalculated.setText(alarm.getFormattedTime(alarm.calculatedTime))
+        tvTimeCalculated.setText(alarm.getFormattedTime(alarm.calculatedTime, true))
         tvTimeCalculated.visibility = View.VISIBLE
 
         tvTime2.visibility = View.VISIBLE
         tvTime3.visibility = View.VISIBLE
         tvTime4.visibility = View.VISIBLE
 
-        tvTime2.setText(alarm.getFormattedTime(alarm.time1))
+        tvTime2.setText(alarm.getFormattedTime(alarm.time1, false))
         tvTime3.setText(alarm.mode)
 
         if (alarm.relative2 != "Pick Time") {
-            tvTime5.setText("(" + alarm.getFormattedTime(alarm.time2) + ")")
+            tvTime5.setText("(" + alarm.getFormattedTime(alarm.time2, true) + ")")
             tvTime4.setText(alarm.relative2)
             tvTime5.visibility = View.VISIBLE
         } else {
@@ -336,7 +336,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 alarm.time1 = (hour.toLong() * 60 + minute) * 60
                 alarm.enabled = true
                 swicthEnabled.isChecked = alarm.enabled
-                Log.e("ALARM", alarm.getFormattedTime(alarm.time1).toString())
+                Log.e("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
                 alarmDbHelper.updateAlarm(alarm)
                 arrangeLayout(context, container, alarm, alarm.mode, holder)
             }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
@@ -370,7 +370,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         var tvTime4 = container.findViewById<TextView>(R.id.tvAlarmTime4)
         var tvTime5 = container.findViewById<TextView>(R.id.tvAlarmTime5)
         var tvTimeCalculated = container.findViewById<TextView>(R.id.calculatedTime)
-        tvTimeCalculated.setText(alarm.getFormattedTime(alarm.calculatedTime))
+        tvTimeCalculated.setText(alarm.getFormattedTime(alarm.calculatedTime, false))
         tvTimeCalculated.visibility = View.VISIBLE
 
 
@@ -380,12 +380,12 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         tvTime4.visibility = View.VISIBLE
 
         tvTime0.setText("Between")
-        tvTime1.setText(alarm.getFormattedTime(alarm.time1))
+        tvTime1.setText(alarm.getFormattedTime(alarm.time1, false))
         tvTime3.setText("and")
-        tvTime4.setText(alarm.getFormattedTime(alarm.time2))
+        tvTime4.setText(alarm.getFormattedTime(alarm.time2, false))
 
         if (alarm.relative1 != "Pick Time") {
-            tvTime2.setText("(" + alarm.getFormattedTime(alarm.time1) + ")")
+            tvTime2.setText("(" + alarm.getFormattedTime(alarm.time1, false) + ")")
             tvTime1.setText(alarm.relative1)
             tvTime2.visibility = View.VISIBLE
         } else {
@@ -394,7 +394,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         }
 
         if (alarm.relative2 != "Pick Time") {
-            tvTime5.setText("(" + alarm.getFormattedTime(alarm.time2) + ")")
+            tvTime5.setText("(" + alarm.getFormattedTime(alarm.time2, false) + ")")
             tvTime4.setText(alarm.relative2)
             tvTime5.visibility = View.VISIBLE
         } else {

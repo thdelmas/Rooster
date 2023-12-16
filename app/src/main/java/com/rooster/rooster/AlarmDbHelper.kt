@@ -255,11 +255,18 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             "Solar Noon" -> timeInMillis = sharedPrefs.getLong("solarNoon", 0)
         }
          // Calculate the time difference in milliseconds between local time and GMT+0.
-         val timeDifferenceMillis = TimeZone.getDefault().rawOffset - TimeZone.getTimeZone("GMT+0").rawOffset
+            val fullDateFormat = SimpleDateFormat("HH:mm")
+            var calendar = Calendar.getInstance()
+            val timeZone = TimeZone.getTimeZone("GMT")
+            fullDateFormat.timeZone = timeZone
+            calendar.timeInMillis = timeInMillis
+            if (timeZone.inDaylightTime(calendar.time)) {
+                val dstOffsetInMillis = timeZone.dstSavings
+                calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+            }
 
          // Add the time difference to the local time to get GMT+0 time.
-         val timeInMillisGMT = timeInMillis + timeDifferenceMillis
-        return timeInMillisGMT
+        return calendar.timeInMillis
     }
 
     fun deleteAlarm(id: Long) {
