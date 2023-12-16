@@ -67,7 +67,20 @@ class AlarmclockReceiver : BroadcastReceiver() {
                 }
             }, delay)
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-            // Handle BOOT_COMPLETED action
-        }
+// Retrieve saved alarms from persistent storage
+            var alarmHandler = AlarmHandler()
+            val alarmDbHelper = AlarmDbHelper(context)
+            val alarms = alarmDbHelper.getAllAlarms()
+
+            // Re-set alarms using AlarmManager
+            for (alarm in alarms) {
+                if (alarm.enabled) {
+                    alarmHandler.unsetAlarm(context, alarm)
+                    alarmHandler.setAlarm(context, alarm)
+                } else {
+                    alarmHandler.unsetAlarm(context, alarm)
+                }
+
+            }        }
     }
 }
