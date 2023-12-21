@@ -111,6 +111,12 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     fun updateAlarm(alarm: Alarm) {
         val db = writableDatabase
         // Calculate the alarm time
+        if (alarm.relative1 != "Pick Time") {
+            alarm.time1 = getRelativeTime(alarm.relative1)
+        }
+        if (alarm.relative2 != "Pick Time") {
+            alarm.time2 = getRelativeTime(alarm.relative2)
+        }
         alarm.calculatedTime = calculateTime(alarm)
         Log.e("Update Alarm", alarm.calculatedTime.toString())
         val values = ContentValues().apply {
@@ -130,14 +136,8 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             put("saturday", alarm.saturday)
             put("sunday", alarm.sunday)
         }
-
         db.update("alarms", values, "id = ?", arrayOf(alarm.id.toString()))
-        if (alarm.enabled) {
-            alarmHandler.unsetAlarm(context, alarm)
-            alarmHandler.setAlarm(context, alarm)
-        } else {
-            alarmHandler.unsetAlarm(context, alarm)
-        }
+        alarmHandler.setNextAlarm(context)
     }
 
     private fun calculateTime(alarm: Alarm): Long {

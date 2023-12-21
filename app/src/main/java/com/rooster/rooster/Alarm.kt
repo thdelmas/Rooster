@@ -49,7 +49,9 @@ class Alarm(
     }
 
     fun getDayEnabled(d: String): Boolean {
-        return when (d) {
+        val day = d.toLowerCase() // Convert input string to lowercase
+
+        return when (day) {
             "monday" -> this.monday
             "tuesday" -> this.tuesday
             "wednesday" -> this.wednesday

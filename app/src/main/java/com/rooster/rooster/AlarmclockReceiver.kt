@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.os.postDelayed
 
 class AlarmclockReceiver : BroadcastReceiver() {
+    private var alarmHandler = AlarmHandler()
     override fun onReceive(context: Context, intent: Intent) {
         Log.e("RECEIVER", "RECEIVED WELL")
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
@@ -57,30 +58,13 @@ class AlarmclockReceiver : BroadcastReceiver() {
             notificationManager.notify(1, notification)
             context.applicationContext.startActivity(alarmActivityIntent)
             val handler = Handler()
-            val delay = 3 * 60 * 1000L
+            val delay = 30 * 1000L
             handler.postDelayed({
-                val alarmDbHelper = AlarmDbHelper(context)
-                val alarm = alarmDbHelper.getAlarm(alarmId)
-                if (alarm != null) {
-                    alarm.calculatedTime = 0
-                    alarmDbHelper.updateAlarm(alarm)
-                }
+                alarmHandler.setNextAlarm(context)
             }, delay)
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-// Retrieve saved alarms from persistent storage
-            var alarmHandler = AlarmHandler()
-            val alarmDbHelper = AlarmDbHelper(context)
-            val alarms = alarmDbHelper.getAllAlarms()
-
-            // Re-set alarms using AlarmManager
-            for (alarm in alarms) {
-                if (alarm.enabled) {
-                    alarmHandler.unsetAlarm(context, alarm)
-                    alarmHandler.setAlarm(context, alarm)
-                } else {
-                    alarmHandler.unsetAlarm(context, alarm)
-                }
-
-            }        }
+            // Retrieve saved alarms from persistent storage
+            alarmHandler.setNextAlarm(context)
+        }
     }
 }
