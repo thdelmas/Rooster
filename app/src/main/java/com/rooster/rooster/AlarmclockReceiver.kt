@@ -63,7 +63,6 @@ class AlarmclockReceiver : BroadcastReceiver() {
                 alarmHandler.setNextAlarm(context)
             }, delay)
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-            // Retrieve saved alarms from persistent storage
             alarmHandler.setNextAlarm(context)
         }
     }

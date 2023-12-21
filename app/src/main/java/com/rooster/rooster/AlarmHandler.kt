@@ -75,14 +75,14 @@ class AlarmHandler {
         var closestAlarm: Alarm? = null
         var timeDifference: Long = Long.MAX_VALUE
         val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-        val today: String = dayFormat.format(currentTime.time)
 
         for (alarm in alarms) {
+            val alarmTime = Calendar.getInstance()
+            alarmTime.timeInMillis = alarm.calculatedTime
+            val alarmDay: String = dayFormat.format(alarmTime.time)
             if (alarm.enabled &&
-                (alarm.getDayEnabled(today) ||
+                (alarm.getDayEnabled(alarmDay) ||
                         (!alarm.monday && !alarm.tuesday && !alarm.wednesday && !alarm.thursday && !alarm.friday && !alarm.saturday && !alarm.sunday))) {
-                val alarmTime = Calendar.getInstance()
-                alarmTime.timeInMillis = alarm.calculatedTime
                 val alarmMillis = alarmTime.timeInMillis
 
                 // Calculate the time difference between current time and alarm time
