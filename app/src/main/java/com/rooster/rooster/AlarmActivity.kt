@@ -54,7 +54,9 @@ class AlarmActivity : FragmentActivity() {
         })
         refreshCycle()
         alarmRing()
-        // Release the wake lock
+        //TODO Release wake lock
+        val alarmHandler = AlarmHandler()
+        alarmHandler.setNextAlarm(applicationContext)
     }
 
     private fun refreshCycle() {
@@ -183,15 +185,13 @@ class AlarmActivity : FragmentActivity() {
         wakeLock.acquire()
 
         if (!alarmIsRunning) {
-            alarmIsRunning = true
+            //alarmIsRunning = true
         }
     }
 
     override fun onPause() {
          val mediaPlayer = MediaPlayer()
          val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
-
         super.onPause()
         alarmIsRunning = false
         mediaPlayer.stop()
