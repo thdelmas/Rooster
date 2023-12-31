@@ -19,17 +19,21 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 import kotlin.concurrent.fixedRateTimer
 
 class AlarmActivity : FragmentActivity() {
+    private var alarmIsRunning = false
+    private var isVibrating = false
 
-    private val wakeLock: PowerManager.WakeLock by lazy {
-        (getSystemService(Context.POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "alarm")
-    }
-
-  private var alarmIsRunning = false
+    private var vibrator: Vibrator? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.e("Alarm", "Activity Start")
@@ -95,19 +99,21 @@ class AlarmActivity : FragmentActivity() {
         // Wake Phone
         val powerManager: PowerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        @Suppress("DEPRECATION") val wakeLock = powerManager.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP or PowerManager.ON_AFTER_RELEASE or PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "rooster:wakelock")
-        wakeLock.acquire()
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                    PowerManager.ON_AFTER_RELEASE or
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "rooster:wakelock"
+        )
+        wakeLock?.acquire()
 
-        val vibrator = applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator = applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val gentlePattern = createWaveformVibrationPattern(longArrayOf(0, 1000, 2000, 3000), repeat = -1)
-
-            var vibrationEffect1 = VibrationEffect.createWaveform(gentlePattern, 3)
-
             // it is safe to cancel other vibrations currently taking place
-            vibrator.cancel()
-            val soundUri = Uri.parse("android.resource://${applicationContext.packageName}/raw/alarmclock")
-            val mediaPlayer = MediaPlayer().apply {
+            vibrator!!.cancel()
+            val soundUri =
+                Uri.parse("android.resource://${applicationContext.packageName}/raw/alarmclock")
+
+            mediaPlayer = MediaPlayer().apply {
                 setDataSource(applicationContext, soundUri)
                 setAudioAttributes(
                     AudioAttributes.Builder()
@@ -115,26 +121,41 @@ class AlarmActivity : FragmentActivity() {
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
-                prepare()
-            }
-            // Start a loop that checks a SharedPreferences for a flag to stop the vibration
-            Thread {
-                vibrator.vibrate(vibrationEffect1)
-                while (true) {
-                    Log.w("Rooster Alarm", "Ring")
-                    if (alarmIsRunning) {
-                        mediaPlayer.start()
-                        Thread.sleep(500)
-                    } else {
-                        vibrator.cancel()
-                        mediaPlayer.stop()
-                        mediaPlayer.release()
-                        wakeLock.release()
-                        break
-                    }
-                    Thread.sleep(1000)
+                setOnCompletionListener {
+                    // Release MediaPlayer resources after completion
+                    it?.release()
                 }
-            }.start()
+                prepareAsync()
+                setOnPreparedListener { player ->
+                    // Start playback when prepared
+                    player.start()
+                    startAlarmLoop()
+                }
+                isLooping = true
+            }
+        }
+    }
+    private fun startAlarmLoop() {
+        // Start a loop that checks a SharedPreferences for a flag to stop the vibration
+        val vibesPattern = createWaveformVibrationPattern(longArrayOf(0, 1000, 2000, 3000), repeat = -1)
+        var vibrationEffect1 = VibrationEffect.createWaveform(vibesPattern, 3)
+        CoroutineScope(Dispatchers.Default).launch {
+            isVibrating = true
+            vibrator?.vibrate(vibrationEffect1)
+            if (alarmIsRunning) {
+                mediaPlayer?.start()
+            }
+            while (isVibrating) {
+                Log.w("Rooster Alarm", "Ring")
+                // Check for alarmIsRunning flag to control MediaPlayer and vibration
+                if (alarmIsRunning) {
+                    delay(500)
+                } else {
+                    isVibrating = false
+                    break
+                }
+                delay(1000)
+            }
         }
     }
 
@@ -169,20 +190,15 @@ class AlarmActivity : FragmentActivity() {
     }
 
     fun stopAlarm(view: View) {
-         val mediaPlayer = MediaPlayer()
-         val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-
         alarmIsRunning = false
-        wakeLock.release()
-        mediaPlayer.stop()
-        vibrator.cancel()
+        releaseResources()
         supportFragmentManager.popBackStackImmediate()
         finish()
     }
 
     override fun onResume() {
         super.onResume()
-        wakeLock.acquire()
+        wakeLock?.acquire()
 
         if (!alarmIsRunning) {
             //alarmIsRunning = true
@@ -190,11 +206,19 @@ class AlarmActivity : FragmentActivity() {
     }
 
     override fun onPause() {
-         val mediaPlayer = MediaPlayer()
-         val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         super.onPause()
-        alarmIsRunning = false
-        mediaPlayer.stop()
-        vibrator.cancel()
+        /*alarmIsRunning = false
+        mediaPlayer?.stop()
+        vibrator?.cancel()*/
+    }
+
+    private fun releaseResources() {
+        mediaPlayer?.stop()
+        mediaPlayer?.reset()
+        mediaPlayer?.release()
+        mediaPlayer = null
+
+        wakeLock?.release()
+        wakeLock = null
     }
 }
