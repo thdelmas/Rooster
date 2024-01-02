@@ -1,6 +1,7 @@
 package com.rooster.rooster
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -163,30 +164,37 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
                 return calculatedTime
             }
         } else if (alarm.mode == "Between") {
-            var time1 = 0L
-            var time2 = 0L
-            if (alarm.relative1 == "Pick Time") {
-                time1 = alarm.time1
-            } else {
+            var time1 = alarm.time1
+            var time2 = alarm.time2
+            if (alarm.relative1 != "Pick Time") {
                 time1 = getRelativeTime(alarm.relative1)
             }
-            if (alarm.relative2 == "Pick Time") {
-                time2 = alarm.time2
-            } else {
+            if (alarm.relative2 != "Pick Time") {
                 time2 = getRelativeTime(alarm.relative2)
             }
-            calculatedTime = (time1 + time2) / 2
-            val calendar = Calendar.getInstance()
+
+            val calendar1 = Calendar.getInstance()
+            val calendar2 = Calendar.getInstance()
+            calendar1.timeInMillis = time1
+            calendar2.timeInMillis = time2
+
+            // Ensure Date Time is future
+            while (calendar1.timeInMillis <= System.currentTimeMillis()) {
+                calendar1.add(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            while (calendar2.timeInMillis <= System.currentTimeMillis()) {
+                calendar2.add(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            calculatedTime = (calendar1.timeInMillis + calendar2.timeInMillis) / 2
 
             // Print the full date with the time
             val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
+            var formattedDate = fullDateFormat.format(calendar1.time)
 
-            calendar.timeInMillis = time1
-            var formattedDate = fullDateFormat.format(calendar.time)
             Log.d("TIME1", "@ $formattedDate")
-
-            calendar.timeInMillis = time2
-            formattedDate = fullDateFormat.format(calendar.time)
+            formattedDate = fullDateFormat.format(calendar2.time)
             Log.d("TIME2", "@ $formattedDate")
             return calculatedTime
         } else if (alarm.mode == "After") {
