@@ -36,7 +36,7 @@ class AlarmActivity : FragmentActivity() {
     private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.e("Alarm", "Activity Start")
+        Log.e("Alarm", "Alarm Activity Start")
         alarmIsRunning = true
         super.setShowWhenLocked(true)
         super.setTurnScreenOn(true)
@@ -47,8 +47,8 @@ class AlarmActivity : FragmentActivity() {
         val seekBar = findViewById<SeekBar>(R.id.seekBar)
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                // Check if the seek bar is at 95%
-                if (progress >= 95) {
+                // Check if the seek bar is at 90%
+                if (progress >= 90) {
                     stopAlarm(seekBar)
                 }
             }
@@ -213,6 +213,7 @@ class AlarmActivity : FragmentActivity() {
     }
 
     private fun releaseResources() {
+        vibrator?.cancel()
         mediaPlayer?.stop()
         mediaPlayer?.reset()
         mediaPlayer?.release()
