@@ -47,7 +47,9 @@ Waking up at sunrise can help improve your mood, energy levels, and sleep qualit
 ## Download
 > Rooster is currently available exclusively on Android!
 
-You can get your hands on Rooster by downloading it from this repository. Stay tuned – it's coming soon to the Play Store!
+You can get your hands on Rooster by downloading it from [this repository](https://github.com/thdelmas/Rooster/releases).
+
+Stay tuned – it's coming soon to the Play Store!
 
 ## Contributing
 
@@ -58,6 +60,6 @@ We welcome any contributions, suggestions or feedbacks. Don't hesitate to share 
 Rooster is licensed under the GPLv3 License.
 
 ## Acknowledgments
-Thanks to:
+We would like to thanks:
 - All people spending their time to make a better world
 - United Nations for the [SDGs](https://sdgs.un.org/goals)
