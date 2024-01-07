@@ -17,7 +17,6 @@ import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +24,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
-import kotlin.concurrent.fixedRateTimer
 
 class AlarmActivity : FragmentActivity() {
     private var alarmIsRunning = false
@@ -48,7 +46,7 @@ class AlarmActivity : FragmentActivity() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 // Check if the seek bar is at 90%
-                if (progress >= 90) {
+                if (progress >= 90 ) {
                     stopAlarm(seekBar)
                 }
             }
@@ -189,7 +187,7 @@ class AlarmActivity : FragmentActivity() {
         return percentage.toFloat()
     }
 
-    fun stopAlarm(view: View) {
+    fun stopAlarm(view: View?) {
         alarmIsRunning = false
         releaseResources()
         supportFragmentManager.popBackStackImmediate()
@@ -207,6 +205,7 @@ class AlarmActivity : FragmentActivity() {
 
     override fun onPause() {
         super.onPause()
+        stopAlarm(null)
         /*alarmIsRunning = false
         mediaPlayer?.stop()
         vibrator?.cancel()*/
