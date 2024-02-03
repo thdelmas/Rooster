@@ -97,7 +97,31 @@
             android:background="@drawable/rounded_button"
             android:layout_marginHorizontal="3dp"
             android:textStyle="bold"/>
+    </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="6dp">
+
+
+        <ImageButton
+            android:id="@+id/buttonRingtone"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/music"
+            android:onClick="deleteAlarm"
+            android:background="@color/black"
+            android:textColor="@color/primary"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Default Ringtone"
+            android:textColor="@color/primary"
+            android:textSize="18dp"
+            android:paddingHorizontal="6dp"
+            android:gravity="center"/>
     </LinearLayout>
 
     <!-- Vibrate Checkbox -->
@@ -135,7 +159,6 @@
         android:id="@+id/buttonDelete"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:text="Delete"
         android:src="@drawable/bin"
         android:onClick="deleteAlarm"
         android:background="@color/black"
