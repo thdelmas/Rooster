@@ -29,10 +29,10 @@ class AlarmclockReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(notificationChannel)
 
 
-            // Set the notification's intent.
             val alarmActivityIntent = Intent(context, AlarmActivity::class.java)
             alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             alarmActivityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            alarmActivityIntent.putExtra("alarm_id", alarmId.toString())
             val alarmActivityPendingIntent = PendingIntent.getActivity(
                 context,
                 0,

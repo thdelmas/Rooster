@@ -26,6 +26,7 @@ import java.util.Calendar
 import java.util.Date
 
 class AlarmActivity : FragmentActivity() {
+    private var alarmId: Long = 0
     private var alarmIsRunning = false
     private var isVibrating = false
 
@@ -33,8 +34,15 @@ class AlarmActivity : FragmentActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
+    val alarmDbHelper = AlarmDbHelper(this)
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.e("Alarm", "Alarm Activity Start")
+        val alarm = alarmDbHelper.getAlarm(alarmId)
+        Log.e("Alarm", "Alarm Activity Start\n" + "Alarm id: $alarmId")
+        alarmId = intent.getStringExtra("alarm_id")!!
+            .toLong() // -1 is a default value if "alarm_id" is not found
+        Log.e("Alarmclock Reciever", "Alarm id: $alarmId")
         alarmIsRunning = true
         super.setShowWhenLocked(true)
         super.setTurnScreenOn(true)
@@ -55,7 +63,9 @@ class AlarmActivity : FragmentActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
         refreshCycle()
-        alarmRing()
+        if (alarm != null) {
+            alarmRing(alarm.ringtoneUri)
+        }
         //TODO Release wake lock
         val alarmHandler = AlarmHandler()
         alarmHandler.setNextAlarm(applicationContext)
@@ -93,7 +103,7 @@ class AlarmActivity : FragmentActivity() {
             handler.post(updateRunnable)
     }
 
-    private fun alarmRing() {
+    private fun alarmRing(ringtoneUri: String) {
         // Wake Phone
         val powerManager: PowerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -108,9 +118,13 @@ class AlarmActivity : FragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // it is safe to cancel other vibrations currently taking place
             vibrator!!.cancel()
-            val soundUri =
+            val soundUri = if (ringtoneUri == "default") {
+                // Fallback to a default sound if the URI is null or empty
                 Uri.parse("android.resource://${applicationContext.packageName}/raw/alarmclock")
-
+            } else {
+                // Use the provided URI
+                Uri.parse(ringtoneUri)
+            }
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(applicationContext, soundUri)
                 setAudioAttributes(

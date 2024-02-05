@@ -16,6 +16,10 @@ import androidx.appcompat.app.AppCompatActivity
 import java.util.Date
 
 class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", null, 1) {
+    companion object {
+        const val DATABASE_VERSION = 2 // Increment database version
+        const val DATABASE_NAME = "alarm_db"
+    }
 
     private val alarmHandler = AlarmHandler()
     val context = context
@@ -27,6 +31,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     label TEXT,
     mode TEXT,
+    ringtoneUri TEXT,
     relative1 TEXT,
     relative2 TEXT,
     time1 INTEGER,
@@ -45,7 +50,9 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // TODO: Implement database migration if needed
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE alarms ADD COLUMN ringtoneUri TEXT")
+        }
     }
 
     fun insertAlarm(alarm: AlarmCreation) {
@@ -53,6 +60,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
         val values = ContentValues().apply {
             put("label", alarm.label)
             put("mode", alarm.mode)
+            put("ringtoneUri", alarm.ringtoneUri)
             put("relative1", alarm.relative1)
             put("relative2", alarm.relative2)
             put("time1", alarm.time1)
@@ -89,6 +97,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
                 id = cursor.getLong(cursor.getColumnIndex("id")),
                 label = cursor.getString(cursor.getColumnIndex("label")),
                 mode = cursor.getString(cursor.getColumnIndex("mode")),
+                ringtoneUri = cursor.getString(cursor.getColumnIndex("ringtoneUri")),
                 relative1 = cursor.getString(cursor.getColumnIndex("relative1")),
                 relative2 = cursor.getString(cursor.getColumnIndex("relative2")),
                 time1 = cursor.getLong(cursor.getColumnIndex("time1")),
@@ -123,6 +132,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
         val values = ContentValues().apply {
             put("label", alarm.label)
             put("mode", alarm.mode)
+            put("ringtoneUri", alarm.ringtoneUri)
             put("relative1", alarm.relative1)
             put("relative2", alarm.relative2)
             put("time1", alarm.time1)
@@ -285,13 +295,14 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
 
     fun getAllAlarms(): List<Alarm> {
         val db = readableDatabase
-        val cursor = db.query("alarms", arrayOf("id", "label", "mode", "relative1", "relative2", "time1", "time2", "calculated_time", "enabled", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"), null, null, null, null, null)
+        val cursor = db.query("alarms", arrayOf("id", "label", "mode", "ringtoneUri", "relative1", "relative2", "time1", "time2", "calculated_time", "enabled", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"), null, null, null, null, null)
         val alarms = mutableListOf<Alarm>()
         while (cursor.moveToNext()) {
             alarms.add(Alarm(
                 id = cursor.getLong(cursor.getColumnIndex("id")),
                 label = cursor.getString(cursor.getColumnIndex("label")),
                 mode = cursor.getString(cursor.getColumnIndex("mode")),
+                ringtoneUri = cursor.getString(cursor.getColumnIndex("ringtoneUri")),
                 relative1 = cursor.getString(cursor.getColumnIndex("relative1")),
                 relative2 = cursor.getString(cursor.getColumnIndex("relative2")),
                 time1 = cursor.getLong(cursor.getColumnIndex("time1")),

@@ -3,6 +3,11 @@ package com.rooster.rooster
 import android.app.AlertDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -124,6 +129,21 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             }
             dynamicButton.isSelected = alarm.getDayEnabled(d)
             setButtonState(dynamicButton, dynamicButton.isSelected)
+        }
+
+        val ringtoneTitle = holder.alarmContainer.findViewById<TextView>(R.id.ringtoneTitle)
+        val title = getRingtoneTitleFromUri(holder.alarmContainer.context, alarm.ringtoneUri)
+        ringtoneTitle.text = title
+        val ringtoneButton = holder.alarmContainer.findViewById<LinearLayout>(R.id.layoutRingtone)
+        ringtoneButton.setOnClickListener {
+            val ringtoneActivity = Intent(context, RingtoneActivity::class.java)
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M || Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ringtoneActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            val b = Bundle()
+            b.putLong("alarm_id", alarm.id)
+            ringtoneActivity.putExtras(b);
+            context.applicationContext.startActivity(ringtoneActivity);
         }
 
         // Vibrate
@@ -473,5 +493,17 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             bgDrawable = R.drawable.rounded_button
         }
         button?.setBackgroundResource(bgDrawable)
+    }
+    fun getRingtoneTitleFromUri(context: Context, ringtoneUri: String?): String {
+        if (ringtoneUri == null) return "Default Ringtone" // Return a default or an indication that no custom ringtone is set
+
+        try {
+            val uri = Uri.parse(ringtoneUri)
+            val ringtone = RingtoneManager.getRingtone(context, uri)
+            return ringtone.getTitle(context)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return "Unknown Ringtone" // In case of any error, return a default name
+        }
     }
 }

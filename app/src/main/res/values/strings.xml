@@ -1,12 +1,12 @@
 <resources>
     <string name="app_name">Rooster</string>
-        <string name="alarm_mode_selector">Mode</string>
-        <string-array name="alarm_modes">
-            <item>Before</item>
-            <item>At</item>
-            <item>Between</item>
-            <item>After</item>
-        </string-array>
+    <string name="alarm_mode_selector">Mode</string>
+    <string-array name="alarm_modes">
+        <item>Before</item>
+        <item>At</item>
+        <item>Between</item>
+        <item>After</item>
+    </string-array>
     <string name="alarm_mode_item_selector">Relative</string>
     <string-array name="alarm_relatives">
         <item>Time</item>

@@ -22,7 +22,7 @@ class AlarmListActivity() : ComponentActivity() {
     private fun linkButtons() {
         val addAlarmButton = findViewById<Button>(R.id.addAlarmButton)
         addAlarmButton.setOnClickListener {
-            val alarm = AlarmCreation("Alarm",false, "At", "Pick Time", "Pick Time", 0, 0, 0)
+            val alarm = AlarmCreation("Alarm",false, "At","Default", "Pick Time", "Pick Time", 0, 0, 0)
             alarmDbHelper.insertAlarm(alarm)
             reloadAlarmList()
         }
