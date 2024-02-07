@@ -65,6 +65,7 @@ class MainActivity() : ComponentActivity() {
             Manifest.permission.USE_FULL_SCREEN_INTENT,
             Manifest.permission.SYSTEM_ALERT_WINDOW,
             Manifest.permission.WAKE_LOCK,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.SCHEDULE_EXACT_ALARM,
             Manifest.permission.FOREGROUND_SERVICE
             )
