@@ -27,7 +27,7 @@ class RingtoneActivity : AppCompatActivity() {
 
     private fun showRingtonePicker() {
         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
             putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Ringtone")
         }
         startActivityForResult(intent, RINGTONE_PICKER_REQUEST_CODE)
