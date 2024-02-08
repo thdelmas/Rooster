@@ -1,61 +1,69 @@
 package com.rooster.rooster
-
+import android.app.Activity
 import android.content.Intent
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
+import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
+import com.rooster.rooster.R
 
 class RingtoneActivity : AppCompatActivity() {
-    private var alarmId: Long = 0
 
-    // Register a callback for the result from opening a document
-    private val openDocumentRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == AppCompatActivity.RESULT_OK) {
-            val uri: Uri? = result.data?.data
-            uri?.let {
-                // Grant temporary read permission to the content URI
-                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-                // Use the Uri to access the selected file here.
-                updateAlarmRingtone(alarmId, it.toString())
-                Toast.makeText(this, "Ringtone file selected!", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    private val RINGTONE_PICKER_REQUEST_CODE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ringtone)
 
-        intent.extras?.let {
-            alarmId = it.getLong("alarm_id")
-            Log.i("RingtoneActivity", "Alarm ID: $alarmId")
+        val btnSelectRingtone: Button = findViewById(R.id.btnSelectRingtone)
+        btnSelectRingtone.setOnClickListener {
+            checkAndRequestPermission()
+            showRingtonePicker()
         }
-
-        // Trigger the document selection
-        selectRingtoneFile()
     }
 
-    private fun selectRingtoneFile() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "audio/*" // Filter to show only audio files. Adjust if needed.
+    private fun showRingtonePicker() {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Ringtone")
         }
-        openDocumentRequest.launch(intent)
+        startActivityForResult(intent, RINGTONE_PICKER_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == RINGTONE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            val uri: Uri? = data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            if (uri != null) {
+                Log.e("Ringtone", "Ringtone URI: $uri")
+                updateAlarmRingtone(intent.getLongExtra("alarm_id", -1), uri.toString())
+            }
+        }
+    }
+
+    private fun checkAndRequestPermission() {
+        if (!Settings.System.canWrite(this)) {
+            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        } else {
+            // Permission has already been granted, proceed with your logic
+        }
     }
 
     private fun updateAlarmRingtone(alarmId: Long, ringtoneUri: String) {
-        // Update your method to handle the ringtone file URI
         val alarmDbHelper = AlarmDbHelper(this)
         val alarm = alarmDbHelper.getAlarm(alarmId)
-        Log.w("Update", "Ringtone file URI update Intent for alarm $alarmId")
+        Log.w("Update", "Ringtone update Intent for alarm $alarmId")
         alarm?.let {
             it.ringtoneUri = ringtoneUri
             alarmDbHelper.updateAlarm(it)
-            Log.i("Update", "Ringtone file URI updated for alarm $alarmId")
+            Log.i("Update", "Ringtone updated for alarm $alarmId")
         }
         finish()
     }
