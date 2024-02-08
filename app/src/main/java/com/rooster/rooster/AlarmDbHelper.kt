@@ -14,6 +14,7 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Date
+import java.util.Locale
 
 class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", null, 1) {
     companion object {
@@ -173,7 +174,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
                 calculatedTime = getRelativeTime(alarm.relative1)
                 return calculatedTime
             }
-        } else if (alarm.mode == "Between") {
+        }else if (alarm.mode == "Between") {
             var time1 = alarm.time1
             var time2 = alarm.time2
             if (alarm.relative1 != "Pick Time") {
@@ -183,31 +184,41 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
                 time2 = getRelativeTime(alarm.relative2)
             }
 
+            val calendarNow = Calendar.getInstance()
             val calendar1 = Calendar.getInstance()
             val calendar2 = Calendar.getInstance()
             calendar1.timeInMillis = time1
             calendar2.timeInMillis = time2
 
-            // Ensure Date Time is future
-            while (calendar1.timeInMillis <= System.currentTimeMillis()) {
-                calendar1.add(Calendar.DAY_OF_MONTH, 1)
+
+            // Ensure times are for today, adjust if in the past
+            if (calendar1.before(calendarNow)) {
+                calendar1.set(Calendar.YEAR, calendarNow.get(Calendar.YEAR))
+                calendar1.set(Calendar.MONTH, calendarNow.get(Calendar.MONTH))
+                calendar1.set(Calendar.DAY_OF_MONTH, calendarNow.get(Calendar.DAY_OF_MONTH))            }
+            if (calendar2.before(calendarNow)) {
+                calendar2.set(Calendar.YEAR, calendarNow.get(Calendar.YEAR))
+                calendar2.set(Calendar.MONTH, calendarNow.get(Calendar.MONTH))
+                calendar2.set(Calendar.DAY_OF_MONTH, calendarNow.get(Calendar.DAY_OF_MONTH))            }
+
+            // Calculate the middle point based only on time
+            val midTime = (calendar1.timeInMillis + calendar2.timeInMillis) / 2
+            val calculatedCalendar = Calendar.getInstance()
+            calculatedCalendar.timeInMillis = midTime
+
+
+            if (calculatedCalendar.timeInMillis <= System.currentTimeMillis()) {
+                calculatedCalendar.add(Calendar.DAY_OF_MONTH, 1)
             }
+            // Print the hours and minutes
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            Log.d("TIME1", "@ ${timeFormat.format(calendar1.time)}")
+            Log.d("TIME2", "@ ${timeFormat.format(calendar2.time)}")
+            Log.d("CALCULATED_TIME", "@ ${timeFormat.format(calculatedCalendar.time)}")
 
-            while (calendar2.timeInMillis <= System.currentTimeMillis()) {
-                calendar2.add(Calendar.DAY_OF_MONTH, 1)
-            }
-
-            calculatedTime = (calendar1.timeInMillis + calendar2.timeInMillis) / 2
-
-            // Print the full date with the time
-            val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
-            var formattedDate = fullDateFormat.format(calendar1.time)
-
-            Log.d("TIME1", "@ $formattedDate")
-            formattedDate = fullDateFormat.format(calendar2.time)
-            Log.d("TIME2", "@ $formattedDate")
-            return calculatedTime
-        } else if (alarm.mode == "After") {
+            return calculatedCalendar.timeInMillis
+        }
+        else if (alarm.mode == "After") {
             var time1 = getRelativeTime(alarm.relative2)
             var time2 = alarm.time1
             calculatedTime = (time1 + time2)
