@@ -152,14 +152,15 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
         alarmHandler.setNextAlarm(context)
     }
 
-    private fun calculateTime(alarm: Alarm): Long {
+    internal fun calculateTime(alarm: Alarm): Long {
+        Log.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
         alarm.calculatedTime = calculateTimeInner(alarm)
         alarm.calculatedTime = addDays(alarm, alarm.calculatedTime)
         val calendar = Calendar.getInstance()
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
         calendar.timeInMillis = alarm.calculatedTime
         var formattedDate = fullDateFormat.format(calendar.time)
-        Log.d("Rooster", "Calculated time\n@ $formattedDate")
+        Log.d("Rooster", "Next Iteration: $formattedDate\n---")
         return alarm.calculatedTime
     }
 
@@ -251,9 +252,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             alarm.saturday
         )
         // Start searching from the current day and go up to 7 days (a full week)
-        Log.e("Day Check", alarmDayOfWeek.toString())
         for (i in 0 until 7) {
-            Log.e("Day Check", i.toString())
             val dayToCheck = (alarmDayOfWeek + i) % 7 // Ensure it wraps around the days of the week
             if (weekdays[dayToCheck]) {
                 // Calculate the difference in days between the current day and the day with a true value

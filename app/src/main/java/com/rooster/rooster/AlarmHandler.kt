@@ -74,46 +74,44 @@ class AlarmHandler {
 
         var closestAlarm: Alarm? = null
         var timeDifference: Long = Long.MAX_VALUE
-        val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
 
         Log.i(TAG, "Current Time: $currentTime")
 
         for (alarm in alarms) {
+            if (!alarm.enabled) continue // Skip disabled alarms
+
+            // Update the calculatedTime for each alarm
+            alarmDbHelper.calculateTime(alarm) // Assuming this updates alarm.calculatedTime and logs the time
+
             val alarmTime = Calendar.getInstance()
             alarmTime.timeInMillis = alarm.calculatedTime
-            val alarmDay: String = dayFormat.format(alarmTime.time)
-            var alarmMillis = alarmTime.timeInMillis
+            val alarmMillis = alarm.calculatedTime
 
-            // Check if alarm is enabled for today and in the future, or if it's in the past
-            if (alarm.enabled && (alarm.getDayEnabled(alarmDay) || alarmMillis < currentMillis)) {
-                var diff = alarmMillis - currentMillis
+            // Calculate the difference between current time and the alarm time
+            var diff = alarmMillis - currentMillis
 
-                // If alarm is in the past, find next occurrence on enabled days
-                if (diff <= 0) {
-                    val today = currentTime.get(Calendar.DAY_OF_WEEK)
-                    var dayIncrement = 1
-                    // Find next enabled day
-                    while (!alarm.getDayEnabled(dayFormat.format(alarmTime.time))) {
-                        alarmTime.add(Calendar.DAY_OF_WEEK, dayIncrement)
-                        dayIncrement++
-                    }
-                    alarmMillis = alarmTime.timeInMillis
-                    diff = alarmMillis - currentMillis
-                }
+            if (diff < 0) {
+                // If the calculated time is in the past, calculate for the next occurrence
+                continue // Or adjust logic to calculate for the next valid day
+            }
 
-                Log.i(TAG, "Alarm: ${alarm.label}, Day: $alarmDay, Difference: $diff")
-
-                // Update closestAlarm if the alarm time is closer than the previous closest alarm
-                if (diff > 0 && diff < timeDifference) {
-                    closestAlarm = alarm
-                    timeDifference = diff
-                }
+            // Update closestAlarm if this alarm is closer than the previously found closest alarm
+            if (diff < timeDifference) {
+                closestAlarm = alarm
+                timeDifference = diff
             }
         }
 
         closestAlarm?.let {
-            Log.i(TAG, "Closest Alarm Set: $it")
-            setAlarm(context, it)
+            Log.i(TAG, "Closest Alarm Set: ${it.label}")
+            setAlarm(context, it) // Assuming setAlarm is a method to actually set the alarm
         }
     }
+
+
+    fun dayOfWeek(index: Int): String {
+        val days = arrayOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+        return days[index % days.size] // Use modulo to safely wrap around the array
+    }
+
 }

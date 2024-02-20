@@ -44,7 +44,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
             val notificationBuilder = NotificationCompat.Builder(context, notificationChannel.id)
                 .setContentTitle("Rooster")
                 .setContentText("Click here to stop the alarm")
-                .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
