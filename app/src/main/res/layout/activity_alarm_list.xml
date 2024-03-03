@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/night">
+    android:background="@color/astronomical"
+    android:paddingTop="8dp">
 
 
     <androidx.recyclerview.widget.RecyclerView

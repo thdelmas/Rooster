@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <LinearLayout
-            android:background="@color/nautical"
+            android:background="@color/astronomical"
             android:orientation="vertical"
             android:layout_height="wrap_content"
             android:layout_width="match_parent">
@@ -20,41 +20,50 @@
                 android:textSize="21sp"
                 android:gravity="center"
                 android:textColor="@color/primary"
-                android:background="@color/astronomical"/>
+                android:background="@color/astronomical"
+                android:layout_marginVertical="16dp"
+                />
+
             <RelativeLayout
                 android:id="@+id/altitudeSetting"
-                android:layout_height="wrap_content"
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="2dp"
+                android:layout_marginStart="2dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginBottom="2dp"
+                android:background="@drawable/rounded_background"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
                 android:padding="14dp">
+
                 <TextView
                     android:id="@+id/altitudeTitle"
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:text="Altitude"
-                    android:textSize="18sp"
+                    android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:textColor="@color/primary"/>
+                    android:text="Altitude"
+                    android:textColor="@color/primary"
+                    android:textSize="18sp" />
+
                 <TextView
                     android:id="@+id/altitudeValue"
-                    android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:gravity="center"
+                    android:layout_height="wrap_content"
                     android:layout_alignParentRight="true"
-                    android:textSize="21sp"
+                    android:gravity="center"
                     android:paddingLeft="10dp"
                     android:text="0.0"
-                    android:textColor="@color/primary"/>
+                    android:textColor="@color/primary"
+                    android:textSize="21sp" />
             </RelativeLayout>
             <RelativeLayout
                 android:id="@+id/latitudeSetting"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/latitudeTitle"
@@ -80,8 +89,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/longitudeTitle"
@@ -107,8 +116,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/locationTitle"
@@ -132,10 +141,11 @@
             <RelativeLayout
                 android:id="@+id/syncGpsSetting"
                 android:layout_height="wrap_content"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="8dp"
                 android:padding="14dp"
                 android:gravity="center">
                 <TextView
@@ -154,43 +164,45 @@
                 android:textSize="21sp"
                 android:text="Astronomy"
                 android:gravity="center"
+                android:layout_marginVertical="16dp"
                 android:textColor="@color/primary"
                 android:background="@color/astronomical"/>
             <RelativeLayout
                 android:id="@+id/dayLengthSetting"
                 android:layout_height="wrap_content"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
-                android:padding="14dp">
+                android:background="@drawable/rounded_background"
+                android:backgroundTintMode="add"
+                android:backgroundTint="@color/nautical"
+                android:layout_margin="8dp"
+                android:padding="8dp">
                 <TextView
                     android:id="@+id/dayLengthTitle"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
+                    android:layout_centerHorizontal="true"
                     android:text="Day Length"
                     android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
+                    android:textColor="@color/background"/>
                 <TextView
                     android:id="@+id/dayLengthValue"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
+                    android:layout_centerInParent="true"
+                    android:layout_below="@id/dayLengthTitle"
                     android:textSize="21sp"
                     android:text="00:00"
-                    android:textColor="@color/primary"/>
+                    android:textColor="@color/background"/>
             </RelativeLayout>
-
             <RelativeLayout
                 android:id="@+id/astroDawnSetting"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/astroDawnTitle"
@@ -216,8 +228,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/nauticalDawnTitle"
@@ -243,8 +255,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/civilDawnTitle"
@@ -270,8 +282,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/sunriseTitle"
@@ -297,8 +309,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/solarNoonTitle"
@@ -324,8 +336,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/sunsetTitle"
@@ -351,8 +363,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/civilDuskTitle"
@@ -378,8 +390,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/nauticalDuskTitle"
@@ -405,8 +417,8 @@
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="vertical"
-                android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:background="@drawable/rounded_background"
+                android:layout_margin="2dp"
                 android:padding="14dp">
                 <TextView
                     android:id="@+id/astroDuskTitle"
@@ -427,13 +439,15 @@
                     android:text="00:00"
                     android:textColor="@color/primary"/>
             </RelativeLayout>
+
+
             <LinearLayout
                 android:id="@+id/iconLinearLayout"
                 android:layout_height="wrap_content"
                 android:layout_width="match_parent"
                 android:orientation="horizontal"
                 android:background="@color/night"
-                android:layout_marginTop="1dp"
+                android:layout_marginTop="8dp"
                 android:padding="14dp"
                 android:gravity="center">
 
