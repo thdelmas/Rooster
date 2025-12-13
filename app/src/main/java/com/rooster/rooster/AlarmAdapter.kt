@@ -480,13 +480,13 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
 
         if (isSelected) {
             if (button != null) {
-                textColor = button.context.getColor(R.color.astronomical)
+                textColor = button.context.getColor(R.color.md_theme_dark_onPrimaryContainer)
                 button?.setTextColor(textColor)
             }
             bgDrawable = R.drawable.rounded_button_selected
         } else {
             if (button != null) {
-                textColor = button.context.getColor(R.color.primary)
+                textColor = button.context.getColor(R.color.md_theme_dark_onSurface)
                 button?.setTextColor(textColor)
             }
             bgDrawable = R.drawable.rounded_button
