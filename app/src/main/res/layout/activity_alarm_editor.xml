@@ -175,8 +175,60 @@
                     <com.rooster.rooster.SunCourseView
                         android:id="@+id/sunCourseView"
                         android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:layout_marginBottom="20dp"/>
+                        android:layout_height="240dp"
+                        android:layout_marginBottom="24dp"
+                        android:clickable="true"
+                        android:focusable="true"/>
+                    
+                    <!-- Quick Presets -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quick Presets"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:layout_marginBottom="8dp"/>
+                    
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="20dp">
+                        
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/presetSunriseButton"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:text="🌅 Sunrise"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"/>
+                        
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/presetSunsetButton"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="6dp"
+                            android:text="🌇 Sunset"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"/>
+                        
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/presetDawnButton"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="6dp"
+                            android:text="🌆 Dawn"
+                            android:textSize="12sp"
+                            app:cornerRadius="12dp"/>
+                        
+                    </LinearLayout>
 
                     <!-- Timing Type -->
                     <TextView
@@ -260,56 +312,43 @@
                         android:visibility="gone"
                         android:layout_marginBottom="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Offset"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
-                            android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                            android:layout_marginBottom="8dp"/>
-
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="center_vertical">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/decreaseOffsetButton"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:text="-"
-                                android:textSize="20sp"
-                                app:cornerRadius="24dp"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:padding="0dp"/>
-
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+                            
                             <TextView
-                                android:id="@+id/offsetTimeText"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                android:text="Offset"
+                                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                                android:textColor="@color/md_theme_dark_onSurfaceVariant"/>
+                            
+                            <TextView
+                                android:id="@+id/offsetTimeText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:text="30 minutes"
-                                android:textSize="18sp"
+                                android:textSize="16sp"
                                 android:textColor="@color/md_theme_dark_primary"
-                                android:gravity="center"
-                                android:layout_marginHorizontal="16dp"/>
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/increaseOffsetButton"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:text="+"
-                                android:textSize="20sp"
-                                app:cornerRadius="24dp"
-                                android:insetTop="0dp"
-                                android:insetBottom="0dp"
-                                android:padding="0dp"/>
-
+                                android:textStyle="bold"/>
                         </LinearLayout>
+
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/offsetSlider"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:valueFrom="5f"
+                            android:valueTo="180f"
+                            android:stepSize="5f"
+                            android:value="30f"
+                            android:thumbTint="@color/md_theme_dark_primary"
+                            android:trackActiveTintColor="@color/md_theme_dark_primary"
+                            android:trackInactiveTintColor="@color/md_theme_dark_outlineVariant"
+                            android:layout_marginTop="8dp"/>
 
                     </LinearLayout>
 

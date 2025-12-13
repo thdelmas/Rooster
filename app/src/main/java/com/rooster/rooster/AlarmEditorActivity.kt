@@ -169,6 +169,10 @@ class AlarmEditorActivity : AppCompatActivity() {
                     sunTimingMode = alarm.mode
                     solarEvent1 = alarm.relative1
                     solarEvent2 = alarm.relative2
+                    // Load offset from time1 (stored in milliseconds)
+                    if (alarm.mode == "Before" || alarm.mode == "After") {
+                        offsetMinutes = (alarm.time1 / 1000 / 60).toInt()
+                    }
                 } else {
                     currentMode = "classic"
                     selectedTime = alarm.time1
@@ -195,6 +199,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 updateSnoozeDisplay()
                 
                 updateUI()
+                updateSunCourseVisualization()
             }
         } else {
             // New alarm defaults
@@ -211,12 +216,15 @@ class AlarmEditorActivity : AppCompatActivity() {
         // Mode selection
         sunModeButton.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
             currentMode = "sun"
             updateUI()
+            updateSunCourseVisualization()
         }
         
         classicModeButton.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
             currentMode = "classic"
             updateUI()
         }
@@ -234,33 +242,72 @@ class AlarmEditorActivity : AppCompatActivity() {
                 }
                 updateSunModeUI()
                 updateCalculatedTime()
+                updateSunCourseVisualization()
             }
         }
         
         // Solar event selection
         solarEvent1Button.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
             showSolarEventPicker(1)
         }
         
         solarEvent2Button.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
             showSolarEventPicker(2)
         }
         
-        // Offset adjustment
-        findViewById<MaterialButton>(R.id.decreaseOffsetButton).setOnClickListener {
-            HapticFeedbackHelper.performLightClick(it)
-            offsetMinutes = maxOf(5, offsetMinutes - 5)
+        // Offset adjustment with slider
+        val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
+        offsetSlider.addOnChangeListener { _, value, _ ->
+            HapticFeedbackHelper.performLightClick(offsetSlider)
+            offsetMinutes = value.toInt()
             updateOffsetDisplay()
             updateCalculatedTime()
+            updateSunCourseVisualization()
         }
         
-        findViewById<MaterialButton>(R.id.increaseOffsetButton).setOnClickListener {
-            HapticFeedbackHelper.performLightClick(it)
-            offsetMinutes = minOf(180, offsetMinutes + 5)
-            updateOffsetDisplay()
-            updateCalculatedTime()
+        // Quick preset buttons
+        findViewById<MaterialButton>(R.id.presetSunriseButton)?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            solarEvent1 = "Sunrise"
+            sunTimingMode = "At"
+            sunTimingToggle.check(R.id.atButton)
+            updateSolarEventDisplay()
+            updateSunModeUI()
+        }
+        
+        findViewById<MaterialButton>(R.id.presetSunsetButton)?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            solarEvent1 = "Sunset"
+            sunTimingMode = "At"
+            sunTimingToggle.check(R.id.atButton)
+            updateSolarEventDisplay()
+            updateSunModeUI()
+        }
+        
+        findViewById<MaterialButton>(R.id.presetDawnButton)?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            solarEvent1 = "Civil Dawn"
+            sunTimingMode = "At"
+            sunTimingToggle.check(R.id.atButton)
+            updateSolarEventDisplay()
+            updateSunModeUI()
+        }
+        
+        // Interactive sun course view
+        sunCourseView.onSolarEventSelected = { eventName ->
+            HapticFeedbackHelper.performClick(sunCourseView)
+            solarEvent1 = eventName
+            sunTimingMode = "At"
+            sunTimingToggle.check(R.id.atButton)
+            updateSolarEventDisplay()
+            updateSunModeUI()
         }
         
         // Classic time selection - Use Apple-style time picker
@@ -473,6 +520,9 @@ class AlarmEditorActivity : AppCompatActivity() {
                 if (solarEvent2Layout.visibility == View.VISIBLE) {
                     AnimationHelper.fadeOut(solarEvent2Layout) { solarEvent2Layout.visibility = View.GONE }
                 }
+                // Initialize slider value
+                val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
+                offsetSlider?.value = offsetMinutes.toFloat()
                 updateOffsetDisplay()
             }
             "Between" -> {
@@ -524,7 +574,12 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun updateOffsetDisplay() {
-        offsetTimeText.text = "$offsetMinutes minutes"
+        val offsetText = findViewById<TextView>(R.id.offsetTimeText)
+        offsetText?.text = "$offsetMinutes minutes"
+        
+        // Update slider value if it exists
+        val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
+        offsetSlider?.value = offsetMinutes.toFloat()
     }
     
     private fun updateSnoozeDisplay() {
@@ -535,13 +590,23 @@ class AlarmEditorActivity : AppCompatActivity() {
     private fun updateSunCourseVisualization() {
         val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
         
+        // Get all solar times
+        val astroDawn = sharedPreferences.getLong("astroDawn", 0)
+        val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
         val civilDawn = sharedPreferences.getLong("civilDawn", 0)
         val sunrise = sharedPreferences.getLong("sunrise", 0)
         val solarNoon = sharedPreferences.getLong("solarNoon", 0)
         val sunset = sharedPreferences.getLong("sunset", 0)
         val civilDusk = sharedPreferences.getLong("civilDusk", 0)
+        val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
+        val astroDusk = sharedPreferences.getLong("astroDusk", 0)
         
-        sunCourseView.setSunTimes(civilDawn, sunrise, solarNoon, sunset, civilDusk)
+        // Set all sun times for full visualization
+        sunCourseView.setAllSunTimes(
+            astroDawn, nauticalDawn, civilDawn,
+            sunrise, solarNoon, sunset,
+            civilDusk, nauticalDusk, astroDusk
+        )
         
         // Set marker based on current alarm configuration
         if (currentMode == "sun") {
@@ -557,15 +622,15 @@ class AlarmEditorActivity : AppCompatActivity() {
                 else -> 0L
             }
             
-            val markerEmoji = when (sunTimingMode) {
-                "At" -> "⏰"
-                "Before" -> "⏰"
-                "After" -> "⏰"
-                "Between" -> "⏰"
-                else -> "⏰"
+            val markerLabel = when (sunTimingMode) {
+                "At" -> "Alarm"
+                "Before" -> "${offsetMinutes}m before"
+                "After" -> "${offsetMinutes}m after"
+                "Between" -> "Between"
+                else -> "Alarm"
             }
             
-            sunCourseView.setMarker(markerTime, markerEmoji)
+            sunCourseView.setMarker(markerTime, markerLabel)
         }
     }
     
@@ -622,20 +687,34 @@ class AlarmEditorActivity : AppCompatActivity() {
     private fun showSolarEventPicker(eventNumber: Int) {
         val cleanedEvents = solarEvents.map { it.substring(2) }.toTypedArray()
         
-        AlertDialog.Builder(this)
+        // Create a custom dialog with better visual design
+        val dialogView = layoutInflater.inflate(R.layout.dialog_solar_event_picker, null)
+        val recyclerView = dialogView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.solarEventRecyclerView)
+        
+        val dialog = AlertDialog.Builder(this)
             .setTitle("Select Solar Event")
-            .setItems(solarEvents) { _, which ->
-                HapticFeedbackHelper.performSuccessFeedback(this)
-                val selected = cleanedEvents[which]
-                if (eventNumber == 1) {
-                    solarEvent1 = selected
-                } else {
-                    solarEvent2 = selected
-                }
-                updateSolarEventDisplay()
-                updateCalculatedTime()
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
+        
+        val adapter = SolarEventAdapter(solarEvents.toList()) { selectedIndex ->
+            HapticFeedbackHelper.performSuccessFeedback(this)
+            val selected = cleanedEvents[selectedIndex]
+            if (eventNumber == 1) {
+                solarEvent1 = selected
+            } else {
+                solarEvent2 = selected
             }
-            .show()
+            updateSolarEventDisplay()
+            updateCalculatedTime()
+            updateSunCourseVisualization()
+            dialog.dismiss()
+        }
+        
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        
+        dialog.show()
     }
     
     private fun showAppleTimePicker() {
