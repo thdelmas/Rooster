@@ -1,179 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginBottom="1dp">
+    android:paddingTop="16dp">
 
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/md_theme_dark_outlineVariant"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Repeat Days Section -->
     <TextView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-         android:layout_width="match_parent"
-        android:text="Repeats On"
-        android:textSize="17dp"
-        android:textColor="@color/primary"/>
+        android:text="Repeat"
+        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+        android:layout_marginBottom="12dp"/>
 
     <LinearLayout
         android:id="@+id/daysOfWeekLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:paddingVertical="12dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/sundayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="S"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/mondayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="M"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/tuesdayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="T"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/wednesdayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="W"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/thursdayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="T"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/fridayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:text="F"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/saturdayButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="S"
+            android:textColor="@color/md_theme_dark_primary"
+            android:layout_marginHorizontal="2dp"
+            android:minWidth="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:cornerRadius="24dp"
+            app:strokeColor="@color/md_theme_dark_outline"/>
+
+    </LinearLayout>
+
+    <!-- Ringtone Section - Use MaterialButton instead of LinearLayout -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/layoutRingtone"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:gravity="start|center_vertical"
+        android:paddingVertical="12dp"
+        android:text="Default Ringtone"
+        android:textColor="@color/md_theme_dark_onSurface"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        android:textAlignment="textStart"
+        app:icon="@drawable/music"
+        app:iconGravity="start"
+        app:iconSize="24dp"
+        app:iconTint="@color/md_theme_dark_primary"
+        app:cornerRadius="12dp"/>
+
+    <!-- Vibrate Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="S"
-            android:textColor="#ff9853"
-            android:background="@drawable/rounded_button"
-            android:layout_marginHorizontal="3dp"
-            android:textStyle="bold"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutRingtone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="6dp">
-
-
-        <ImageButton
-            android:id="@+id/buttonRingtone"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/music"
-            android:onClick="deleteAlarm"
-            android:background="@color/black"
-            android:textColor="@color/primary"/>
-
-        <TextView
-            android:id="@+id/ringtoneTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="Default Ringtone"
-            android:textColor="@color/primary"
-            android:textSize="18dp"
-            android:paddingHorizontal="6dp"
-            android:gravity="center"/>
-    </LinearLayout>
-
-    <!-- Vibrate Checkbox -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="6dp">
-
-
-    <CheckBox
-        android:id="@+id/checkBoxVibrate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/black"
-        android:textColor="@color/primary"
-        android:scaleX="1.4"
-        android:scaleY="1.4"
-        android:checked="true"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
             android:text="Vibrate"
-            android:textColor="@color/primary"
-            android:textSize="18dp"
-            android:paddingHorizontal="6dp"
-            android:gravity="center"/>
-    </LinearLayout>
-    <!-- Delete Button -->
-    <LinearLayout
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:paddingVertical="6dp">
-    <ImageButton
-        android:id="@+id/buttonDelete"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:src="@drawable/bin"
-        android:onClick="deleteAlarm"
-        android:background="@color/black"
-        android:textColor="@color/primary"/>
+            android:textColor="@color/md_theme_dark_onSurface"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
 
-        <TextView
-            android:id="@+id/buttonDeleteText"
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/checkBoxVibrate"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="Delete"
-            android:textColor="@color/primary"
-            android:textSize="18dp"
-            android:paddingHorizontal="6dp"
-            android:gravity="center"/>
+            android:layout_height="wrap_content"
+            android:checked="true"/>
+
     </LinearLayout>
+
+    <!-- Delete Button - Use MaterialButton -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonDelete"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Delete Alarm"
+        android:textColor="@color/md_theme_dark_error"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        android:gravity="start|center_vertical"
+        app:icon="@drawable/bin"
+        app:iconGravity="start"
+        app:iconSize="24dp"
+        app:iconTint="@color/md_theme_dark_error"
+        app:cornerRadius="12dp"/>
+
 </LinearLayout>

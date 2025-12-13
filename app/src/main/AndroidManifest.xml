@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <application
+        android:name=".RoosterApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -31,6 +32,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
+        
+        <!-- Disable default WorkManager initialization to use Hilt -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
         <receiver
             android:name=".AlarmclockReceiver"
@@ -42,6 +55,15 @@
                 <action android:name="android.intent.action.ALARM" />
 
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receiver.SnoozeReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.rooster.rooster.ACTION_SNOOZE" />
             </intent-filter>
         </receiver>
 
@@ -61,7 +83,14 @@
             android:turnScreenOn="true" />
         <activity
             android:name=".AlarmListActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:theme="@style/AppTheme.AlarmList" />
+        
+        <activity
+            android:name=".AlarmEditorActivity"
+            android:exported="false"
+            android:parentActivityName=".AlarmListActivity"
+            android:theme="@style/Theme.MyApplication" />
 
         <service
             android:name=".AstronomyUpdateService"

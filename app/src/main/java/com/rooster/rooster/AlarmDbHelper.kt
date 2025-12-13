@@ -16,9 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 import java.util.Date
 import java.util.Locale
 
-class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", null, 1) {
+class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
     companion object {
-        const val DATABASE_VERSION = 2 // Increment database version
+        const val DATABASE_VERSION = 5 // Increment database version for new features
         const val DATABASE_NAME = "alarm_db"
     }
 
@@ -45,7 +45,13 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
     thursday BOOLEAN,
     friday BOOLEAN,
     saturday BOOLEAN,
-    sunday BOOLEAN
+    sunday BOOLEAN,
+    vibrate BOOLEAN DEFAULT 1,
+    snooze_enabled BOOLEAN DEFAULT 1,
+    snooze_duration INTEGER DEFAULT 10,
+    snooze_count INTEGER DEFAULT 3,
+    volume INTEGER DEFAULT 80,
+    gradual_volume BOOLEAN DEFAULT 0
 );"""
         )
     }
@@ -54,6 +60,30 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE alarms ADD COLUMN ringtoneUri TEXT")
         }
+        if (oldVersion < 3) {
+            // Add any version 3 schema changes here if needed
+            // For now, maintaining compatibility with existing version 3 databases
+        }
+        if (oldVersion < 4) {
+            // Add new alarm feature columns
+            db.execSQL("ALTER TABLE alarms ADD COLUMN vibrate BOOLEAN DEFAULT 1")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_enabled BOOLEAN DEFAULT 1")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_duration INTEGER DEFAULT 10")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_count INTEGER DEFAULT 3")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN volume INTEGER DEFAULT 80")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN gradual_volume BOOLEAN DEFAULT 0")
+        }
+        if (oldVersion < 5) {
+            // Version 5 changes (if any)
+            // Currently maintaining schema from version 4
+        }
+    }
+
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Handle downgrade gracefully - in most cases for development,
+        // we'll just maintain compatibility with the current schema
+        Log.w("AlarmDbHelper", "Downgrading database from version $oldVersion to $newVersion")
+        // No action needed as schema is compatible
     }
 
     fun insertAlarm(alarm: AlarmCreation) {
@@ -75,6 +105,12 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             put("friday", false)
             put("saturday", false)
             put("sunday", false)
+            put("vibrate", true)
+            put("snooze_enabled", true)
+            put("snooze_duration", 10)
+            put("snooze_count", 3)
+            put("volume", 80)
+            put("gradual_volume", false)
         }
 
         db.insert("alarms", null, values)
@@ -93,28 +129,36 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             null
         )
 
-        if (cursor.moveToFirst()) {
-            return Alarm(
-                id = cursor.getLong(cursor.getColumnIndex("id")),
-                label = cursor.getString(cursor.getColumnIndex("label")),
-                mode = cursor.getString(cursor.getColumnIndex("mode")),
-                ringtoneUri = cursor.getString(cursor.getColumnIndex("ringtoneUri")),
-                relative1 = cursor.getString(cursor.getColumnIndex("relative1")),
-                relative2 = cursor.getString(cursor.getColumnIndex("relative2")),
-                time1 = cursor.getLong(cursor.getColumnIndex("time1")),
-                time2 = cursor.getLong(cursor.getColumnIndex("time2")),
-                calculatedTime = cursor.getLong(cursor.getColumnIndex("calculated_time")),
-                enabled = cursor.getInt(cursor.getColumnIndex("enabled")) == 1,
-                monday = cursor.getInt(cursor.getColumnIndex("monday")) == 1,
-                tuesday = cursor.getInt(cursor.getColumnIndex("tuesday")) == 1,
-                wednesday = cursor.getInt(cursor.getColumnIndex("wednesday")) == 1,
-                thursday = cursor.getInt(cursor.getColumnIndex("thursday")) == 1,
-                friday = cursor.getInt(cursor.getColumnIndex("friday")) == 1,
-                saturday = cursor.getInt(cursor.getColumnIndex("saturday")) == 1,
-                sunday = cursor.getInt(cursor.getColumnIndex("sunday")) == 1,
-            )
-        } else {
-            return null
+        return cursor.use {
+            if (it.moveToFirst()) {
+                Alarm(
+                    id = it.getLong(it.getColumnIndexOrThrow("id")),
+                    label = it.getString(it.getColumnIndexOrThrow("label")),
+                    mode = it.getString(it.getColumnIndexOrThrow("mode")),
+                    ringtoneUri = it.getString(it.getColumnIndexOrThrow("ringtoneUri")) ?: "Default",
+                    relative1 = it.getString(it.getColumnIndexOrThrow("relative1")),
+                    relative2 = it.getString(it.getColumnIndexOrThrow("relative2")),
+                    time1 = it.getLong(it.getColumnIndexOrThrow("time1")),
+                    time2 = it.getLong(it.getColumnIndexOrThrow("time2")),
+                    calculatedTime = it.getLong(it.getColumnIndexOrThrow("calculated_time")),
+                    enabled = it.getInt(it.getColumnIndexOrThrow("enabled")) == 1,
+                    monday = it.getInt(it.getColumnIndexOrThrow("monday")) == 1,
+                    tuesday = it.getInt(it.getColumnIndexOrThrow("tuesday")) == 1,
+                    wednesday = it.getInt(it.getColumnIndexOrThrow("wednesday")) == 1,
+                    thursday = it.getInt(it.getColumnIndexOrThrow("thursday")) == 1,
+                    friday = it.getInt(it.getColumnIndexOrThrow("friday")) == 1,
+                    saturday = it.getInt(it.getColumnIndexOrThrow("saturday")) == 1,
+                    sunday = it.getInt(it.getColumnIndexOrThrow("sunday")) == 1,
+                    vibrate = it.getInt(it.getColumnIndexOrThrow("vibrate")) == 1,
+                    snoozeEnabled = it.getInt(it.getColumnIndexOrThrow("snooze_enabled")) == 1,
+                    snoozeDuration = it.getInt(it.getColumnIndexOrThrow("snooze_duration")),
+                    snoozeCount = it.getInt(it.getColumnIndexOrThrow("snooze_count")),
+                    volume = it.getInt(it.getColumnIndexOrThrow("volume")),
+                    gradualVolume = it.getInt(it.getColumnIndexOrThrow("gradual_volume")) == 1
+                )
+            } else {
+                null
+            }
         }
     }
 
@@ -147,6 +191,12 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
             put("friday", alarm.friday)
             put("saturday", alarm.saturday)
             put("sunday", alarm.sunday)
+            put("vibrate", alarm.vibrate)
+            put("snooze_enabled", alarm.snoozeEnabled)
+            put("snooze_duration", alarm.snoozeDuration)
+            put("snooze_count", alarm.snoozeCount)
+            put("volume", alarm.volume)
+            put("gradual_volume", alarm.gradualVolume)
         }
         db.update("alarms", values, "id = ?", arrayOf(alarm.id.toString()))
         alarmHandler.setNextAlarm(context)
@@ -305,30 +355,45 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, "alarm_db", nu
 
     fun getAllAlarms(): List<Alarm> {
         val db = readableDatabase
-        val cursor = db.query("alarms", arrayOf("id", "label", "mode", "ringtoneUri", "relative1", "relative2", "time1", "time2", "calculated_time", "enabled", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"), null, null, null, null, null)
-        val alarms = mutableListOf<Alarm>()
-        while (cursor.moveToNext()) {
-            alarms.add(Alarm(
-                id = cursor.getLong(cursor.getColumnIndex("id")),
-                label = cursor.getString(cursor.getColumnIndex("label")),
-                mode = cursor.getString(cursor.getColumnIndex("mode")),
-                ringtoneUri = cursor.getString(cursor.getColumnIndex("ringtoneUri")),
-                relative1 = cursor.getString(cursor.getColumnIndex("relative1")),
-                relative2 = cursor.getString(cursor.getColumnIndex("relative2")),
-                time1 = cursor.getLong(cursor.getColumnIndex("time1")),
-                time2 = cursor.getLong(cursor.getColumnIndex("time2")),
-                calculatedTime = cursor.getLong(cursor.getColumnIndex("calculated_time")),
-                enabled = cursor.getInt(cursor.getColumnIndex("enabled")) == 1,
-                monday = cursor.getInt(cursor.getColumnIndex("monday")) == 1,
-                tuesday = cursor.getInt(cursor.getColumnIndex("tuesday")) == 1,
-                wednesday = cursor.getInt(cursor.getColumnIndex("wednesday")) == 1,
-                thursday = cursor.getInt(cursor.getColumnIndex("thursday")) == 1,
-                friday = cursor.getInt(cursor.getColumnIndex("friday")) == 1,
-                saturday = cursor.getInt(cursor.getColumnIndex("saturday")) == 1,
-                sunday = cursor.getInt(cursor.getColumnIndex("sunday")) == 1,
-            ))
+        val cursor = db.query(
+            "alarms", 
+            arrayOf("id", "label", "mode", "ringtoneUri", "relative1", "relative2", 
+                    "time1", "time2", "calculated_time", "enabled", "monday", "tuesday", 
+                    "wednesday", "thursday", "friday", "saturday", "sunday", "vibrate",
+                    "snooze_enabled", "snooze_duration", "snooze_count", "volume", "gradual_volume"), 
+            null, null, null, null, null
+        )
+        
+        return cursor.use {
+            val alarms = mutableListOf<Alarm>()
+            while (it.moveToNext()) {
+                alarms.add(Alarm(
+                    id = it.getLong(it.getColumnIndexOrThrow("id")),
+                    label = it.getString(it.getColumnIndexOrThrow("label")),
+                    mode = it.getString(it.getColumnIndexOrThrow("mode")),
+                    ringtoneUri = it.getString(it.getColumnIndexOrThrow("ringtoneUri")) ?: "Default",
+                    relative1 = it.getString(it.getColumnIndexOrThrow("relative1")),
+                    relative2 = it.getString(it.getColumnIndexOrThrow("relative2")),
+                    time1 = it.getLong(it.getColumnIndexOrThrow("time1")),
+                    time2 = it.getLong(it.getColumnIndexOrThrow("time2")),
+                    calculatedTime = it.getLong(it.getColumnIndexOrThrow("calculated_time")),
+                    enabled = it.getInt(it.getColumnIndexOrThrow("enabled")) == 1,
+                    monday = it.getInt(it.getColumnIndexOrThrow("monday")) == 1,
+                    tuesday = it.getInt(it.getColumnIndexOrThrow("tuesday")) == 1,
+                    wednesday = it.getInt(it.getColumnIndexOrThrow("wednesday")) == 1,
+                    thursday = it.getInt(it.getColumnIndexOrThrow("thursday")) == 1,
+                    friday = it.getInt(it.getColumnIndexOrThrow("friday")) == 1,
+                    saturday = it.getInt(it.getColumnIndexOrThrow("saturday")) == 1,
+                    sunday = it.getInt(it.getColumnIndexOrThrow("sunday")) == 1,
+                    vibrate = it.getInt(it.getColumnIndexOrThrow("vibrate")) == 1,
+                    snoozeEnabled = it.getInt(it.getColumnIndexOrThrow("snooze_enabled")) == 1,
+                    snoozeDuration = it.getInt(it.getColumnIndexOrThrow("snooze_duration")),
+                    snoozeCount = it.getInt(it.getColumnIndexOrThrow("snooze_count")),
+                    volume = it.getInt(it.getColumnIndexOrThrow("volume")),
+                    gradualVolume = it.getInt(it.getColumnIndexOrThrow("gradual_volume")) == 1
+                ))
+            }
+            alarms
         }
-        cursor.close()
-        return alarms
     }
 }

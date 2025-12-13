@@ -9,9 +9,9 @@
     android:thickness="42sp"
     android:useLevel="false">
     <gradient
-        android:startColor="@color/night_blue"
-        android:centerColor="@color/primary"
-        android:endColor="@color/night_blue"
+        android:startColor="@color/astronomical"
+        android:centerColor="@color/md_theme_dark_primary"
+        android:endColor="@color/astronomical"
         android:centerX="0.25"
         android:centerY="0.5"
         android:type="sweep"

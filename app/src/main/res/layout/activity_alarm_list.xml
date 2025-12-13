@@ -1,32 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/astronomical"
-    android:paddingTop="8dp">
+    android:background="@color/astronomical">
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/alarmListView"
+    <!-- App Bar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topAppBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:title="My Alarms"
+        app:titleTextColor="@color/md_theme_dark_primary"
+        app:titleTextAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+        app:navigationIcon="@drawable/alarm"
+        app:navigationIconTint="@color/md_theme_dark_primary"
+        style="@style/Widget.Material3.Toolbar"/>
 
-    <Button
+    <!-- Main Content -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Empty State Card (visible when no alarms) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/emptyStateCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="24dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="4dp"
+            app:strokeWidth="0dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="48dp"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🌅"
+                    android:textSize="80sp"
+                    android:layout_marginBottom="24dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No alarms yet"
+                    android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
+                    android:textColor="@color/md_theme_dark_onSurface"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Create your first alarm to wake up with the sun"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                    android:gravity="center"
+                    android:alpha="0.8"
+                    android:lineSpacingExtra="4dp"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Alarms RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/alarmListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="88dp"
+            android:paddingHorizontal="16dp"
+            android:overScrollMode="never"/>
+
+    </LinearLayout>
+
+    <!-- Add Alarm Button - Fixed at bottom -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/addAlarmButton"
-        android:layout_width="84dp"
-        android:layout_height="84dp"
-        android:background="@drawable/add_alarm_button"
-        android:gravity="center"
-        android:textSize="50dp"
-        android:textAlignment="center"
-        android:padding="2dp"
-        android:layout_centerInParent="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="21dp"/>
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_margin="20dp"
+        android:text="New Alarm"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/md_theme_dark_onPrimaryContainer"
+        app:icon="@drawable/add_alarm_button"
+        app:iconGravity="textStart"
+        app:iconSize="28dp"
+        app:iconTint="@color/md_theme_dark_onPrimaryContainer"
+        app:backgroundTint="@color/md_theme_dark_primaryContainer"
+        app:cornerRadius="20dp"
+        app:elevation="8dp"
+        android:stateListAnimator="@null"/>
 
-</RelativeLayout>
+</LinearLayout>

@@ -1,21 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- Material Design 3 Color Palette -->
+    <!-- Primary Colors - Sunrise Orange Theme -->
+    <color name="md_theme_light_primary">#A05000</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#FFDCC2</color>
+    <color name="md_theme_light_onPrimaryContainer">#341100</color>
+    
+    <color name="md_theme_light_secondary">#735A48</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#FFDCC2</color>
+    <color name="md_theme_light_onSecondaryContainer">#2A1609</color>
+    
+    <color name="md_theme_light_tertiary">#5B6348</color>
+    <color name="md_theme_light_onTertiary">#FFFFFF</color>
+    <color name="md_theme_light_tertiaryContainer">#DFE9C6</color>
+    <color name="md_theme_light_onTertiaryContainer">#191E0A</color>
+    
+    <color name="md_theme_light_error">#BA1A1A</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+    <color name="md_theme_light_errorContainer">#FFDAD6</color>
+    <color name="md_theme_light_onErrorContainer">#410002</color>
+    
+    <color name="md_theme_light_background">#FFFBFF</color>
+    <color name="md_theme_light_onBackground">#201B16</color>
+    <color name="md_theme_light_surface">#FFFBFF</color>
+    <color name="md_theme_light_onSurface">#201B16</color>
+    <color name="md_theme_light_surfaceVariant">#F2DFD1</color>
+    <color name="md_theme_light_onSurfaceVariant">#51443A</color>
+    <color name="md_theme_light_outline">#847569</color>
+    <color name="md_theme_light_outlineVariant">#D5C3B5</color>
+    
+    <!-- Dark Theme Colors - Enhanced for Astronomy Theme -->
+    <color name="md_theme_dark_primary">#FFB86C</color>
+    <color name="md_theme_dark_onPrimary">#562000</color>
+    <color name="md_theme_dark_primaryContainer">#7B3800</color>
+    <color name="md_theme_dark_onPrimaryContainer">#FFDCC2</color>
+    
+    <color name="md_theme_dark_secondary">#E2C1A9</color>
+    <color name="md_theme_dark_onSecondary">#43291B</color>
+    <color name="md_theme_dark_secondaryContainer">#5C4231</color>
+    <color name="md_theme_dark_onSecondaryContainer">#FFDCC2</color>
+    
+    <color name="md_theme_dark_tertiary">#C3CCAC</color>
+    <color name="md_theme_dark_onTertiary">#2D331D</color>
+    <color name="md_theme_dark_tertiaryContainer">#434932</color>
+    <color name="md_theme_dark_onTertiaryContainer">#DFE9C6</color>
+    
+    <color name="md_theme_dark_error">#FFB4AB</color>
+    <color name="md_theme_dark_onError">#690005</color>
+    <color name="md_theme_dark_errorContainer">#93000A</color>
+    <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
+    
+    <color name="md_theme_dark_background">#0D0D0D</color>
+    <color name="md_theme_dark_onBackground">#EBE0DA</color>
+    <color name="md_theme_dark_surface">#1A1614</color>
+    <color name="md_theme_dark_onSurface">#EBE0DA</color>
+    <color name="md_theme_dark_surfaceVariant">#51443A</color>
+    <color name="md_theme_dark_onSurfaceVariant">#D5C3B5</color>
+    <color name="md_theme_dark_outline">#9D8E82</color>
+    <color name="md_theme_dark_outlineVariant">#51443A</color>
+    
+    <color name="md_theme_dark_surfaceContainerLowest">#0F0D0B</color>
+    <color name="md_theme_dark_surfaceContainerLow">#201B16</color>
+    <color name="md_theme_dark_surfaceContainer">#252016</color>
+    <color name="md_theme_dark_surfaceContainerHigh">#2F2A24</color>
+    <color name="md_theme_dark_surfaceContainerHighest">#3A352E</color>
+    
+    <!-- Legacy colors for compatibility -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary">#FF9853</color>
-    <color name="secondary">#B66D00</color>
-    <color name="grey">#434343</color>
-    <color name="background">#000000</color>
-    <color name="night_blue">#040348</color>
-
-    <color name="night">#000000</color>
-    <color name="astronomical">#1D2F4E</color>
-    <color name="nautical">#4B7DBF</color>
-    <color name="civil">#8FAFD9</color>
-    <color name="sunrise">#FF9853</color>
+    <color name="primary">#FFB86C</color>
+    <color name="secondary">#E2C1A9</color>
+    <color name="grey">#51443A</color>
+    <color name="background">#0D0D0D</color>
+    
+    <!-- Astronomy Theme Colors -->
+    <color name="night">#0D0D0D</color>
+    <color name="astronomical">#1A2332</color>
+    <color name="nautical">#2A3F5F</color>
+    <color name="civil">#5B728E</color>
+    <color name="sunrise">#FFB86C</color>
+    <color name="golden_hour">#FFA726</color>
+    <color name="day_sky">#64B5F6</color>
+    
+    <!-- Accent Colors -->
+    <color name="accent_amber">#FFB86C</color>
+    <color name="accent_coral">#FF8A65</color>
+    <color name="accent_rose">#F48FB1</color>
+    
+    <!-- Semantic Colors -->
+    <color name="success">#81C784</color>
+    <color name="warning">#FFB74D</color>
+    <color name="info">#64B5F6</color>
+    
+    <!-- Surface Tints -->
+    <color name="surface_tint_low">#1F1F1F</color>
+    <color name="surface_tint_medium">#2A2A2A</color>
+    <color name="surface_tint_high">#353535</color>
 </resources>

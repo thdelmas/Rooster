@@ -6,9 +6,12 @@ import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.widget.ImageButton
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import java.util.Calendar
@@ -25,6 +28,10 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.rooster.rooster.util.PermissionHelper
+import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.worker.WorkManagerHelper
 
 
 class MainActivity() : ComponentActivity() {
@@ -32,88 +39,99 @@ class MainActivity() : ComponentActivity() {
     val coarseLocationPermissionRequestCode = 1
     val notificationPermissionRequestCode = 2
     val fullScreenIntentPermissionRequestCode = 3
+    
+    private val handler = Handler(Looper.getMainLooper())
+    private var updateRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate started")
+        
+        // USE FIXED MAIN LAYOUT
         setContentView(R.layout.activity_main)
+        Log.d("MainActivity", "Layout set")
+        
+        // Setup toolbar
+        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.topAppBar)
+        toolbar?.setNavigationOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            it.postDelayed({
+                val alarmsListActivity = Intent(this, AlarmListActivity::class.java)
+                startActivity(alarmsListActivity)
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+            }, 150)
+        }
+        
         getPermissions()
         linkButtons()
         refreshCycle()
+        animateViews()
+        Log.d("MainActivity", "onCreate completed")
     }
 
     private fun getPermissions() {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(applicationContext)) {
-                // Overlay permission is not granted, show a pop-up to request it
-                showOverlayPermissionPopup()
-            }
+        // Check and request overlay permission
+        if (!PermissionHelper.isOverlayPermissionGranted(this)) {
+            showOverlayPermissionPopup()
         }
-
-        requestFullScreenIntentPermission(this) { granted ->
-            if (granted) {
-                // Full screen intent permission is granted, so show the PopTime dialog
-                Log.e("Rooster", "Full Screen Permission Granted")
-            } else {
-                // Full screen intent permission is not granted
-                Log.e("Rooster", "Full Screen Not Permission Granted")
-            }
+        
+        // Check and request exact alarm permission (Android 12+)
+        if (!PermissionHelper.isExactAlarmPermissionGranted(this)) {
+            showExactAlarmPermissionDialog()
         }
-        val permissionsToRequest = arrayOf(
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.POST_NOTIFICATIONS,
-            Manifest.permission.USE_FULL_SCREEN_INTENT,
-            Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.WAKE_LOCK,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.SCHEDULE_EXACT_ALARM,
-            Manifest.permission.FOREGROUND_SERVICE
-            )
-
-        val grantedPermissions = permissionsToRequest.filter {
-            ActivityCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
-        }
-
-        if (grantedPermissions.size < permissionsToRequest.size) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.filter { !grantedPermissions.contains(it) }.toTypedArray(),
-                REQUEST_CODE_PERMISSIONS
-            )
-        }
+        
+        // Request all other required permissions
+        PermissionHelper.requestAllPermissions(this)
     }
 
-    fun requestFullScreenIntentPermission(activity: Activity, callback: (Boolean) -> Unit) {
-        // Check if full screen intent permission is granted
-        val granted = ActivityCompat.checkSelfPermission(
-            activity,
-            Manifest.permission.USE_FULL_SCREEN_INTENT
-        ) == PackageManager.PERMISSION_GRANTED
-
-        // If full screen intent permission is not granted, request it
-        if (!granted) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.USE_FULL_SCREEN_INTENT),
-                0
-            )
-        } else {
-            // Full screen intent permission is already granted
-            callback(true)
+    private fun showExactAlarmPermissionDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Exact Alarm Permission Required")
+        builder.setMessage("Rooster needs permission to schedule exact alarms to wake you up at the precise time.\n\nThis ensures your alarm goes off exactly when you want it to.")
+        builder.setPositiveButton("Grant Permission") { dialog, _ ->
+            PermissionHelper.openExactAlarmSettings(this)
+            dialog.dismiss()
         }
+        builder.setNegativeButton("Skip") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.show()
     }
 
 
     private fun linkButtons() {
-        val settingsButton = findViewById<ImageButton>(R.id.settingsButton)
-        settingsButton.setOnClickListener {
-            val settingsActivity = Intent(applicationContext, SettingsActivity::class.java)
-            startActivity(settingsActivity);
+        val settingsButton = findViewById<View>(R.id.settingsButton)
+        settingsButton?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            it.postDelayed({
+                val settingsActivity = Intent(this, SettingsActivity::class.java)
+                startActivity(settingsActivity)
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+            }, 150)
         }
-        val alarmsButton = findViewById<ImageButton>(R.id.alarmButton)
-        alarmsButton.setOnClickListener {
-            val alarmsListActivity = Intent(applicationContext, AlarmListActivity::class.java)
-            startActivity(alarmsListActivity);
+        
+        val alarmsButton = findViewById<View>(R.id.alarmButton)
+        alarmsButton?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            it.postDelayed({
+                val alarmsListActivity = Intent(this, AlarmListActivity::class.java)
+                startActivity(alarmsListActivity)
+                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+            }, 150)
+        }
+    }
+    
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_settings -> {
+                val settingsActivity = Intent(this, SettingsActivity::class.java)
+                startActivity(settingsActivity)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
@@ -133,50 +151,40 @@ class MainActivity() : ComponentActivity() {
     private fun refreshCycle() {
         val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
         val progressText = findViewById<TextView>(R.id.progress_text)
-        val handler = Handler()
-        val delayMillis = 1000
+        val delayMillis = 1000L
         val maxProgress = 100
 
-        val updateRunnable = object : Runnable {
-            var i = 0
-
+        updateRunnable = object : Runnable {
             override fun run() {
                 val currentTime = System.currentTimeMillis()
-                val sdf = SimpleDateFormat("HH:mm")
+                val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                 val formattedTime = sdf.format(Date(currentTime))
                 val percentage = getPercentageOfDay().toLong()
-                if (percentage <= maxProgress) {
-                    progressText.text = formattedTime
-                    progressBar.progress = percentage.toInt()
-                    handler.postDelayed(this, delayMillis.toLong())
-                } else {
-                    // Reset progress bar and text
-                    progressBar.progress = 0
-                    progressText.text = "00:00"
-                    // Start the loop again
-                    handler.postDelayed(this, delayMillis.toLong())
-                }
+                
+                progressText.text = formattedTime
+                progressBar.progress = percentage.toInt()
+                
+                handler.postDelayed(this, delayMillis)
             }
         }
 
-        handler.post(updateRunnable)
+        updateRunnable?.let { handler.post(it) }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         Log.e("Rooster", "Permission Callback")
-        // Get the fused location provider.
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        // Schedule WorkManager tasks and trigger immediate updates
+        WorkManagerHelper.scheduleLocationUpdates(this)
+        WorkManagerHelper.scheduleAstronomyUpdates(this)
+        WorkManagerHelper.triggerLocationUpdate(this)
+        
+        // Get the fused location provider for initial location
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-
-        // Request location updates.
         val locationRequest = LocationRequest.create()
         locationRequest.interval = 10000 // milliseconds
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        val intentLocationService = Intent(this, LocationUpdateService::class.java)
-        startService(intentLocationService)
-        val intentAstronomyService = Intent(this, AstronomyUpdateService::class.java)
-        startService(intentAstronomyService)
     }
 
     private val locationCallback = object : LocationCallback() {
@@ -185,32 +193,74 @@ class MainActivity() : ComponentActivity() {
             super.onLocationResult(locationResult)
             val location = locationResult.lastLocation
             val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit()
-                .putFloat("altitude", location.altitude.toFloat())
-                .putFloat("longitude", location.longitude.toFloat())
-                .putFloat("latitude", location.latitude.toFloat())
-                .apply()
+            location?.let {
+                sharedPreferences.edit()
+                    .putFloat("altitude", it.altitude.toFloat())
+                    .putFloat("longitude", it.longitude.toFloat())
+                    .putFloat("latitude", it.latitude.toFloat())
+                    .apply()
+            }
         }
     }
 
     private fun showOverlayPermissionPopup() {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Overlay Permission Required")
-        builder.setMessage("This app need permissions to:\n\n  - Display alarms\n\n  - Stop alarms")
-        builder.setPositiveButton("Open Settings") { dialog, which ->
-            val intent = Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:" + applicationContext.packageName)
-            )
-            startActivityForResult(intent, 101)
+        builder.setTitle("Display Over Other Apps Permission")
+        builder.setMessage("Rooster needs this permission to:\n\n  • Display alarm screen when device is locked\n  • Show alarm controls\n  • Ensure you can dismiss alarms")
+        builder.setPositiveButton("Grant Permission") { dialog, _ ->
+            PermissionHelper.openOverlaySettings(this)
+            dialog.dismiss()
         }
-        builder.setNegativeButton("Cancel") { dialog, which ->
-            // Handle cancel button click if needed
+        builder.setNegativeButton("Skip") { dialog, _ ->
+            dialog.dismiss()
         }
         builder.show()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        // Clean up handler to prevent memory leaks
+        updateRunnable?.let { handler.removeCallbacks(it) }
+        updateRunnable = null
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Stop updates when app is in background
+        updateRunnable?.let { handler.removeCallbacks(it) }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // Resume updates when app comes to foreground
+        updateRunnable?.let { handler.post(it) }
+    }
+    
+    private fun animateViews() {
+        val timeCard = findViewById<View>(R.id.timeCard)
+        val infoCard = findViewById<View>(R.id.infoCard)
+        
+        timeCard?.let {
+            it.alpha = 0f
+            it.translationY = 30f
+            it.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(400)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
+        
+        infoCard?.let {
+            it.alpha = 0f
+            it.translationY = 30f
+            it.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(400)
+                .setStartDelay(100)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
     }
 }

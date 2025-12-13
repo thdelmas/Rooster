@@ -10,48 +10,77 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import kotlinx.coroutines.*
 
 class LocationUpdateService : Service() {
 
-    private val handler = Handler()
     private var locationManager: LocationManager? = null
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val delay = 3 * 60 * 60 * 1000
-        //val delay = 1000
+        val delay = 3 * 60 * 60 * 1000L // 3 hours
+        
         getLastKnownPosition()
-        Log.i("Rooster Location Service", "Started")
-        // Post a runnable to get the last known position every 3 hours.
-        handler.postDelayed({
-            Log.i("Rooster Location Service", "Running")
-            getLastKnownPosition()
-        }, delay.toLong())
+        Log.i("LocationUpdateService", "Started")
+        
+        // Use coroutines for periodic updates
+        serviceScope.launch {
+            while (isActive) {
+                delay(delay)
+                Log.i("LocationUpdateService", "Running periodic update")
+                getLastKnownPosition()
+            }
+        }
 
         return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
         Log.i("Rooster Location Service", "Bind")
-        TODO("Not yet implemented")
+        // This service is not designed to be bound, return null
+        return null
     }
 
     private fun getLastKnownPosition() {
         // Check for location permission before requesting updates.
-        if (isLocationPermissionGranted()) {
-            var lastLocataion = locationManager?.getLastKnownLocation("NETWORK")
-            locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            locationManager?.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                0, 0f, networkLocationListener
-            )
-        } else {
-            // Handle the case where permission is not granted.
-            Log.e("GPS Update", "Location permission not granted")
+        if (!isLocationPermissionGranted()) {
+            Log.e("LocationUpdateService", "Location permission not granted")
+            return
         }
+        
+        try {
+            locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            
+            locationManager?.let { manager ->
+                // Try to get last known location first
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    val lastLocation = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                    lastLocation?.let { updateLocation(it) }
+                }
+                
+                // Request new location updates
+                manager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    0, 0f, networkLocationListener
+                )
+            }
+        } catch (e: SecurityException) {
+            Log.e("LocationUpdateService", "Security exception getting location", e)
+        }
+    }
+    
+    private fun updateLocation(location: Location) {
+        Log.i("LocationUpdateService", "Location updated: ${location.latitude}, ${location.longitude}")
+        
+        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+        sharedPreferences.edit()
+            .putFloat("altitude", location.altitude.toFloat())
+            .putFloat("longitude", location.longitude.toFloat())
+            .putFloat("latitude", location.latitude.toFloat())
+            .apply()
     }
 
     private fun isLocationPermissionGranted(): Boolean {
@@ -61,26 +90,29 @@ class LocationUpdateService : Service() {
 
     private val networkLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            // Handle the network location update here.
-            Log.e("Network Location Update", location.toString())
+            Log.i("LocationUpdateService", "Location changed: $location")
+            updateLocation(location)
 
-            // Store the altitude, longitude, and latitude in shared prefs.
-            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit()
-                .putFloat("altitude", location.altitude.toFloat())
-                .putFloat("longitude", location.longitude.toFloat())
-                .putFloat("latitude", location.latitude.toFloat())
-                .apply()
-
+            // Trigger astronomy data update
             val intent = Intent(applicationContext, AstronomyUpdateService::class.java)
             intent.putExtra("syncData", true)
             startService(intent)
+            
+            // Remove location updates after successful update to save battery
+            locationManager?.removeUpdates(this)
         }
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            Log.d("LocationUpdateService", "Provider status changed: $provider, status: $status")
+        }
     }
 
-    // Handle the permission request result in onRequestPermissionsResult method.
-
+    override fun onDestroy() {
+        super.onDestroy()
+        locationManager?.removeUpdates(networkLocationListener)
+        serviceScope.cancel()
+        Log.i("LocationUpdateService", "Service destroyed")
+    }
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 1

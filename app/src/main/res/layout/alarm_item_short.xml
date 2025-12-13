@@ -6,153 +6,177 @@
     android:id="@+id/alarmContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:layout_margin="4dp"
-    android:padding="8dp"
-    android:background="@drawable/rounded_background">
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/alarmBanner"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginVertical="8dp"
+        android:layout_marginHorizontal="4dp"
+        app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="3dp"
+        app:strokeWidth="0dp">
 
-        <Button
-            android:id="@+id/textViewAlarmLabel"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/background"
-            android:padding="8dp"
-            android:text="My Super Alarm"
-            android:textColor="@color/primary"
-            android:textSize="14dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <ImageButton
-            android:id="@+id/expandButton"
-            android:layout_height="21dp"
-            android:layout_width="21dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:layout_margin="14dp"
-            android:padding="21dp"
-            android:background="@color/night"
-            android:src="@drawable/down_arrow"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- Alarm Time -->
+            <!-- Header Row -->
+            <LinearLayout
+                android:id="@+id/alarmBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
 
-    <LinearLayout
-        android:id="@+id/timePickRaw"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingVertical="8dp">
+                <!-- Alarm Label -->
+                <TextView
+                    android:id="@+id/textViewAlarmLabel"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Morning Alarm"
+                    android:textColor="@color/md_theme_dark_onSurface"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
 
-        <TextView
-            android:id="@+id/tvAlarmTime0"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="At"
-            android:textColor="@color/primary" />
+                <!-- Expand/Collapse Button -->
+                <ImageButton
+                    android:id="@+id/expandButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/down_arrow"
+                    android:background="@drawable/ripple_circular"
+                    android:tint="@color/md_theme_dark_primary"
+                    android:scaleType="centerInside"
+                    android:padding="8dp"
+                    android:contentDescription="Expand alarm details"/>
 
-        <TextView
-            android:id="@+id/tvAlarmTime1"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="00:00"
-            android:padding="8dp"
-            android:layout_margin="8dp"
-            android:textColor="@color/primary"
-            android:visibility="gone"/>
+            </LinearLayout>
+
+            <!-- Time Display Row -->
+            <LinearLayout
+                android:id="@+id/timePickRaw"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tvAlarmTime0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="At"
+                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvAlarmTime1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00"
+                    android:textColor="@color/md_theme_dark_primary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:visibility="gone"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvAlarmTime2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="8:30 AM"
+                    android:textColor="@color/md_theme_dark_primary"
+                    android:textAppearance="@style/TextAppearance.Rooster.DisplayLarge"
+                    android:textSize="40sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/tvAlarmTime3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00 AM"
+                    android:textColor="@color/md_theme_dark_primary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:visibility="gone"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvAlarmTime4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00 AM"
+                    android:textColor="@color/md_theme_dark_primary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:visibility="gone"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvAlarmTime5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00:00 AM"
+                    android:textColor="@color/md_theme_dark_primary"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+
+            <!-- Calculated Time Display -->
             <TextView
-                android:id="@+id/tvAlarmTime2"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="8:30 AM"
-                android:gravity="center"
-                android:textColor="@color/primary"/>
+                android:id="@+id/calculatedTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="32sp"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textStyle="bold"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp"/>
 
-        <TextView
-            android:id="@+id/tvAlarmTime3"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="00:00 AM"
-            android:textColor="@color/primary"
-            android:visibility="gone"/>
+            <!-- Bottom Row - Enable Switch -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/tvAlarmTime4"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="00:00 AM"
-            android:textColor="@color/primary"
-            android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/tvAlarmEnabled"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Enabled"
+                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"/>
 
-        <TextView
-            android:id="@+id/tvAlarmTime5"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="00:00 AM"
-            android:textColor="@color/primary"
-            android:visibility="gone"/>
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchAlarmEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    app:thumbTint="@color/md_theme_dark_onPrimaryContainer"
+                    app:trackTint="@color/md_theme_dark_primaryContainer"
+                    tools:ignore="TouchTargetSizeCheck"/>
 
-    </LinearLayout>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/calculatedTime"
-        android:textSize="42dp"
-        android:visibility="gone"
-        android:textColor="@color/primary"/>
+            </LinearLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            <!-- Extended Details Section -->
+            <include 
+                layout="@layout/alarm_item_extended"
+                android:id="@+id/alarmExtension"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
 
-        <TextView
-            android:id="@+id/tvAlarmEnabled"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_centerInParent="true"
-            android:text="Enabled"
-            android:textColor="@color/primary"
-            android:textSize="16dp"
-            android:padding="2dp"/>
+        </LinearLayout>
 
-        <Switch
-            android:id="@+id/switchAlarmEnabled"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:checked="true"
-            android:scaleX="1.4"
-            android:scaleY="1.4"
-            android:textColor="@color/primary"
-            tools:ignore="TouchTargetSizeCheck" />
+    </com.google.android.material.card.MaterialCardView>
 
-    </RelativeLayout>
-    <include layout="@layout/alarm_item_extended"
-        android:id="@+id/alarmExtension"
-        android:visibility="gone"
-        />
 </LinearLayout>

@@ -18,7 +18,7 @@ class AlarmCreation(
     var calculatedTime: Long
     )
 
-class Alarm(
+data class Alarm(
     val id: Long,
     var label: String,
     var enabled: Boolean,
@@ -35,7 +35,13 @@ class Alarm(
     var thursday: Boolean,
     var friday: Boolean,
     var saturday: Boolean,
-    var sunday: Boolean
+    var sunday: Boolean,
+    var vibrate: Boolean = true,
+    var snoozeEnabled: Boolean = true,
+    var snoozeDuration: Int = 10,
+    var snoozeCount: Int = 3,
+    var volume: Int = 80,
+    var gradualVolume: Boolean = false
 ) {
     fun setDayEnabled(day: String, checked: Boolean) {
         when (day) {
@@ -51,7 +57,7 @@ class Alarm(
     }
 
     fun getDayEnabled(d: String): Boolean {
-        val day = d.toLowerCase() // Convert input string to lowercase
+        val day = d.lowercase() // Convert input string to lowercase
 
         return when (day) {
             "monday" -> this.monday
@@ -65,13 +71,13 @@ class Alarm(
         }
     }
 
-    fun getFormattedTime(timeInSec: Long, dst: Boolean): CharSequence? {
-        val fullDateFormat = SimpleDateFormat("HH:mm")
-        var calendar = Calendar.getInstance()
+    fun getFormattedTime(timeInSec: Long, dst: Boolean): String {
+        val fullDateFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val calendar = Calendar.getInstance()
         calendar.timeInMillis = timeInSec // Convert seconds to milliseconds
         // Consider daylight saving time (DST)
         // Adjust the calendar based on the input time zone's DST offset
-        if (dst == true) {
+        if (dst) {
             val timeZone = TimeZone.getTimeZone("GMT")
             fullDateFormat.timeZone = timeZone
             if (timeZone.inDaylightTime(calendar.time)) {

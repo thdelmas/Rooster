@@ -12,9 +12,9 @@
         android:useLevel="true">
         <gradient
             android:angle="0"
-            android:endColor="@color/night_blue"
-            android:startColor="@color/night_blue"
-            android:centerColor="@color/primary"
+            android:endColor="@color/astronomical"
+            android:startColor="@color/astronomical"
+            android:centerColor="@color/md_theme_dark_primary"
             android:type="sweep"
             android:useLevel="false" />
     </shape>
