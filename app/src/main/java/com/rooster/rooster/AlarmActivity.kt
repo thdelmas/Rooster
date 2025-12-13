@@ -1,5 +1,7 @@
 package com.rooster.rooster
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -7,6 +9,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.PowerManager
@@ -20,11 +23,14 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -45,6 +51,8 @@ class AlarmActivity : FragmentActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var currentAlarm: Alarm? = null
+    private var refreshJob: Job? = null
+    private var volumeIncreaseJob: Job? = null
 
     // Assume AlarmDbHelper is a helper class for database operations
     private lateinit var alarmDbHelper: AlarmDbHelper
@@ -124,11 +132,18 @@ class AlarmActivity : FragmentActivity() {
     private fun wakePhone() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        wakeLock = powerManager.newWakeLock(
-            PowerManager.PARTIAL_WAKE_LOCK or
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                    PowerManager.ON_AFTER_RELEASE, "rooster:wakelock"
-        ).apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
+        
+        try {
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK or
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE, "rooster:wakelock"
+            )
+            wakeLock?.acquire(10 * 60 * 1000L /*10 minutes*/)
+        } catch (e: Exception) {
+            Log.e("AlarmActivity", "Error acquiring wake lock", e)
+            // Continue without wake lock - screen should still turn on
+        }
     }
 
     private fun playRingtone(ringtoneUri: String, alarm: Alarm) {
@@ -143,7 +158,14 @@ class AlarmActivity : FragmentActivity() {
         val uri = when {
             ringtoneUri.isEmpty() || ringtoneUri.equals("default", ignoreCase = true) || ringtoneUri == "Default" -> 
                 Uri.parse("android.resource://$packageName/raw/alarmclock")
-            else -> Uri.parse(ringtoneUri)
+            else -> {
+                try {
+                    Uri.parse(ringtoneUri)
+                } catch (e: Exception) {
+                    Log.w("AlarmActivity", "Invalid ringtone URI: $ringtoneUri, using default", e)
+                    Uri.parse("android.resource://$packageName/raw/alarmclock")
+                }
+            }
         }
 
         try {
@@ -158,36 +180,87 @@ class AlarmActivity : FragmentActivity() {
                         .setUsage(AudioAttributes.USAGE_ALARM)
                         .build()
                 )
-                setDataSource(applicationContext, uri)
-                setOnErrorListener { _, what, extra ->
-                    Log.e("AlarmActivity", "MediaPlayer error - What: $what, Extra: $extra")
-                    true
-                }
-                setOnPreparedListener { 
-                    Log.i("AlarmActivity", "MediaPlayer prepared, starting playback")
-                    setVolume(currentVolume, currentVolume)
-                    start()
-                    
-                    // Start gradual volume increase if enabled
-                    if (alarm.gradualVolume) {
-                        startGradualVolumeIncrease(targetVolume)
+                
+                var dataSourceSet = false
+                try {
+                    setDataSource(applicationContext, uri)
+                    dataSourceSet = true
+                } catch (e: Exception) {
+                    Log.e("AlarmActivity", "Error setting data source with URI: $uri", e)
+                    // Fallback to default ringtone
+                    try {
+                        val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                        setDataSource(applicationContext, defaultUri)
+                        dataSourceSet = true
+                        Log.i("AlarmActivity", "Using default ringtone as fallback")
+                    } catch (fallbackException: Exception) {
+                        Log.e("AlarmActivity", "Error setting default ringtone", fallbackException)
+                        dataSourceSet = false
                     }
                 }
+                
+                if (!dataSourceSet) {
+                    release()
+                    mediaPlayer = null
+                    Log.e("AlarmActivity", "Failed to set data source, alarm will only vibrate")
+                    return
+                }
+                
+                setOnErrorListener { mp, what, extra ->
+                    Log.e("AlarmActivity", "MediaPlayer error - What: $what, Extra: $extra")
+                    // Try to recover by using default ringtone
+                    try {
+                        mp?.reset()
+                        val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                        mp?.setDataSource(applicationContext, defaultUri)
+                        mp?.prepareAsync()
+                        Log.i("AlarmActivity", "Attempting recovery with default ringtone")
+                    } catch (e: Exception) {
+                        Log.e("AlarmActivity", "Failed to recover from MediaPlayer error", e)
+                    }
+                    true // Error handled
+                }
+                
+                setOnPreparedListener { mp ->
+                    try {
+                        Log.i("AlarmActivity", "MediaPlayer prepared, starting playback")
+                        mp.setVolume(currentVolume, currentVolume)
+                        mp.start()
+                        
+                        // Start gradual volume increase if enabled
+                        if (alarm.gradualVolume) {
+                            startGradualVolumeIncrease(targetVolume)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AlarmActivity", "Error starting MediaPlayer", e)
+                    }
+                }
+                
                 isLooping = true
                 prepareAsync() // Use async preparation for better performance
             }
         } catch (e: Exception) {
             Log.e("AlarmActivity", "Error initializing MediaPlayer", e)
+            // Ensure vibration continues even if audio fails
+            if (alarm.vibrate && vibrator == null) {
+                vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                val pattern = longArrayOf(0, 1000, 1000)
+                vibrator?.vibrate(pattern, 0)
+            }
         }
     }
     
     private fun startGradualVolumeIncrease(targetVolume: Float) {
-        CoroutineScope(Dispatchers.Main).launch {
+        // Cancel any existing volume increase job
+        volumeIncreaseJob?.cancel()
+        
+        volumeIncreaseJob = lifecycleScope.launch {
             val steps = 30 // Increase over 30 seconds
             val increment = (targetVolume - currentVolume) / steps
             
             repeat(steps) {
-                if (alarmIsRunning && currentVolume < targetVolume) {
+                if (!isActive || !alarmIsRunning) return@launch
+                if (currentVolume < targetVolume) {
                     currentVolume += increment
                     mediaPlayer?.setVolume(currentVolume, currentVolume)
                     delay(1000L)
@@ -195,7 +268,7 @@ class AlarmActivity : FragmentActivity() {
             }
             
             // Ensure we reach target volume
-            if (alarmIsRunning) {
+            if (isActive && alarmIsRunning) {
                 currentVolume = targetVolume
                 mediaPlayer?.setVolume(currentVolume, currentVolume)
             }
@@ -204,6 +277,7 @@ class AlarmActivity : FragmentActivity() {
     
     private fun snoozeAlarm() {
         if (snoozeCount >= maxSnoozeCount) {
+            Log.w("AlarmActivity", "Max snooze count reached: $snoozeCount/$maxSnoozeCount")
             return
         }
         
@@ -216,16 +290,51 @@ class AlarmActivity : FragmentActivity() {
         alarmIsRunning = false
         releaseResources()
         
-        // Schedule snooze
+        // Schedule snooze using AlarmManager for reliability
         currentAlarm?.let { alarm ->
-            val handler = Handler(mainLooper)
-            handler.postDelayed({
-                // Re-trigger alarm after snooze
-                val intent = Intent(this, AlarmActivity::class.java)
-                intent.putExtra("alarm_id", alarmId.toString())
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                startActivity(intent)
-            }, snoozeDuration * 60 * 1000L)
+            try {
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                if (alarmManager == null) {
+                    Log.e("AlarmActivity", "AlarmManager is null, cannot schedule snooze")
+                    finish()
+                    return
+                }
+                
+                val snoozeTime = System.currentTimeMillis() + (snoozeDuration * 60 * 1000L)
+                
+                val intent = Intent(this, AlarmclockReceiver::class.java).apply {
+                    putExtra("message", "alarm time")
+                    putExtra("alarm_id", alarmId.toString())
+                    action = "com.rooster.alarmmanager"
+                }
+                
+                // Use unique request code for snooze (negative to distinguish from regular alarms)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    this,
+                    (-alarmId).toInt(),
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                
+                // Schedule snooze alarm
+                when {
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+                    }
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> {
+                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+                    }
+                    else -> {
+                        alarmManager.set(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
+                    }
+                }
+                
+                Log.i("AlarmActivity", "Snooze alarm scheduled for ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(snoozeTime))}")
+            } catch (e: SecurityException) {
+                Log.e("AlarmActivity", "Permission denied for exact alarm (snooze)", e)
+            } catch (e: Exception) {
+                Log.e("AlarmActivity", "Error scheduling snooze alarm", e)
+            }
         }
         
         finish()
@@ -234,35 +343,59 @@ class AlarmActivity : FragmentActivity() {
     // Remaining methods including refreshCycle, getPercentageOfDay, stopAlarm, onResume, onPause, releaseResources...
 
     private fun releaseResources() {
+        // Release MediaPlayer with proper error handling
         try {
             mediaPlayer?.apply {
-                if (isPlaying) stop()
-                release()
+                if (isPlaying) {
+                    try {
+                        stop()
+                    } catch (e: Exception) {
+                        Log.w("AlarmActivity", "Error stopping MediaPlayer", e)
+                    }
+                }
+                try {
+                    release()
+                } catch (e: Exception) {
+                    Log.w("AlarmActivity", "Error releasing MediaPlayer", e)
+                }
             }
         } catch (e: Exception) {
-            Log.e("AlarmActivity", "Error releasing MediaPlayer", e)
+            Log.e("AlarmActivity", "Error in MediaPlayer cleanup", e)
         } finally {
             mediaPlayer = null
         }
         
-        try {
-            wakeLock?.let {
-                if (it.isHeld) {
-                    it.release()
+        // Release WakeLock with proper error handling
+        val lock = wakeLock
+        if (lock != null) {
+            try {
+                if (lock.isHeld) {
+                    lock.release()
+                    Log.d("AlarmActivity", "WakeLock released")
                 }
+            } catch (e: Exception) {
+                Log.e("AlarmActivity", "Error releasing WakeLock", e)
             }
-        } catch (e: Exception) {
-            Log.e("AlarmActivity", "Error releasing WakeLock", e)
-        } finally {
-            wakeLock = null
         }
+        wakeLock = null
         
-        vibrator?.cancel()
-        vibrator = null
+        // Cancel vibration
+        try {
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            Log.w("AlarmActivity", "Error cancelling vibrator", e)
+        } finally {
+            vibrator = null
+        }
     }
     
     override fun onDestroy() {
         super.onDestroy()
+        // Cancel all coroutines to prevent memory leaks
+        refreshJob?.cancel()
+        volumeIncreaseJob?.cancel()
+        refreshJob = null
+        volumeIncreaseJob = null
         releaseResources()
         Log.i("AlarmActivity", "Activity destroyed")
     }
@@ -285,8 +418,11 @@ class AlarmActivity : FragmentActivity() {
         val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
         val progressText = findViewById<TextView>(R.id.progress_text)
 
-        CoroutineScope(Dispatchers.Main).launch {
-            while (alarmIsRunning) {
+        // Cancel any existing refresh job
+        refreshJob?.cancel()
+        
+        refreshJob = lifecycleScope.launch {
+            while (alarmIsRunning && isActive) {
                 val currentTime = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                 val formattedTime = sdf.format(Date(currentTime))
