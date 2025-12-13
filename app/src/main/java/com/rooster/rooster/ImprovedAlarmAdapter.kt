@@ -21,7 +21,6 @@ class ImprovedAlarmAdapter(
 ) : RecyclerView.Adapter<ImprovedAlarmAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val alarmContainer: LinearLayout = itemView.findViewById(R.id.alarmContainer)
         val alarmCard: MaterialCardView = itemView.findViewById(R.id.alarmCard)
         val modeBadge: MaterialCardView = itemView.findViewById(R.id.modeBadge)
         val modeBadgeText: TextView = itemView.findViewById(R.id.modeBadgeText)
@@ -40,7 +39,7 @@ class ImprovedAlarmAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val alarm = alarmList[position]
-        val context = holder.alarmContainer.context
+        val context = holder.alarmCard.context
 
         // Animate card entry
         holder.alarmCard.alpha = 0f
