@@ -49,25 +49,36 @@ class AlarmListActivity : AppCompatActivity() {
     }
 
     private fun linkButtons() {
-        val addAlarmButton = findViewById<Button>(R.id.addAlarmButton)
+        val addAlarmButton = findViewById<com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>(R.id.addAlarmButton)
         addAlarmButton.setOnClickListener {
             HapticFeedbackHelper.performHeavyClick(it)
             HapticFeedbackHelper.performSuccessFeedback(this)
             AnimationHelper.scaleWithBounce(it)
-            // Create alarm and open editor
-            val alarm = AlarmCreation("Alarm", false, "At", "Default", "Pick Time", "Pick Time", 0, 0, 0)
-            val alarmId = viewModel.insertAlarm(alarm)
-            // Wait a moment for insertion, then open editor
-            it.postDelayed({
-                val allAlarms = alarmDbHelper.getAllAlarms()
-                val newAlarm = allAlarms.maxByOrNull { it.id }
-                newAlarm?.let { alarm ->
-                    val intent = android.content.Intent(this, AlarmEditorActivity::class.java)
-                    intent.putExtra("alarm_id", alarm.id)
-                    startActivity(intent)
-                }
-            }, 200)
+            createNewAlarm()
         }
+        
+        // Empty state button
+        findViewById<com.google.android.material.button.MaterialButton>(R.id.emptyStateButton)?.setOnClickListener {
+            HapticFeedbackHelper.performHeavyClick(it)
+            HapticFeedbackHelper.performSuccessFeedback(this)
+            AnimationHelper.scaleWithBounce(it)
+            createNewAlarm()
+        }
+    }
+    
+    private fun createNewAlarm() {
+        val alarm = AlarmCreation("Alarm", false, "At", "Default", "Pick Time", "Pick Time", 0, 0, 0)
+        val alarmId = viewModel.insertAlarm(alarm)
+        // Wait a moment for insertion, then open editor
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            val allAlarms = alarmDbHelper.getAllAlarms()
+            val newAlarm = allAlarms.maxByOrNull { it.id }
+            newAlarm?.let { alarm ->
+                val intent = android.content.Intent(this, AlarmEditorActivity::class.java)
+                intent.putExtra("alarm_id", alarm.id)
+                startActivity(intent)
+            }
+        }, 200)
     }
 
     private fun updateAlarmList(alarms: List<Alarm>) {
