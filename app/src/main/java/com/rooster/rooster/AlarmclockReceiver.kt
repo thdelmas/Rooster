@@ -10,15 +10,25 @@ import android.os.Handler
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.os.postDelayed
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AlarmclockReceiver : BroadcastReceiver() {
     private var alarmHandler = AlarmHandler()
     override fun onReceive(context: Context, intent: Intent) {
-        Log.e("RECEIVER", "RECEIVED WELL")
+        Log.i("AlarmclockReceiver", "Received broadcast: ${intent?.action}")
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
-            val alarmId = intent.getStringExtra("alarm_id")!!
-                .toLong() // -1 is a default value if "alarm_id" is not found
-            Log.e("Alarmclock Reciever", "Alarm id: $alarmId")
+            // Safe null handling - validate alarm_id before use
+            val alarmIdStr = intent.getStringExtra("alarm_id")
+            val alarmId = alarmIdStr?.toLongOrNull()
+            
+            if (alarmId == null || alarmId <= 0) {
+                Log.e("AlarmclockReceiver", "Invalid or missing alarm_id: $alarmIdStr")
+                return
+            }
+            
+            Log.i("AlarmclockReceiver", "Processing alarm id: $alarmId")
 
             // Create a notification channel.
             val notificationChannel =
@@ -57,13 +67,29 @@ class AlarmclockReceiver : BroadcastReceiver() {
             // Show the notification.
             notificationManager.notify(1, notification)
             context.applicationContext.startActivity(alarmActivityIntent)
-            val handler = Handler()
-            val delay = 30 * 1000L
-            handler.postDelayed({
-                alarmHandler.setNextAlarm(context)
-            }, delay)
+            
+            // Schedule next alarm immediately instead of delayed to avoid race conditions
+            // Use coroutine scope for async operations
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    alarmHandler.setNextAlarm(context)
+                    Log.i("AlarmclockReceiver", "Next alarm scheduled successfully")
+                } catch (e: Exception) {
+                    Log.e("AlarmclockReceiver", "Error scheduling next alarm", e)
+                }
+            }
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-            alarmHandler.setNextAlarm(context)
+            Log.i("AlarmclockReceiver", "Boot completed, rescheduling alarms")
+            // Use coroutine scope for async operations
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    // Validate and reschedule all alarms on boot
+                    alarmHandler.setNextAlarm(context)
+                    Log.i("AlarmclockReceiver", "Alarms rescheduled after boot")
+                } catch (e: Exception) {
+                    Log.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
+                }
+            }
         }
     }
 }
