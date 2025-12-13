@@ -1,13 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme.FullScreen" parent="@style/Theme.AppCompat.Light">
+    <!-- Base Material Design 3 Dark Theme -->
+    <style name="Base.Theme.Rooster" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Primary colors -->
+        <item name="colorPrimary">@color/md_theme_dark_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_dark_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_dark_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_dark_onPrimaryContainer</item>
+        
+        <!-- Secondary colors -->
+        <item name="colorSecondary">@color/md_theme_dark_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_dark_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_dark_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_dark_onSecondaryContainer</item>
+        
+        <!-- Tertiary colors -->
+        <item name="colorTertiary">@color/md_theme_dark_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_dark_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_dark_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_dark_onTertiaryContainer</item>
+        
+        <!-- Error colors -->
+        <item name="colorError">@color/md_theme_dark_error</item>
+        <item name="colorOnError">@color/md_theme_dark_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_dark_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_dark_onErrorContainer</item>
+        
+        <!-- Surface colors -->
+        <item name="colorSurface">@color/md_theme_dark_surface</item>
+        <item name="colorOnSurface">@color/md_theme_dark_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_dark_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_dark_onSurfaceVariant</item>
+        
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/md_theme_dark_background</item>
+        <item name="colorOnBackground">@color/md_theme_dark_onBackground</item>
+        
+        <!-- Outline colors -->
+        <item name="colorOutline">@color/md_theme_dark_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_dark_outlineVariant</item>
+        
+        <!-- Status bar -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        
+        <!-- Navigation bar -->
+        <item name="android:navigationBarColor">@color/md_theme_dark_surface</item>
+        
+        <!-- Material3 shape theming -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Rooster.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Rooster.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Rooster.LargeComponent</item>
+    </style>
+    
+    <style name="Theme.Rooster" parent="Base.Theme.Rooster">
+        <!-- Customize further if needed -->
+    </style>
+    
+    <!-- Full Screen Theme for Alarm/Ringtone Activities -->
+    <style name="AppTheme.FullScreen" parent="Base.Theme.Rooster">
         <item name="windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
-    <style name="Theme.MyApplication" parent="android:Theme.Material.Light.NoActionBar" />
-    <style name="mySpinnerItemStyle" parent="@android:style/Widget.Holo.DropDownItem.Spinner">
+    
+    <!-- Alarm List Theme -->
+    <style name="AppTheme.AlarmList" parent="Base.Theme.Rooster">
+        <item name="android:windowBackground">@color/astronomical</item>
+    </style>
+    
+    <!-- Shape Appearance Styles -->
+    <style name="ShapeAppearance.Rooster.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Rooster.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    
+    <style name="ShapeAppearance.Rooster.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+    
+    <!-- Card Style -->
+    <style name="Widget.Rooster.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">4dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardBackgroundColor">@color/md_theme_dark_surfaceContainer</item>
+        <item name="contentPadding">16dp</item>
+    </style>
+    
+    <!-- Button Styles -->
+    <style name="Widget.Rooster.Button.Filled" parent="Widget.Material3.Button">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <style name="Widget.Rooster.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="cornerRadius">16dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="strokeWidth">2dp</item>
+    </style>
+    
+    <style name="Widget.Rooster.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+    
+    <style name="Widget.Rooster.Button.Icon" parent="Widget.Material3.Button.IconButton">
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+    
+    <!-- FAB Style -->
+    <style name="Widget.Rooster.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Primary">
+        <item name="shapeAppearance">@style/ShapeAppearance.Rooster.MediumComponent</item>
+        <item name="elevation">6dp</item>
+    </style>
+    
+    <!-- Text Styles -->
+    <style name="TextAppearance.Rooster.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="fontFamily">sans-serif-light</item>
+    </style>
+    
+    <style name="TextAppearance.Rooster.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+    
+    <style name="TextAppearance.Rooster.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+    </style>
+    
+    <style name="TextAppearance.Rooster.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+    
+    <!-- Spinner Style -->
+    <style name="mySpinnerItemStyle" parent="@android:style/Widget.Material.DropDownItem.Spinner">
         <item name="android:textColor">@color/primary</item>
     </style>
+    
+    <!-- Legacy Application Theme -->
+    <style name="Theme.MyApplication" parent="Base.Theme.Rooster" />
 </resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WheelTimePicker">
+        <attr name="visibleItems" format="integer" />
+        <attr name="textSize" format="dimension" />
+        <attr name="selectedTextColor" format="color" />
+        <attr name="textColor" format="color" />
+    </declare-styleable>
+</resources>
+
+

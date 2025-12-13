@@ -1,103 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    tools:context=".MainActivity"
-    android:background="@color/night">
+    android:background="@color/night"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/sunEmojiTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="☀️"
-        android:layout_alignParentTop="true"
-        android:textSize="40sp"
-        android:layout_centerInParent="true"
-        android:gravity="center"
-        android:layout_marginTop="42dp"/>
-
-    <TextView
-        android:id="@+id/dayStartsTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="The Day Starts !"
-        android:textSize="20sp"
-        android:textColor="@color/primary"
-        android:layout_below="@id/sunEmojiTextView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:gravity="center"/>
-
-    <RelativeLayout
-        android:id="@+id/progress_layout"
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_centerInParent="true"
-        android:padding="21dp"
-        android:layout_marginVertical="126dp">
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
-        <!--progress bar implementation-->
-        <ProgressBar
-            android:id="@+id/progress_cycle"
-            style="?android:attr/progressBarStyleHorizontal"
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+            app:navigationIconTint="@color/md_theme_dark_primary"
+            app:title="Alarm Ringing"
+            app:titleTextColor="@color/md_theme_dark_onBackground"
+            style="@style/Widget.Material3.Toolbar"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/circular_shape"
-            android:indeterminate="false"
-            android:progressDrawable="@drawable/circle_progress_bar"
-            android:textAlignment="center" />
-
-        <!--Text implementation in center of the progress bar-->
-        <TextView
-            android:id="@+id/progress_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
+            android:orientation="vertical"
             android:gravity="center"
-            android:text="--:--"
-            android:textColor="@color/primary"
-            android:textSize="63sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+            android:padding="32dp">
 
+            <!-- Sun Icon Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="24dp">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="168dp"
-        android:layout_alignParentBottom="true"
-        android:gravity="center">
+                <TextView
+                    android:id="@+id/sunEmojiTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:text="☀️"
+                    android:textSize="64sp"
+                    android:gravity="center"/>
 
-    <SeekBar
-        android:id="@+id/seekBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:max="100"
-        android:progress="0"
-        android:thumb="@drawable/sun_pic"
-        android:progressBackgroundTint="@color/civil"
-        android:progressTint="@color/primary"
-        android:padding="21dp"
-        android:layout_marginHorizontal="42dp" />
+            </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/slideText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Slide to stop the alarm"
-            android:textSize="20sp"
-            android:textColor="@color/primary"
-            android:layout_below="@id/seekBar"
-            android:layout_centerHorizontal="true"
-            android:gravity="center"
-            android:layout_margin="42dp"/>
+            <!-- Title -->
+            <TextView
+                android:id="@+id/dayStartsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="The Day Starts!"
+                android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+                android:textColor="@color/md_theme_dark_primary"
+                android:layout_marginBottom="48dp"
+                android:gravity="center"/>
 
-    </RelativeLayout>
+            <!-- Progress Circle Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="6dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="48dp">
 
-</RelativeLayout>
+                <RelativeLayout
+                    android:id="@+id/progress_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="40dp">
+
+                    <!-- Circular Progress Bar -->
+                    <ProgressBar
+                        android:id="@+id/progress_cycle"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_centerInParent="true"
+                        android:indeterminate="false"
+                        android:progressDrawable="@drawable/progress_circular"
+                        android:max="100"
+                        android:progress="0"/>
+
+                    <!-- Time Display -->
+                    <TextView
+                        android:id="@+id/progress_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:text="--:--"
+                        android:textColor="@color/md_theme_dark_primary"
+                        android:textSize="64sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-light"/>
+
+                </RelativeLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Spacer to push slider to bottom -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <!-- Snooze Button -->
+            <Button
+                android:id="@+id/snoozeButton"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Snooze"
+                android:textSize="18sp"
+                android:textColor="@color/md_theme_dark_onPrimaryContainer"
+                android:background="@color/md_theme_dark_primaryContainer"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Slider Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainer"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:id="@+id/slideText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Slide to stop the alarm"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textColor="@color/md_theme_dark_onSurface"
+                        android:gravity="center"
+                        android:layout_marginBottom="16dp"/>
+
+                    <SeekBar
+                        android:id="@+id/seekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"
+                        android:progress="0"
+                        android:thumb="@drawable/seekbar_thumb"
+                        android:progressBackgroundTint="@color/md_theme_dark_surfaceVariant"
+                        android:progressTint="@color/md_theme_dark_primaryContainer"
+                        android:paddingHorizontal="8dp"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

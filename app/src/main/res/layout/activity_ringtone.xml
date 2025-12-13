@@ -1,15 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+    android:background="@color/md_theme_dark_background"
+    android:fitsSystemWindows="true">
 
-    <Button
-        android:id="@+id/btnSelectRingtone"
-        android:layout_width="wrap_content"
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Select Ringtone" />
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
-</LinearLayout>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+            app:navigationIconTint="@color/md_theme_dark_primary"
+            app:title="Select Ringtone"
+            app:titleTextColor="@color/md_theme_dark_onBackground"
+            style="@style/Widget.Material3.Toolbar"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="24dp">
+
+            <!-- Ringtone Icon Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                app:cardCornerRadius="60dp"
+                app:cardElevation="6dp"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="32dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/music"
+                    android:padding="32dp"
+                    android:tint="@color/md_theme_dark_onPrimaryContainer"
+                    android:contentDescription="Music"/>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Title -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Your Alarm Sound"
+                android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+                android:textColor="@color/md_theme_dark_onBackground"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Subtitle -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select a ringtone for this alarm"
+                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                android:gravity="center"
+                android:layout_marginBottom="48dp"/>
+
+            <!-- Select Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSelectRingtone"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select Ringtone"
+                app:icon="@drawable/music"
+                app:iconGravity="start"
+                android:paddingVertical="16dp"
+                app:cornerRadius="16dp"/>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

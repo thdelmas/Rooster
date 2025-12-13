@@ -1,483 +1,864 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="@color/astronomical"
+    android:fitsSystemWindows="true">
 
-    <ScrollView
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/astronomical"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
+            app:navigationIconTint="@color/md_theme_dark_primary"
+            app:title="Settings"
+            app:titleTextColor="@color/md_theme_dark_primary"
+            app:titleTextAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+            style="@style/Widget.Material3.Toolbar"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
         <LinearLayout
-            android:background="@color/astronomical"
-            android:orientation="vertical"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent">
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Location Section Header -->
             <TextView
-                android:layout_height="wrap_content"
                 android:layout_width="match_parent"
-                android:text="Coordinates"
+                android:layout_height="wrap_content"
+                android:text="Location"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="@color/md_theme_dark_primary"
                 android:textStyle="bold"
-                android:textSize="21sp"
-                android:gravity="center"
-                android:textColor="@color/primary"
-                android:background="@color/astronomical"
-                android:layout_marginVertical="16dp"
-                />
-
-            <RelativeLayout
-                android:id="@+id/altitudeSetting"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="2dp"
-                android:layout_marginStart="2dp"
-                android:layout_marginTop="2dp"
-                android:layout_marginEnd="2dp"
-                android:layout_marginBottom="2dp"
-                android:background="@drawable/rounded_background"
-                android:orientation="vertical"
-                android:padding="14dp">
-
-                <TextView
-                    android:id="@+id/altitudeTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Altitude"
-                    android:textColor="@color/primary"
-                    android:textSize="18sp" />
-
-                <TextView
-                    android:id="@+id/altitudeValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentRight="true"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:text="0.0"
-                    android:textColor="@color/primary"
-                    android:textSize="21sp" />
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/latitudeSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/latitudeTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Latitude"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/latitudeValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:paddingLeft="10dp"
-                    android:text="0.0"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/longitudeSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/longitudeTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Longitude"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/longitudeValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="0.0"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/locationSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/locationTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Location"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/locationValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="Earth"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/syncGpsSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="8dp"
-                android:padding="14dp"
-                android:gravity="center">
-                <TextView
-                    android:id="@+id/syncGpsTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Refresh Coordinates"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <TextView
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:textStyle="bold"
-                android:textSize="21sp"
-                android:text="Astronomy"
-                android:gravity="center"
-                android:layout_marginVertical="16dp"
-                android:textColor="@color/primary"
-                android:background="@color/astronomical"/>
-            <RelativeLayout
-                android:id="@+id/dayLengthSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:layout_gravity="center"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:backgroundTintMode="add"
-                android:backgroundTint="@color/nautical"
-                android:layout_margin="8dp"
-                android:padding="8dp">
-                <TextView
-                    android:id="@+id/dayLengthTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:text="Day Length"
-                    android:textSize="18sp"
-                    android:textColor="@color/background"/>
-                <TextView
-                    android:id="@+id/dayLengthValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:layout_below="@id/dayLengthTitle"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/background"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/astroDawnSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/astroDawnTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Astronomical Dawn"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/astroDawnValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/nauticalDawnSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/nauticalDawnTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Nautical Dawn"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/nauticalDawnValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/civilDawnSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/civilDawnTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Civil Dawn"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/civilDawnValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/sunriseSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/sunriseTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Sunrise"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/sunriseValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/solarNoonSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/solarNoonTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Solar Noon"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/solarNoonValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/sunsetSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/sunsetTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Sunset"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/sunsetValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/civilDuskSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/civilDuskTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Civil Dusk"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/civilDuskValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/nauticalDuskSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/nauticalDuskTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Nautical Dusk"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/nauticalDuskValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/astroDuskSetting"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_background"
-                android:layout_margin="2dp"
-                android:padding="14dp">
-                <TextView
-                    android:id="@+id/astroDuskTitle"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:text="Astronomical Dusk"
-                    android:textSize="18sp"
-                    android:gravity="center"
-                    android:textColor="@color/primary"/>
-                <TextView
-                    android:id="@+id/astroDuskValue"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:gravity="center"
-                    android:paddingLeft="10dp"
-                    android:layout_alignParentRight="true"
-                    android:textSize="21sp"
-                    android:text="00:00"
-                    android:textColor="@color/primary"/>
-            </RelativeLayout>
-
-
-            <LinearLayout
-                android:id="@+id/iconLinearLayout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:orientation="horizontal"
-                android:background="@color/night"
+                android:paddingHorizontal="8dp"
                 android:layout_marginTop="8dp"
-                android:padding="14dp"
-                android:gravity="center">
+                android:layout_marginBottom="12dp"/>
 
-                <!-- LinkedIn Icon -->
-                <ImageView
-                    android:id="@+id/linkedinIcon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/linkedin_icon"
-                    android:layout_margin="12dp"
-                    android:onClick="redirectToLinkedIn" />
+            <!-- Coordinates Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
 
-                <!-- GitHub Icon -->
-                <ImageView
-                    android:id="@+id/githubIcon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/github_icon"
-                    android:layout_margin="12dp"
-                    android:onClick="redirectToGitHub" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <!-- Email Icon -->
-                <ImageView
-                    android:id="@+id/emailIcon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:src="@drawable/email_icon"
-                    android:layout_margin="12dp"
-                    android:onClick="redirectToEmail" />
-            </LinearLayout>
+                    <!-- Altitude -->
+                    <LinearLayout
+                        android:id="@+id/altitudeSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/altitudeTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Altitude"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/altitudeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0 m"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Latitude -->
+                    <LinearLayout
+                        android:id="@+id/latitudeSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/latitudeTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Latitude"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/latitudeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0°"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Longitude -->
+                    <LinearLayout
+                        android:id="@+id/longitudeSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/longitudeTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Longitude"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/longitudeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0°"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Location -->
+                    <LinearLayout
+                        android:id="@+id/locationSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/locationTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Location"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/locationValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Earth"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:maxLines="1"
+                            android:ellipsize="end"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Refresh Location Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/syncGpsSetting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
+                app:strokeWidth="0dp"
+                app:rippleColor="@color/md_theme_dark_primary">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        android:tint="@color/md_theme_dark_onPrimaryContainer"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="Location"/>
+
+                    <TextView
+                        android:id="@+id/syncGpsTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Refresh Coordinates"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textColor="@color/md_theme_dark_onPrimaryContainer"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Astronomy Section Header -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Astronomy Data"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Day Length Highlight Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dayLengthSetting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/nautical"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/dayLengthTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Day Length"
+                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                        android:textColor="@color/white"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:id="@+id/dayLengthValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="00:00"
+                        android:textAppearance="@style/TextAppearance.Rooster.DisplayLarge"
+                        android:textSize="48sp"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Astronomy Times Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Astronomical Dawn -->
+                    <LinearLayout
+                        android:id="@+id/astroDawnSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/astroDawnTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Astronomical Dawn"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/astroDawnValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Nautical Dawn -->
+                    <LinearLayout
+                        android:id="@+id/nauticalDawnSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/nauticalDawnTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Nautical Dawn"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/nauticalDawnValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Civil Dawn -->
+                    <LinearLayout
+                        android:id="@+id/civilDawnSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/civilDawnTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Civil Dawn"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/civilDawnValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Sunrise -->
+                    <LinearLayout
+                        android:id="@+id/sunriseSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/sunriseTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="☀️ Sunrise"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/sunriseValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/sunrise"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Solar Noon -->
+                    <LinearLayout
+                        android:id="@+id/solarNoonSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/solarNoonTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Solar Noon"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/solarNoonValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Sunset -->
+                    <LinearLayout
+                        android:id="@+id/sunsetSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/sunsetTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🌅 Sunset"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textStyle="bold"/>
+
+                        <TextView
+                            android:id="@+id/sunsetValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/accent_coral"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textStyle="bold"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Civil Dusk -->
+                    <LinearLayout
+                        android:id="@+id/civilDuskSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/civilDuskTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Civil Dusk"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/civilDuskValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Nautical Dusk -->
+                    <LinearLayout
+                        android:id="@+id/nauticalDuskSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/nauticalDuskTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Nautical Dusk"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/nauticalDuskValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Astronomical Dusk -->
+                    <LinearLayout
+                        android:id="@+id/astroDuskSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <TextView
+                            android:id="@+id/astroDuskTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Astronomical Dusk"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                        <TextView
+                            android:id="@+id/astroDuskValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="00:00"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:fontFamily="monospace"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <!-- Appearance Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Appearance"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Theme Settings Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Theme Mode -->
+                    <LinearLayout
+                        android:id="@+id/themeModeSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/themeModeTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Theme"
+                                android:textColor="@color/md_theme_dark_onSurface"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                            <TextView
+                                android:id="@+id/themeModeDescription"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Choose your preferred theme"
+                                android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/themeModeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Auto"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_marginStart="16dp"/>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/md_theme_dark_outlineVariant"/>
+
+                    <!-- Dynamic Colors (Material You) -->
+                    <LinearLayout
+                        android:id="@+id/dynamicColorsSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/dynamicColorsTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Dynamic Colors"
+                                android:textColor="@color/md_theme_dark_onSurface"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                            <TextView
+                                android:id="@+id/dynamicColorsDescription"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Match system wallpaper colors (Android 12+)"
+                                android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/dynamicColorsSwitch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:layout_marginStart="16dp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- About Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="About"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="12dp"/>
+
+            <!-- Social Links Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:id="@+id/iconLinearLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center">
+
+                    <!-- LinkedIn Icon -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_margin="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                        app:cardCornerRadius="28dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="0dp"
+                        app:rippleColor="@color/md_theme_dark_primary">
+
+                        <ImageView
+                            android:id="@+id/linkedinIcon"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/linkedin_icon"
+                            android:padding="14dp"
+                            android:tint="@color/md_theme_dark_onPrimaryContainer"
+                            android:contentDescription="LinkedIn"/>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- GitHub Icon -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_margin="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                        app:cardCornerRadius="28dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="0dp"
+                        app:rippleColor="@color/md_theme_dark_primary">
+
+                        <ImageView
+                            android:id="@+id/githubIcon"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/github_icon"
+                            android:padding="14dp"
+                            android:tint="@color/md_theme_dark_onPrimaryContainer"
+                            android:contentDescription="GitHub"/>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Email Icon -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_margin="8dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                        app:cardCornerRadius="28dp"
+                        app:cardElevation="2dp"
+                        app:strokeWidth="0dp"
+                        app:rippleColor="@color/md_theme_dark_primary">
+
+                        <ImageView
+                            android:id="@+id/emailIcon"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/email_icon"
+                            android:padding="14dp"
+                            android:tint="@color/md_theme_dark_onPrimaryContainer"
+                            android:contentDescription="Email"/>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
-    </ScrollView>
-</RelativeLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

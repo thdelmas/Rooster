@@ -13,13 +13,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.Switch
 import android.widget.TextView
+import com.google.android.material.materialswitch.MaterialSwitch
 import androidx.recyclerview.widget.RecyclerView
+import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.HapticFeedbackHelper
 import java.util.Calendar
 
 
@@ -51,19 +52,16 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val container = holder.alarmContainer
         val context = container.context
-        var alarm = alarmList[position]
-        var alarmExtension = holder.alarmContainer.findViewById<LinearLayout>(R.id.alarmExtension)
+        val alarm = alarmList[position]
 
         linkButtons(holder, container, context, alarm)
     }
 
     private fun linkButtons(holder: ViewHolder, container: LinearLayout, context: Context, alarm: Alarm) {
-
-
         // Label
-
         val tvLabel = container.findViewById<TextView>(R.id.textViewAlarmLabel)
         tvLabel.setOnClickListener {
+            HapticFeedbackHelper.performLightClick(it)
             val input = EditText(context)
             input.hint = "Enter new alarm label"
             input.setText(alarm.label)
@@ -73,6 +71,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 .setTitle("Edit Alarm Label")
                 .setView(input)
                 .setPositiveButton("Save") { _, _ ->
+                    HapticFeedbackHelper.performSuccessFeedback(context)
                     alarm.label = input.text.toString()
                     alarmDbHelper.updateAlarm(alarm)
                     reloadAlarmList(holder)
@@ -91,13 +90,14 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         var extendedView = container.findViewById<LinearLayout>(R.id.alarmExtension)
         var expandButton = container.findViewById<ImageButton>(R.id.expandButton)
         expandButton.setOnClickListener {
+            HapticFeedbackHelper.performLightClick(it)
             // Check to make sure that the extended view is not already visible before making it visible.
             if (extendedView.visibility == View.GONE) {
-                extendedView.visibility = View.VISIBLE
-                expandButton.rotation = 180.0F
+                AnimationHelper.expand(extendedView)
+                AnimationHelper.rotate(expandButton, 0f, 180f)
             } else {
-                extendedView.visibility = View.GONE
-                expandButton.rotation = 0F
+                AnimationHelper.collapse(extendedView)
+                AnimationHelper.rotate(expandButton, 180f, 0f)
             }
         }
 
@@ -110,9 +110,10 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
 
 
         // Enabled
-        val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
+        val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
         swicthEnabled.isChecked = alarm.enabled
-        swicthEnabled.setOnCheckedChangeListener { _, isChecked ->
+        swicthEnabled.setOnCheckedChangeListener { view, isChecked ->
+            HapticFeedbackHelper.performToggleFeedback(view)
             alarm.enabled = isChecked
             alarmDbHelper.updateAlarm(alarm)
         }
@@ -124,6 +125,8 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             val dynamicId = context.resources.getIdentifier("$d"+"Button", "id", context.packageName);
             val dynamicButton = holder.alarmContainer.findViewById<Button>(dynamicId)
             dynamicButton.setOnClickListener{
+                HapticFeedbackHelper.performLightClick(it)
+                AnimationHelper.scaleWithBounce(it)
                 onDaysClicked(it, alarm)
                 setButtonState(dynamicButton, dynamicButton.isSelected)
             }
@@ -131,11 +134,11 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             setButtonState(dynamicButton, dynamicButton.isSelected)
         }
 
-        val ringtoneTitle = holder.alarmContainer.findViewById<TextView>(R.id.ringtoneTitle)
+        val ringtoneButton = holder.alarmContainer.findViewById<Button>(R.id.layoutRingtone)
         val title = getRingtoneTitleFromUri(holder.alarmContainer.context, alarm.ringtoneUri)
-        ringtoneTitle.text = title
-        val ringtoneButton = holder.alarmContainer.findViewById<LinearLayout>(R.id.layoutRingtone)
+        ringtoneButton.text = title
         ringtoneButton.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
             val ringtoneActivity = Intent(context, RingtoneActivity::class.java)
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M || Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 ringtoneActivity.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -147,20 +150,16 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         }
 
         // Vibrate
-        var vibrateButton = holder.alarmContainer.findViewById<CheckBox>(R.id.checkBoxVibrate)
+        var vibrateButton = holder.alarmContainer.findViewById<MaterialSwitch>(R.id.checkBoxVibrate)
         vibrateButton.setOnClickListener{
             // Update alarm
         }
 
         // Delete
-        var deleteButton = holder.alarmContainer.findViewById<ImageButton>(R.id.buttonDelete)
+        var deleteButton = holder.alarmContainer.findViewById<Button>(R.id.buttonDelete)
         deleteButton.setOnClickListener{
-            Log.e("Delete", "Alarm ID: " + alarm.id.toString())
-            alarmDbHelper.deleteAlarm(alarm.id)
-            reloadAlarmList(holder)
-        }
-        var deleteText = holder.alarmContainer.findViewById<TextView>(R.id.buttonDeleteText)
-        deleteText.setOnClickListener{
+            HapticFeedbackHelper.performHeavyClick(it)
+            HapticFeedbackHelper.performDeleteFeedback(context)
             Log.e("Delete", "Alarm ID: " + alarm.id.toString())
             alarmDbHelper.deleteAlarm(alarm.id)
             reloadAlarmList(holder)
@@ -283,7 +282,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 val pickerDialog = when (alarmRelatives[which]) {
                     "Pick Time" -> {
                         TimePickerDialog(context, { _, hour, minute ->
-                            val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
+                            val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
                             val calendar = Calendar.getInstance()
                             calendar.set(Calendar.HOUR_OF_DAY, hour)
                             calendar.set(Calendar.MINUTE, minute)
@@ -306,7 +305,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                             alarm.time2 = alarmDbHelper.getRelativeTime(alarm.relative2)
                         }
 
-                        val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
+                        val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
                         swicthEnabled.isChecked = alarm.enabled
                         alarmDbHelper.updateAlarm(alarm)
                         arrangeLayout(context, container, alarm, alarm.mode, holder)
@@ -352,7 +351,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         }
         tvTime2.setOnClickListener {
             var picker = TimePickerDialog(context, { _, hour, minute ->
-                val swicthEnabled = container.findViewById<Switch>(R.id.switchAlarmEnabled)
+                val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
                 alarm.time1 = (hour.toLong() * 60 + minute) * 60
                 alarm.enabled = true
                 swicthEnabled.isChecked = alarm.enabled
@@ -495,15 +494,17 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         button?.setBackgroundResource(bgDrawable)
     }
     fun getRingtoneTitleFromUri(context: Context, ringtoneUri: String?): String {
-        if (ringtoneUri == null) return "Default Ringtone" // Return a default or an indication that no custom ringtone is set
+        if (ringtoneUri.isNullOrEmpty() || ringtoneUri == "Default") {
+            return "Default Ringtone"
+        }
 
-        try {
+        return try {
             val uri = Uri.parse(ringtoneUri)
             val ringtone = RingtoneManager.getRingtone(context, uri)
-            return ringtone.getTitle(context)
+            ringtone?.getTitle(context) ?: "Default Ringtone"
         } catch (e: Exception) {
-            e.printStackTrace()
-            return "Unknown Ringtone" // In case of any error, return a default name
+            Log.e("AlarmAdapter", "Error getting ringtone title", e)
+            "Unknown Ringtone"
         }
     }
 }

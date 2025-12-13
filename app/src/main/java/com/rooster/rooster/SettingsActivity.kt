@@ -2,6 +2,7 @@ package com.rooster.rooster
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
@@ -15,14 +16,22 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.google.android.material.switchmaterial.SwitchMaterial
+import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.ThemeHelper
+import com.rooster.rooster.worker.AstronomyUpdateWorker
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
 
-
-class SettingsActivity: AppCompatActivity() {
+@AndroidEntryPoint
+class SettingsActivity : AppCompatActivity() {
 
     private var locationManager: LocationManager? = null
 
@@ -31,17 +40,72 @@ class SettingsActivity: AppCompatActivity() {
         setTheme(androidx.appcompat.R.style.Theme_AppCompat);
         setContentView(R.layout.activity_settings)
         linkButtons()
+        setupThemeSettings()
         updateValues()
     }
 
     private fun linkButtons() {
         val syncGPSButton = findViewById<TextView>(R.id.syncGpsTitle)
-        syncGPSButton.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                Log.e(TAG, "Manual Sync GPS")
-                getLastKnownPosition()
+        syncGPSButton.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            Log.i("SettingsActivity", "Manual Sync GPS")
+            getLastKnownPosition()
+        }
+    }
+    
+    private fun setupThemeSettings() {
+        // Theme mode selector
+        val themeModeSetting = findViewById<LinearLayout>(R.id.themeModeSetting)
+        val themeModeValue = findViewById<TextView>(R.id.themeModeValue)
+        
+        val currentTheme = ThemeHelper.getThemeMode(this)
+        themeModeValue.text = ThemeHelper.getThemeModeName(currentTheme)
+        
+        themeModeSetting.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            showThemeDialog()
+        }
+        
+        // Dynamic colors switch
+        val dynamicColorsSwitch = findViewById<SwitchMaterial>(R.id.dynamicColorsSwitch)
+        val dynamicColorsSetting = findViewById<LinearLayout>(R.id.dynamicColorsSetting)
+        
+        // Hide dynamic colors option if not supported
+        if (!ThemeHelper.supportsDynamicColors()) {
+            dynamicColorsSetting.visibility = View.GONE
+        } else {
+            dynamicColorsSwitch.isChecked = ThemeHelper.isDynamicColorsEnabled(this)
+            dynamicColorsSwitch.setOnCheckedChangeListener { view, isChecked ->
+                HapticFeedbackHelper.performToggleFeedback(view)
+                ThemeHelper.setDynamicColorsEnabled(this, isChecked)
+                // Restart activity to apply changes
+                recreate()
             }
-        })
+        }
+    }
+    
+    private fun showThemeDialog() {
+        val themes = arrayOf("Auto (System)", "Light", "Dark")
+        val currentTheme = ThemeHelper.getThemeMode(this)
+        
+        AlertDialog.Builder(this)
+            .setTitle("Choose Theme")
+            .setSingleChoiceItems(themes, currentTheme) { dialog, which ->
+                HapticFeedbackHelper.performSuccessFeedback(this)
+                ThemeHelper.setThemeMode(this, which)
+                val themeModeValue = findViewById<TextView>(R.id.themeModeValue)
+                themeModeValue.text = ThemeHelper.getThemeModeName(which)
+                dialog.dismiss()
+                // Restart activity to apply theme
+                recreate()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001 // You can use any integer value
@@ -74,24 +138,32 @@ class SettingsActivity: AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, start location updates
+                Log.i("SettingsActivity", "Location permission granted")
                 requestLocationUpdates()
             } else {
-                // Permission denied, handle this case
-                Log.e("GPS Update", "Location permission denied")
+                Log.w("SettingsActivity", "Location permission denied")
             }
         }
     }
 
     // Method to start location updates
     private fun requestLocationUpdates() {
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        locationManager?.requestLocationUpdates(
-            LocationManager.NETWORK_PROVIDER,
-            0, 0f, networkLocationListener
-        )
+        try {
+            locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                locationManager?.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    0, 0f, networkLocationListener
+                )
+            }
+        } catch (e: SecurityException) {
+            Log.e("SettingsActivity", "Security exception requesting location updates", e)
+        }
     }
 
 
@@ -133,19 +205,22 @@ class SettingsActivity: AppCompatActivity() {
 
     fun setTime(hour: Int, minute: Int, tgt: String) {
         val sharedPrefs = applicationContext.getSharedPreferences("RoosterPrefs", MODE_PRIVATE)
-        val editor = sharedPrefs.edit()
-        val calender = Calendar.getInstance()
-        calender.set(Calendar.HOUR_OF_DAY,hour)
-        calender.set(Calendar.MINUTE,minute)
-        calender.set(Calendar.SECOND,0)
-        editor.putLong(tgt, calender.timeInMillis)
-        val formattedTime = SimpleDateFormat("HH:mm").format(calender.time)
-        Log.e("HOUR", calender.timeInMillis.toString())
-        editor.apply()
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, 0)
+        
+        sharedPrefs.edit().apply {
+            putLong(tgt, calendar.timeInMillis)
+            apply()
+        }
+        
+        val formattedTime = SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(calendar.time)
+        Log.d("SettingsActivity", "Time set: $formattedTime (${calendar.timeInMillis})")
     }
 
     private fun updateValues() {
-        val sdf = SimpleDateFormat("HH:mm")
+        val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
         val sharedPrefs = applicationContext.getSharedPreferences("rooster_prefs", MODE_PRIVATE)
         val astroSteps = arrayOf(
             "astroDawn",
@@ -156,71 +231,67 @@ class SettingsActivity: AppCompatActivity() {
             "civilDusk",
             "nauticalDusk",
             "astroDusk",
-            "solarNoon")
+            "solarNoon"
+        )
 
-        var timeInMillis = 0L
         sdf.timeZone = TimeZone.getDefault()
-        for (i in astroSteps) {
-            val tvId = getResources().getIdentifier("$i"+"Value", "id", getPackageName());
-            timeInMillis = sharedPrefs.getLong(i, 0)
+        for (step in astroSteps) {
+            val tvId = resources.getIdentifier("${step}Value", "id", packageName)
+            val timeInMillis = sharedPrefs.getLong(step, 0)
             val formattedTime = getFormattedTime(timeInMillis)
             val tv = findViewById<TextView>(tvId)
-            tv.text = formattedTime
+            tv?.text = formattedTime
         }
 
-        var dayLength = sharedPrefs.getLong("dayLength", 0)
+        val dayLength = sharedPrefs.getLong("dayLength", 0) / 1000
         val tv = findViewById<TextView>(R.id.dayLengthValue)
-        dayLength = dayLength / 1000
-        var dlHours = dayLength / (60 * 60)
-        var dlMinutes = (dayLength / 60) % 60
-        var dlHoursFmt = dlHours.toString()
-        if (dlHours < 10) {
-            dlHoursFmt = "0" + dlHoursFmt
-        }
-        var dlMinutesFmt = dlMinutes.toString()
-        if (dlMinutes < 10) {
-            dlMinutesFmt = "0" + dlMinutesFmt
-        }
-        tv.text = dlHoursFmt + ":" + dlMinutesFmt
+        val dlHours = dayLength / (60 * 60)
+        val dlMinutes = (dayLength / 60) % 60
+        tv?.text = String.format("%02d:%02d", dlHours, dlMinutes)
 
-        val coordinates = arrayOf(
-            "altitude",
-            "latitude",
-            "longitude")
-        for (i in coordinates) {
-            val coordinate = sharedPrefs.getFloat(i, 0F)
-            val tvId = getResources().getIdentifier("$i"+"Value", "id", getPackageName());
-            val tv = findViewById<TextView>(tvId)
-            tv.text = coordinate.toString()
+        val coordinates = arrayOf("altitude", "latitude", "longitude")
+        for (coord in coordinates) {
+            val coordinate = sharedPrefs.getFloat(coord, 0F)
+            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
+            val coordTv = findViewById<TextView>(tvId)
+            coordTv?.text = String.format("%.4f", coordinate)
         }
     }
 
     private val networkLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            // Handle the network location update here.
-            Log.e("Network Location Update", location.toString())
+            Log.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
 
-            // Store the altitude, longitude, and latitude in shared prefs.
-            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-            sharedPreferences.edit()
-                .putFloat("altitude", location.altitude.toFloat())
-                .putFloat("longitude", location.longitude.toFloat())
-                .putFloat("latitude", location.latitude.toFloat())
-                .apply()
+            // Store the location in shared preferences
+            getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
+                putFloat("altitude", location.altitude.toFloat())
+                putFloat("longitude", location.longitude.toFloat())
+                putFloat("latitude", location.latitude.toFloat())
+                apply()
+            }
 
-            val intent = Intent(applicationContext, AstronomyUpdateService::class.java)
-            intent.putExtra("syncData", true)
-            startService(intent)
+            // Trigger astronomy data update using WorkManager
+            val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
+            WorkManager.getInstance(applicationContext).enqueue(workRequest)
+            
+            // Update UI
             updateValues()
+            
+            // Remove location updates after successful update
+            locationManager?.removeUpdates(this)
         }
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+        
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            Log.d("SettingsActivity", "Provider status changed: $provider, status: $status")
+        }
     }
-    fun getFormattedTime(timeInSec: Long): CharSequence? {
-        val fullDateFormat = SimpleDateFormat("HH:mm")
+    fun getFormattedTime(timeInSec: Long): String {
+        if (timeInSec == 0L) return "--:--"
+        
+        val fullDateFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
         val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInSec // Convert seconds to milliseconds
+        calendar.timeInMillis = timeInSec
 
-        // Use the default time zone of the device
         val defaultTimeZone = TimeZone.getDefault()
         fullDateFormat.timeZone = defaultTimeZone
 
@@ -232,14 +303,21 @@ class SettingsActivity: AppCompatActivity() {
 
         return fullDateFormat.format(calendar.time)
     }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        locationManager?.removeUpdates(networkLocationListener)
+    }
 
     fun redirectToGitHub(v: View?) {
+        v?.let { HapticFeedbackHelper.performClick(it) }
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/thdelmas/Rooster"))
         startActivity(intent)
     }
 
     // Function to redirect to LinkedIn
     fun redirectToLinkedIn(v: View?) {
+        v?.let { HapticFeedbackHelper.performClick(it) }
         val intent = Intent(
             Intent.ACTION_VIEW,
             Uri.parse("https://www.linkedin.com/in/th%C3%A9ophile-delmas-92275b16b/")
@@ -249,6 +327,7 @@ class SettingsActivity: AppCompatActivity() {
 
     // Function to redirect to Email
     fun redirectToEmail(v: View?) {
+        v?.let { HapticFeedbackHelper.performClick(it) }
         val intent = Intent(Intent.ACTION_SENDTO)
         intent.setData(Uri.parse("mailto:contact@theophile.world"))
         startActivity(intent)

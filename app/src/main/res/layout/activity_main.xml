@@ -1,73 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:orientation="vertical"
+    android:background="@color/md_theme_dark_background">
 
-    <RelativeLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topAppBar"
         android:layout_width="match_parent"
-        android:layout_height="126dp"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:id="@id/topBanner">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        app:navigationIcon="@drawable/alarm"
+        app:navigationIconTint="@color/md_theme_dark_primary"
+        app:title="Rooster"
+        app:titleTextColor="@color/md_theme_dark_onBackground"
+        app:titleTextAppearance="@style/TextAppearance.Rooster.TitleLarge"
+        app:menu="@menu/main_menu"
+        style="@style/Widget.Material3.Toolbar"/>
 
-        <ImageButton
-            android:id="@+id/alarmButton"
-            android:layout_width="126dp"
-            android:layout_height="126dp"
-            android:src="@drawable/alarm"
-            android:layout_alignParentStart="true"
-            android:background="@color/black"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
-        <ImageView
-            android:id="@+id/logoImageView"
-            android:layout_width="126dp"
-            android:layout_height="126dp"
-            android:layout_centerInParent="true"
-            android:src="@mipmap/ic_launcher_foreground" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <ImageButton
-            android:id="@+id/settingsButton"
-            android:layout_width="126dp"
-            android:layout_height="126dp"
-            android:layout_alignParentEnd="true"
-            android:src="@drawable/ic_settings"
-            android:background="@color/black"/>
-    </RelativeLayout>
+            <!-- Current Time Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/timeCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="0dp"
+                android:stateListAnimator="@null">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="40dp"
+                    android:gravity="center"
+                    android:background="@drawable/card_background_elevated">
 
-    <RelativeLayout
-        android:id="@+id/progress_layout"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Current Time"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:layout_marginBottom="12dp"
+                        android:alpha="0.8"/>
+
+                    <!-- Time Display -->
+                    <TextView
+                        android:id="@+id/progress_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--:--"
+                        android:textColor="@color/md_theme_dark_primary"
+                        android:textSize="72sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-light"
+                        android:letterSpacing="-0.03"
+                        android:layout_marginBottom="24dp"
+                        android:elevation="2dp"/>
+
+                    <!-- Progress Bar -->
+                    <ProgressBar
+                        android:id="@+id/progress_cycle"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="16dp"
+                        android:indeterminate="false"
+                        android:progressDrawable="@drawable/progress_circular"
+                        android:max="100"
+                        android:progress="0"
+                        android:layout_marginBottom="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Day progress"
+                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:alpha="0.7"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Info Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/infoCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainer"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🌅"
+                            android:textSize="32sp"
+                            android:layout_marginEnd="12dp"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Rooster Alarm"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Wake up with the sun using astronomy-based alarms. Set multiple alarms with different modes and relative times like Dawn, Sunrise, and Sunset."
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:lineSpacingExtra="6dp"
+                        android:alpha="0.9"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Bottom Navigation Bar -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/topBanner"
-        android:layout_centerInParent="true"
-        android:padding="21dp"
-        android:layout_marginBottom="126dp">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:gravity="center"
+        android:background="@color/md_theme_dark_surface"
+        android:elevation="12dp">
 
-        <!--progress bar implementation-->
-        <ProgressBar
-            android:id="@+id/progress_cycle"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/circular_shape"
-            android:indeterminate="false"
-            android:progressDrawable="@drawable/circle_progress_bar"
-            android:textAlignment="center" />
+        <!-- Alarms Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/alarmButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="10dp"
+            android:text="Alarms"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_dark_onPrimaryContainer"
+            app:icon="@drawable/alarm"
+            app:iconGravity="textStart"
+            app:iconSize="26dp"
+            app:iconTint="@color/md_theme_dark_onPrimaryContainer"
+            app:backgroundTint="@color/md_theme_dark_primaryContainer"
+            app:cornerRadius="18dp"
+            app:elevation="4dp"
+            android:stateListAnimator="@null"/>
 
-        <!--Text implementation in center of the progress bar-->
-        <TextView
-            android:id="@+id/progress_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:gravity="center"
-            android:text="--:--"
-            android:textColor="@color/primary"
-            android:textSize="63sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
-</RelativeLayout>
+        <!-- Settings Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/settingsButton"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:text="Settings"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/md_theme_dark_onPrimaryContainer"
+            app:icon="@drawable/ic_settings"
+            app:iconGravity="textStart"
+            app:iconSize="26dp"
+            app:iconTint="@color/md_theme_dark_onPrimaryContainer"
+            app:backgroundTint="@color/md_theme_dark_primaryContainer"
+            app:cornerRadius="18dp"
+            app:elevation="4dp"
+            android:stateListAnimator="@null"/>
+
+    </LinearLayout>
+
+</LinearLayout>
