@@ -341,13 +341,13 @@
                             android:id="@+id/offsetSlider"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:valueFrom="5f"
-                            android:valueTo="180f"
-                            android:stepSize="5f"
-                            android:value="30f"
-                            android:thumbTint="@color/md_theme_dark_primary"
-                            android:trackActiveTintColor="@color/md_theme_dark_primary"
-                            android:trackInactiveTintColor="@color/md_theme_dark_outlineVariant"
+                            android:valueFrom="5.0"
+                            android:valueTo="180.0"
+                            android:stepSize="5.0"
+                            android:value="30.0"
+                            app:thumbColor="@color/md_theme_dark_primary"
+                            app:trackColorActive="@color/md_theme_dark_primary"
+                            app:trackColorInactive="@color/md_theme_dark_outlineVariant"
                             android:layout_marginTop="8dp"/>
 
                     </LinearLayout>
