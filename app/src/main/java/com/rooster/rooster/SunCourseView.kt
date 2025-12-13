@@ -22,8 +22,16 @@ class SunCourseView @JvmOverloads constructor(
     private var solarNoon: Long = 0
     private var civilDawn: Long = 0
     private var civilDusk: Long = 0
+    private var nauticalDawn: Long = 0
+    private var nauticalDusk: Long = 0
+    private var astroDawn: Long = 0
+    private var astroDusk: Long = 0
     private var markerTime: Long = 0
     private var markerLabel: String = ""
+    
+    // Interaction callback
+    var onSolarEventSelected: ((String) -> Unit)? = null
+    var interactive: Boolean = true
     
     private val sunColor = Color.parseColor("#FFB86C")
     private val skyColorDay = Color.parseColor("#64B5F6")
@@ -51,6 +59,29 @@ class SunCourseView @JvmOverloads constructor(
         this.solarNoon = solarNoon
         this.sunset = sunset
         this.civilDusk = civilDusk
+        invalidate()
+    }
+    
+    fun setAllSunTimes(
+        astroDawn: Long,
+        nauticalDawn: Long,
+        civilDawn: Long,
+        sunrise: Long,
+        solarNoon: Long,
+        sunset: Long,
+        civilDusk: Long,
+        nauticalDusk: Long,
+        astroDusk: Long
+    ) {
+        this.astroDawn = astroDawn
+        this.nauticalDawn = nauticalDawn
+        this.civilDawn = civilDawn
+        this.sunrise = sunrise
+        this.solarNoon = solarNoon
+        this.sunset = sunset
+        this.civilDusk = civilDusk
+        this.nauticalDusk = nauticalDusk
+        this.astroDusk = astroDusk
         invalidate()
     }
     
@@ -119,13 +150,36 @@ class SunCourseView @JvmOverloads constructor(
             }
         }
         
-        // Draw sunrise marker
-        drawTimeMarker(canvas, "🌅", 0.05f, startX, endX, arcWidth, centerY, arcHeight)
+        // Draw all solar events if available
+        if (astroDawn > 0) {
+            drawSolarEventMarker(canvas, "🌄", "Astro Dawn", astroDawn, startX, endX, arcWidth, centerY, arcHeight, 0.02f)
+        }
+        if (nauticalDawn > 0) {
+            drawSolarEventMarker(canvas, "🌅", "Nautical Dawn", nauticalDawn, startX, endX, arcWidth, centerY, arcHeight, 0.04f)
+        }
+        if (civilDawn > 0) {
+            drawSolarEventMarker(canvas, "🌆", "Civil Dawn", civilDawn, startX, endX, arcWidth, centerY, arcHeight, 0.06f)
+        }
+        if (sunrise > 0) {
+            drawSolarEventMarker(canvas, "🌅", "Sunrise", sunrise, startX, endX, arcWidth, centerY, arcHeight, 0.08f)
+        }
+        if (solarNoon > 0) {
+            drawSolarEventMarker(canvas, "☀️", "Solar Noon", solarNoon, startX, endX, arcWidth, centerY, arcHeight, 0.5f)
+        }
+        if (sunset > 0) {
+            drawSolarEventMarker(canvas, "🌇", "Sunset", sunset, startX, endX, arcWidth, centerY, arcHeight, 0.92f)
+        }
+        if (civilDusk > 0) {
+            drawSolarEventMarker(canvas, "🌆", "Civil Dusk", civilDusk, startX, endX, arcWidth, centerY, arcHeight, 0.94f)
+        }
+        if (nauticalDusk > 0) {
+            drawSolarEventMarker(canvas, "🌃", "Nautical Dusk", nauticalDusk, startX, endX, arcWidth, centerY, arcHeight, 0.96f)
+        }
+        if (astroDusk > 0) {
+            drawSolarEventMarker(canvas, "🌌", "Astro Dusk", astroDusk, startX, endX, arcWidth, centerY, arcHeight, 0.98f)
+        }
         
-        // Draw sunset marker
-        drawTimeMarker(canvas, "🌇", 0.95f, startX, endX, arcWidth, centerY, arcHeight)
-        
-        // Draw custom marker if set
+        // Draw custom marker if set (alarm time)
         if (markerTime > 0 && markerLabel.isNotEmpty()) {
             val progress = calculateProgress(markerTime)
             drawCustomMarker(canvas, markerLabel, progress, startX, endX, arcWidth, centerY, arcHeight)
@@ -159,6 +213,99 @@ class SunCourseView @JvmOverloads constructor(
         val point = getPointOnPath(progress, startX, endX, arcWidth, centerY, arcHeight)
         textPaint.textSize = 28f
         canvas.drawText(emoji, point.x, point.y - 20f, textPaint)
+    }
+    
+    private fun drawSolarEventMarker(
+        canvas: Canvas,
+        emoji: String,
+        label: String,
+        time: Long,
+        startX: Float,
+        endX: Float,
+        arcWidth: Float,
+        centerY: Float,
+        arcHeight: Float,
+        defaultProgress: Float
+    ) {
+        val progress = if (time > 0) calculateProgress(time) else defaultProgress
+        val point = getPointOnPath(progress, startX, endX, arcWidth, centerY, arcHeight)
+        
+        // Draw touchable circle for interaction
+        if (interactive) {
+            paint.style = Paint.Style.FILL
+            paint.color = Color.parseColor("#40FFB86C")
+            canvas.drawCircle(point.x, point.y, 30f, paint)
+        }
+        
+        // Draw emoji
+        textPaint.textSize = 24f
+        textPaint.color = Color.WHITE
+        canvas.drawText(emoji, point.x, point.y - 15f, textPaint)
+        
+        // Draw label below
+        textPaint.textSize = 18f
+        textPaint.color = Color.parseColor("#D5C3B5")
+        val labelY = if (progress < 0.5f) point.y + 35f else point.y + 25f
+        canvas.drawText(label, point.x, labelY, textPaint)
+    }
+    
+    override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
+        if (!interactive || onSolarEventSelected == null) return false
+        
+        when (event.action) {
+            android.view.MotionEvent.ACTION_DOWN -> {
+                val x = event.x
+                val y = event.y
+                
+                // Check which solar event was tapped
+                val tappedEvent = findTappedSolarEvent(x, y)
+                tappedEvent?.let { event ->
+                    onSolarEventSelected?.invoke(event)
+                    performClick()
+                    return true
+                }
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+    
+    private fun findTappedSolarEvent(x: Float, y: Float): String? {
+        val width = width.toFloat()
+        val height = height.toFloat()
+        val centerY = height * 0.65f
+        val arcHeight = height * 0.5f
+        val startX = width * 0.1f
+        val endX = width * 0.9f
+        val arcWidth = endX - startX
+        
+        val events = listOf(
+            Triple("Astronomical Dawn", astroDawn, 0.02f),
+            Triple("Nautical Dawn", nauticalDawn, 0.04f),
+            Triple("Civil Dawn", civilDawn, 0.06f),
+            Triple("Sunrise", sunrise, 0.08f),
+            Triple("Solar Noon", solarNoon, 0.5f),
+            Triple("Sunset", sunset, 0.92f),
+            Triple("Civil Dusk", civilDusk, 0.94f),
+            Triple("Nautical Dusk", nauticalDusk, 0.96f),
+            Triple("Astronomical Dusk", astroDusk, 0.98f)
+        )
+        
+        for ((eventName, time, defaultProgress) in events) {
+            if (time <= 0) continue
+            val progress = if (time > 0) calculateProgress(time) else defaultProgress
+            val point = getPointOnPath(progress, startX, endX, arcWidth, centerY, arcHeight)
+            
+            val distance = Math.sqrt(
+                Math.pow((x - point.x).toDouble(), 2.0) + 
+                Math.pow((y - point.y).toDouble(), 2.0)
+            )
+            
+            if (distance < 40) {
+                return eventName
+            }
+        }
+        
+        return null
     }
     
     private fun drawCustomMarker(
