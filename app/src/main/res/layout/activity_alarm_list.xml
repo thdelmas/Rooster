@@ -1,111 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/astronomical">
+    android:background="@color/md_theme_dark_background"
+    android:fitsSystemWindows="true">
 
     <!-- App Bar -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/topAppBar"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        app:title="My Alarms"
-        app:titleTextColor="@color/md_theme_dark_primary"
-        app:titleTextAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
-        app:navigationIcon="@drawable/alarm"
-        app:navigationIconTint="@color/md_theme_dark_primary"
-        style="@style/Widget.Material3.Toolbar"/>
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:title="My Alarms"
+            app:titleTextColor="@color/md_theme_dark_onBackground"
+            app:titleTextAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+            app:navigationIcon="@drawable/alarm"
+            app:navigationIconTint="@color/md_theme_dark_primary"
+            style="@style/Widget.Material3.Toolbar"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Main Content -->
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Empty State Card (visible when no alarms) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/emptyStateCard"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="24dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="4dp"
-            app:strokeWidth="0dp">
+            android:layout_height="wrap_content">
 
-            <LinearLayout
+            <!-- Empty State -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/emptyStateCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="48dp"
-                android:gravity="center">
+                android:layout_margin="32dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="0dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🌅"
-                    android:textSize="80sp"
-                    android:layout_marginBottom="24dp"/>
+                    android:orientation="vertical"
+                    android:padding="64dp"
+                    android:gravity="center">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="No alarms yet"
-                    android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                    android:textColor="@color/md_theme_dark_onSurface"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🌅"
+                        android:textSize="120sp"
+                        android:layout_marginBottom="32dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Create your first alarm to wake up with the sun"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                    android:gravity="center"
-                    android:alpha="0.8"
-                    android:lineSpacingExtra="4dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Alarms Yet"
+                        android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
+                        android:textColor="@color/md_theme_dark_onSurface"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
 
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Create your first alarm to wake up naturally with the sun"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:gravity="center"
+                        android:alpha="0.8"
+                        android:lineSpacingExtra="6dp"
+                        android:layout_marginBottom="32dp"/>
 
-        </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/emptyStateButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Create Alarm"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:icon="@drawable/add_alarm_button"
+                        app:iconGravity="textStart"
+                        app:backgroundTint="@color/md_theme_dark_primaryContainer"
+                        app:cornerRadius="20dp"
+                        app:elevation="4dp"/>
 
-        <!-- Alarms RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/alarmListView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingTop="8dp"
-            android:paddingBottom="88dp"
-            android:paddingHorizontal="16dp"
-            android:overScrollMode="never"/>
+                </LinearLayout>
 
-    </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-    <!-- Add Alarm Button - Fixed at bottom -->
-    <com.google.android.material.button.MaterialButton
+            <!-- Alarms List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/alarmListView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingTop="16dp"
+                android:paddingBottom="100dp"
+                android:paddingHorizontal="16dp"
+                android:overScrollMode="never"/>
+
+        </FrameLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Add Alarm FAB -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/addAlarmButton"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:layout_margin="20dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
         android:text="New Alarm"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="@color/md_theme_dark_onPrimaryContainer"
         app:icon="@drawable/add_alarm_button"
-        app:iconGravity="textStart"
-        app:iconSize="28dp"
-        app:iconTint="@color/md_theme_dark_onPrimaryContainer"
-        app:backgroundTint="@color/md_theme_dark_primaryContainer"
-        app:cornerRadius="20dp"
-        app:elevation="8dp"
-        android:stateListAnimator="@null"/>
+        app:iconTint="@color/md_theme_dark_onPrimary"
+        app:backgroundTint="@color/md_theme_dark_primary"
+        app:cornerRadius="28dp"
+        app:elevation="12dp"/>
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

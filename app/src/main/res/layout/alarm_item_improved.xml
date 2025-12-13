@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/alarmContainer"
+    android:id="@+id/alarmCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_marginVertical="8dp"
+    android:layout_marginHorizontal="16dp"
+    app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="8dp"
+    app:strokeWidth="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:rippleColor="@color/md_theme_dark_primary"
+    android:stateListAnimator="@null">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/alarmCard"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="10dp"
-        android:layout_marginHorizontal="12dp"
-        app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="6dp"
-        app:strokeWidth="0dp"
-        android:clickable="true"
-        android:focusable="true"
-        app:rippleColor="@color/md_theme_dark_primary"
-        android:stateListAnimator="@null">
+        android:orientation="vertical"
+        android:padding="28dp">
 
+        <!-- Header with Label and Switch -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
 
-            <!-- Header Row -->
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:gravity="center_vertical">
 
                 <!-- Mode Badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/modeBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="12dp"
+                    android:layout_marginEnd="16dp"
                     app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
-                    app:cardCornerRadius="12dp"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
                     app:strokeWidth="0dp">
 
@@ -52,9 +53,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="☀️"
-                        android:textSize="24sp"
-                        android:paddingHorizontal="12dp"
-                        android:paddingVertical="4dp"/>
+                        android:textSize="28sp"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="6dp"/>
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -66,67 +67,76 @@
                     android:layout_weight="1"
                     android:text="Morning Alarm"
                     android:textColor="@color/md_theme_dark_onSurface"
-                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
+                    android:textStyle="bold"
                     android:maxLines="1"
                     android:ellipsize="end"/>
 
-                <!-- Enable Switch -->
-                <com.google.android.material.materialswitch.MaterialSwitch
-                    android:id="@+id/switchAlarmEnabled"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    app:thumbTint="@color/md_theme_dark_onPrimaryContainer"
-                    app:trackTint="@color/md_theme_dark_primaryContainer"/>
-
             </LinearLayout>
 
-            <!-- Time Display -->
-            <TextView
-                android:id="@+id/tvAlarmTime"
+            <!-- Enable Switch -->
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switchAlarmEnabled"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="06:30 AM"
-                android:textColor="@color/md_theme_dark_primary"
-                android:textSize="60sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-light"
-                android:letterSpacing="-0.03"
-                android:layout_marginBottom="12dp"/>
-
-            <!-- Mode Description -->
-            <TextView
-                android:id="@+id/tvModeDescription"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="At Sunrise"
-                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                android:alpha="0.9"
-                android:layout_marginBottom="16dp"/>
-
-            <!-- Repeat Days Row -->
-            <LinearLayout
-                android:id="@+id/repeatDaysRow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="start">
-
-                <TextView
-                    android:id="@+id/tvRepeatDays"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mon, Tue, Wed, Thu, Fri"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="@color/md_theme_dark_onSurfaceVariant"/>
-
-            </LinearLayout>
+                android:checked="true"
+                app:thumbTint="@color/md_theme_dark_onPrimaryContainer"
+                app:trackTint="@color/md_theme_dark_primaryContainer"/>
 
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+        <!-- Time Display -->
+        <TextView
+            android:id="@+id/tvAlarmTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="06:30 AM"
+            android:textColor="@color/md_theme_dark_primary"
+            android:textSize="64sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-light"
+            android:letterSpacing="-0.04"
+            android:layout_marginBottom="16dp"/>
 
-</LinearLayout>
+        <!-- Mode Description -->
+        <TextView
+            android:id="@+id/tvModeDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="At Sunrise"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textColor="@color/md_theme_dark_onSurfaceVariant"
+            android:alpha="0.85"
+            android:layout_marginBottom="20dp"/>
 
+        <!-- Repeat Days -->
+        <LinearLayout
+            android:id="@+id/repeatDaysRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📅"
+                android:textSize="18sp"
+                android:layout_marginEnd="8dp"
+                android:alpha="0.7"/>
+
+            <TextView
+                android:id="@+id/tvRepeatDays"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Mon, Tue, Wed, Thu, Fri"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                android:alpha="0.8"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,46 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<androidx.coordinatorlayout.widget.CoordinatorLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/md_theme_dark_background">
+    android:background="@color/md_theme_dark_background"
+    android:fitsSystemWindows="true">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/topAppBar"
+    <!-- App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="wrap_content"
         android:background="@android:color/transparent"
-        app:navigationIcon="@drawable/alarm"
-        app:navigationIconTint="@color/md_theme_dark_primary"
-        app:title="Rooster"
-        app:titleTextColor="@color/md_theme_dark_onBackground"
-        app:titleTextAppearance="@style/TextAppearance.Rooster.TitleLarge"
-        app:menu="@menu/main_menu"
-        style="@style/Widget.Material3.Toolbar"/>
+        app:elevation="0dp">
 
-    <ScrollView
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/topAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@android:color/transparent"
+            app:navigationIcon="@drawable/alarm"
+            app:navigationIconTint="@color/md_theme_dark_primary"
+            app:title="Rooster"
+            app:titleTextColor="@color/md_theme_dark_onBackground"
+            app:titleTextAppearance="@style/TextAppearance.Rooster.TitleLarge"
+            app:menu="@menu/main_menu"
+            style="@style/Widget.Material3.Toolbar"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Main Content -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="24dp">
 
-            <!-- Current Time Card -->
+            <!-- Hero Time Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/timeCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="32dp"
                 app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
                 app:cardCornerRadius="32dp"
-                app:cardElevation="8dp"
+                app:cardElevation="12dp"
                 app:strokeWidth="0dp"
                 android:stateListAnimator="@null">
 
@@ -48,7 +58,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="40dp"
+                    android:padding="48dp"
                     android:gravity="center"
                     android:background="@drawable/card_background_elevated">
 
@@ -58,8 +68,8 @@
                         android:text="Current Time"
                         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
                         android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:layout_marginBottom="12dp"
-                        android:alpha="0.8"/>
+                        android:layout_marginBottom="16dp"
+                        android:alpha="0.7"/>
 
                     <!-- Time Display -->
                     <TextView
@@ -68,38 +78,140 @@
                         android:layout_height="wrap_content"
                         android:text="--:--"
                         android:textColor="@color/md_theme_dark_primary"
-                        android:textSize="72sp"
+                        android:textSize="96sp"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-light"
-                        android:letterSpacing="-0.03"
-                        android:layout_marginBottom="24dp"
-                        android:elevation="2dp"/>
+                        android:letterSpacing="-0.04"
+                        android:layout_marginBottom="32dp"/>
 
                     <!-- Progress Bar -->
                     <ProgressBar
                         android:id="@+id/progress_cycle"
                         style="?android:attr/progressBarStyleHorizontal"
                         android:layout_width="match_parent"
-                        android:layout_height="16dp"
+                        android:layout_height="20dp"
                         android:indeterminate="false"
                         android:progressDrawable="@drawable/progress_circular"
                         android:max="100"
                         android:progress="0"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_marginBottom="16dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Day progress"
-                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:alpha="0.7"/>
+                        android:alpha="0.6"/>
 
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Info Card -->
+            <!-- Quick Actions Grid -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quick Actions"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textColor="@color/md_theme_dark_onBackground"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="2"
+                android:alignmentMode="alignMargins"
+                android:columnOrderPreserved="false"
+                android:layout_marginBottom="32dp">
+
+                <!-- Alarms Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/alarmButton"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="0dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:rippleColor="@color/md_theme_dark_primary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⏰"
+                            android:textSize="48sp"
+                            android:layout_marginBottom="12dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alarms"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textColor="@color/md_theme_dark_onPrimaryContainer"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Settings Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/settingsButton"
+                    android:layout_width="0dp"
+                    android:layout_height="140dp"
+                    android:layout_columnWeight="1"
+                    android:layout_margin="8dp"
+                    app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="6dp"
+                    app:strokeWidth="0dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:rippleColor="@color/md_theme_dark_primary">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="⚙️"
+                            android:textSize="48sp"
+                            android:layout_marginBottom="12dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Settings"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:textColor="@color/md_theme_dark_onSurface"
+                            android:textStyle="bold"/>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </GridLayout>
+
+            <!-- Info Section -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/infoCard"
                 android:layout_width="match_parent"
@@ -121,20 +233,20 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
-                        android:layout_marginBottom="12dp">
+                        android:layout_marginBottom="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="🌅"
-                            android:textSize="32sp"
-                            android:layout_marginEnd="12dp"/>
+                            android:textSize="40sp"
+                            android:layout_marginEnd="16dp"/>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Rooster Alarm"
+                            android:text="Wake with the Sun"
                             android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
                             android:textColor="@color/md_theme_dark_onSurface"
                             android:textStyle="bold"/>
@@ -144,11 +256,11 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Wake up with the sun using astronomy-based alarms. Set multiple alarms with different modes and relative times like Dawn, Sunrise, and Sunset."
-                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:text="Set astronomy-based alarms that wake you up naturally with sunrise. Choose from multiple solar events like dawn, sunrise, and sunset."
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                         android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:lineSpacingExtra="6dp"
-                        android:alpha="0.9"/>
+                        android:lineSpacingExtra="8dp"
+                        android:alpha="0.85"/>
 
                 </LinearLayout>
 
@@ -156,60 +268,6 @@
 
         </LinearLayout>
 
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Navigation Bar -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="20dp"
-        android:gravity="center"
-        android:background="@color/md_theme_dark_surface"
-        android:elevation="12dp">
-
-        <!-- Alarms Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/alarmButton"
-            android:layout_width="0dp"
-            android:layout_height="64dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="10dp"
-            android:text="Alarms"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/md_theme_dark_onPrimaryContainer"
-            app:icon="@drawable/alarm"
-            app:iconGravity="textStart"
-            app:iconSize="26dp"
-            app:iconTint="@color/md_theme_dark_onPrimaryContainer"
-            app:backgroundTint="@color/md_theme_dark_primaryContainer"
-            app:cornerRadius="18dp"
-            app:elevation="4dp"
-            android:stateListAnimator="@null"/>
-
-        <!-- Settings Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/settingsButton"
-            android:layout_width="0dp"
-            android:layout_height="64dp"
-            android:layout_weight="1"
-            android:layout_marginStart="10dp"
-            android:text="Settings"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/md_theme_dark_onPrimaryContainer"
-            app:icon="@drawable/ic_settings"
-            app:iconGravity="textStart"
-            app:iconSize="26dp"
-            app:iconTint="@color/md_theme_dark_onPrimaryContainer"
-            app:backgroundTint="@color/md_theme_dark_primaryContainer"
-            app:cornerRadius="18dp"
-            app:elevation="4dp"
-            android:stateListAnimator="@null"/>
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
