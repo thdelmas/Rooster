@@ -29,7 +29,6 @@ import java.util.Locale
 class AlarmEditorActivity : AppCompatActivity() {
 
     private val viewModel: AlarmListViewModel by viewModels()
-    private lateinit var alarmDbHelper: AlarmDbHelper
     
     private var alarmId: Long = -1
     private var currentAlarm: Alarm? = null
@@ -91,7 +90,6 @@ class AlarmEditorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_alarm_editor)
         
-        alarmDbHelper = AlarmDbHelper(this)
         alarmId = intent.getLongExtra("alarm_id", -1)
         soundPreviewHelper = com.rooster.rooster.ui.SoundPreviewHelper(this)
         
@@ -159,8 +157,10 @@ class AlarmEditorActivity : AppCompatActivity() {
     
     private fun loadAlarmData() {
         if (alarmId != -1L) {
-            currentAlarm = alarmDbHelper.getAlarm(alarmId)
-            currentAlarm?.let { alarm ->
+            // Load alarm using ViewModel (which uses Repository)
+            viewModel.allAlarms.observe(this) { alarms ->
+                currentAlarm = alarms.find { it.id == alarmId }
+                currentAlarm?.let { alarm ->
                 alarmLabelInput.setText(alarm.label)
                 
                 // Determine mode based on alarm data
@@ -200,6 +200,11 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 updateUI()
                 updateSunCourseVisualization()
+                }
+            } ?: run {
+                // Alarm not found
+                Log.e("AlarmEditorActivity", "Alarm with ID $alarmId not found")
+                finish()
             }
         } else {
             // New alarm defaults
@@ -790,7 +795,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             .setMessage("Are you sure you want to delete this alarm?")
             .setPositiveButton("Delete") { _, _ ->
                 currentAlarm?.let {
-                    alarmDbHelper.deleteAlarm(it.id)
+                    viewModel.deleteAlarm(it)
                 }
                 finish()
             }
@@ -854,16 +859,27 @@ class AlarmEditorActivity : AppCompatActivity() {
             }
         }
         
-        alarm?.let {
-            it.enabled = true
-            it.vibrate = vibrateEnabled
-            it.snoozeEnabled = snoozeEnabled
-            it.snoozeDuration = snoozeDuration
-            it.snoozeCount = snoozeCount
-            it.volume = alarmVolume
-            it.gradualVolume = gradualVolumeEnabled
-            alarmDbHelper.updateAlarm(it)
+        if (alarm == null) {
+            Log.e("AlarmEditorActivity", "Cannot save: alarm is null")
+            com.google.android.material.snackbar.Snackbar.make(
+                findViewById(android.R.id.content),
+                "Error: Alarm not found",
+                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+            ).show()
+            return
         }
+        
+        // Update alarm with all settings
+        alarm.enabled = true
+        alarm.vibrate = vibrateEnabled
+        alarm.snoozeEnabled = snoozeEnabled
+        alarm.snoozeDuration = snoozeDuration
+        alarm.snoozeCount = snoozeCount
+        alarm.volume = alarmVolume
+        alarm.gradualVolume = gradualVolumeEnabled
+        
+        // Use ViewModel to update alarm (which uses Repository)
+        viewModel.updateAlarm(alarm)
         
         finish()
     }
