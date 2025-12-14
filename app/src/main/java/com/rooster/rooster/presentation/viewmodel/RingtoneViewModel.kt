@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AlarmRepository
+import com.rooster.rooster.util.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,10 +43,11 @@ class RingtoneViewModel @Inject constructor(
                     alarmRepository.updateAlarm(updatedAlarm)
                     _updateResult.value = UpdateResult.Success
                 } else {
-                    _updateResult.value = UpdateResult.Error("Alarm not found")
+                    _updateResult.value = UpdateResult.Error("Alarm not found. Please try again")
                 }
             } catch (e: Exception) {
-                _updateResult.value = UpdateResult.Error(e.message ?: "Unknown error")
+                val friendlyError = ErrorMessageMapper.getContextualError("save", e)
+                _updateResult.value = UpdateResult.Error(friendlyError.message)
             }
         }
     }

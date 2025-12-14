@@ -8,6 +8,7 @@ import com.rooster.rooster.Alarm
 import com.rooster.rooster.AlarmCreation
 import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
+import com.rooster.rooster.util.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,7 +43,8 @@ class AlarmListViewModel @Inject constructor(
                 onSuccess(id)
                 _error.value = null
             } catch (e: Exception) {
-                _error.value = "Failed to create alarm: ${e.message}"
+                val friendlyError = ErrorMessageMapper.getContextualError("save", e)
+                _error.value = friendlyError.message
             } finally {
                 _isLoading.value = false
             }
@@ -63,7 +65,8 @@ class AlarmListViewModel @Inject constructor(
                 alarmRepository.updateAlarm(updatedAlarm)
                 _error.value = null
             } catch (e: Exception) {
-                _error.value = "Failed to update alarm: ${e.message}"
+                val friendlyError = ErrorMessageMapper.getContextualError("save", e)
+                _error.value = friendlyError.message
             } finally {
                 _isLoading.value = false
             }
@@ -96,7 +99,8 @@ class AlarmListViewModel @Inject constructor(
                 alarmRepository.updateAlarmEnabled(alarmId, enabled)
                 _error.value = null
             } catch (e: Exception) {
-                _error.value = "Failed to toggle alarm: ${e.message}"
+                val friendlyError = ErrorMessageMapper.mapError(e)
+                _error.value = friendlyError.message
             }
         }
     }
@@ -113,7 +117,8 @@ class AlarmListViewModel @Inject constructor(
                 .filter { it.calculatedTime > currentTime }
                 .minByOrNull { it.calculatedTime }
         } catch (e: Exception) {
-            _error.value = "Failed to get next alarm: ${e.message}"
+            val friendlyError = ErrorMessageMapper.mapError(e)
+            _error.value = friendlyError.message
             null
         }
     }

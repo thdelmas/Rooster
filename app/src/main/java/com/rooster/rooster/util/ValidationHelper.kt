@@ -20,32 +20,32 @@ object ValidationHelper {
         
         // Validate label
         if (alarm.label.isBlank()) {
-            errors.add("Alarm label cannot be empty")
+            errors.add("Please enter a name for your alarm")
         }
         
         if (alarm.label.length > 100) {
-            errors.add("Alarm label is too long (max 100 characters)")
+            errors.add("Alarm name is too long. Please use 100 characters or less")
         }
         
         // Validate mode
         if (!isValidMode(alarm.mode)) {
-            errors.add("Invalid alarm mode: ${alarm.mode}")
+            errors.add("Invalid alarm mode selected. Please choose a valid mode")
         }
         
         // Validate relative times
         if (alarm.mode in listOf(AppConstants.ALARM_MODE_AT, AppConstants.ALARM_MODE_BETWEEN, AppConstants.ALARM_MODE_AFTER, AppConstants.ALARM_MODE_BEFORE)) {
             if (alarm.relative1.isBlank() && alarm.time1 == 0L) {
-                errors.add("Alarm time is not set")
+                errors.add("Please set a time for your alarm")
             }
         }
         
         // Validate time values
         if (alarm.time1 < 0) {
-            errors.add("Invalid time1 value")
+            errors.add("Invalid alarm time. Please set a valid time")
         }
         
         if (alarm.mode == AppConstants.ALARM_MODE_BETWEEN && alarm.time2 < 0) {
-            errors.add("Invalid time2 value")
+            errors.add("Please set both start and end times for the time range")
         }
         
         // Validate ringtone URI
@@ -68,22 +68,22 @@ object ValidationHelper {
         
         // Validate ID
         if (alarm.id <= 0) {
-            errors.add("Invalid alarm ID")
+            errors.add("Invalid alarm. Please try creating a new alarm")
         }
         
         // Validate label
         if (alarm.label.isBlank()) {
-            errors.add("Alarm label cannot be empty")
+            errors.add("Please enter a name for your alarm")
         }
         
         // Validate mode
         if (!isValidMode(alarm.mode)) {
-            errors.add("Invalid alarm mode: ${alarm.mode}")
+            errors.add("Invalid alarm mode selected. Please choose a valid mode")
         }
         
         // Validate at least one day is selected
         if (!hasAtLeastOneDaySelected(alarm)) {
-            errors.add("At least one day must be selected")
+            errors.add("Please select at least one day for your alarm")
         }
         
         // Validate calculated time
@@ -156,15 +156,15 @@ object ValidationHelper {
         val errors = mutableListOf<String>()
         
         if (latitude < -90 || latitude > 90) {
-            errors.add("Invalid latitude: $latitude (must be between -90 and 90)")
+            errors.add("Invalid location. Please select a valid location on the map")
         }
         
         if (longitude < -180 || longitude > 180) {
-            errors.add("Invalid longitude: $longitude (must be between -180 and 180)")
+            errors.add("Invalid location. Please select a valid location on the map")
         }
         
         if (latitude == 0f && longitude == 0f) {
-            return ValidationResult.Warning("Location is at coordinates (0, 0)")
+            return ValidationResult.Warning("Location appears to be at the default coordinates. Please select your actual location")
         }
         
         return if (errors.isEmpty()) {
@@ -181,12 +181,12 @@ object ValidationHelper {
         val errors = mutableListOf<String>()
         
         if (offsetMinutes < 0) {
-            errors.add("Offset minutes cannot be negative")
+            errors.add("Time offset cannot be negative. Please enter a positive value")
         }
         
         // Maximum 24 hours (1440 minutes)
         if (offsetMinutes > 1440) {
-            errors.add("Offset minutes cannot exceed 24 hours (1440 minutes)")
+            errors.add("Time offset cannot exceed 24 hours. Please enter a value between 0 and 1440 minutes")
         }
         
         return if (errors.isEmpty()) {
@@ -250,15 +250,15 @@ object ValidationHelper {
             val index2 = eventOrder.indexOf(event2)
             
             if (index1 == -1) {
-                errors.add("Invalid solar event: $event1")
+                errors.add("Please select a valid first solar event")
             }
             
             if (index2 == -1) {
-                errors.add("Invalid solar event: $event2")
+                errors.add("Please select a valid second solar event")
             }
             
             if (index1 != -1 && index2 != -1 && index1 >= index2) {
-                errors.add("First solar event ($event1) must occur before second solar event ($event2)")
+                errors.add("The first solar event must occur before the second one. Please adjust your selection")
             }
         }
         
@@ -287,7 +287,7 @@ object ValidationHelper {
                                friday || saturday || sunday
         
         if (!hasAtLeastOneDay) {
-            errors.add("At least one day must be selected")
+            errors.add("Please select at least one day for your alarm")
         }
         
         return if (errors.isEmpty()) {
@@ -308,12 +308,12 @@ object ValidationHelper {
         
         // Snooze duration should be between 5 and 30 minutes
         if (snoozeDuration < 5 || snoozeDuration > 30) {
-            errors.add("Snooze duration must be between 5 and 30 minutes")
+            errors.add("Snooze duration must be between 5 and 30 minutes. Please adjust the value")
         }
         
         // Snooze count should be between 1 and 10
         if (snoozeCount < 1 || snoozeCount > 10) {
-            errors.add("Snooze count must be between 1 and 10")
+            errors.add("Snooze count must be between 1 and 10. Please adjust the value")
         }
         
         return if (errors.isEmpty()) {
@@ -330,7 +330,7 @@ object ValidationHelper {
         val errors = mutableListOf<String>()
         
         if (volume < 0 || volume > 100) {
-            errors.add("Volume must be between 0 and 100")
+            errors.add("Volume must be between 0% and 100%. Please adjust the volume slider")
         }
         
         return if (errors.isEmpty()) {
@@ -368,22 +368,22 @@ object ValidationHelper {
         // Validate label
         val sanitizedLabel = sanitizeLabel(label)
         if (sanitizedLabel.isBlank()) {
-            errors.add("Alarm label cannot be empty")
+            errors.add("Please enter a name for your alarm")
         }
         
         // Validate mode
         if (mode != "sun" && mode != "classic") {
-            errors.add("Invalid alarm mode: $mode")
+            errors.add("Please select either Sun Mode or Classic Mode")
         }
         
         // Validate sun mode specific inputs
         if (mode == "sun") {
             if (!isValidMode(sunTimingMode)) {
-                errors.add("Invalid sun timing mode: $sunTimingMode")
+                errors.add("Please select when the alarm should trigger (At, Before, After, or Between)")
             }
             
             if (!isValidRelativeTime(solarEvent1)) {
-                errors.add("Invalid solar event: $solarEvent1")
+                errors.add("Please select a valid solar event (sunrise, sunset, etc.)")
             }
             
             // Validate offset for Before/After modes
@@ -398,7 +398,7 @@ object ValidationHelper {
             // Validate solar event combination for Between mode
             if (sunTimingMode == AppConstants.ALARM_MODE_BETWEEN) {
                 if (!isValidRelativeTime(solarEvent2)) {
-                    errors.add("Invalid second solar event: $solarEvent2")
+                    errors.add("Please select a valid second solar event")
                 }
                 val eventResult = validateSolarEventCombination(solarEvent1, solarEvent2, sunTimingMode)
                 if (eventResult.isError()) {

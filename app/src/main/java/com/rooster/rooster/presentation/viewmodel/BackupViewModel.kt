@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rooster.rooster.data.backup.BackupManager
+import com.rooster.rooster.util.ErrorMessageMapper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +32,13 @@ class BackupViewModel @Inject constructor(
             _backupState.value = if (result.isSuccess) {
                 BackupState.Success(result.getOrNull() ?: "Export successful")
             } else {
-                BackupState.Error(result.exceptionOrNull()?.message ?: "Export failed")
+                val exception = result.exceptionOrNull()
+                val friendlyError = if (exception != null) {
+                    ErrorMessageMapper.getContextualError("export", exception)
+                } else {
+                    ErrorMessageMapper.UserFriendlyError("Unable to export alarms", "Please try again")
+                }
+                BackupState.Error(friendlyError.message)
             }
         }
     }
@@ -48,7 +55,13 @@ class BackupViewModel @Inject constructor(
             _backupState.value = if (result.isSuccess) {
                 BackupState.Success(result.getOrNull() ?: "Import successful")
             } else {
-                BackupState.Error(result.exceptionOrNull()?.message ?: "Import failed")
+                val exception = result.exceptionOrNull()
+                val friendlyError = if (exception != null) {
+                    ErrorMessageMapper.getContextualError("import", exception)
+                } else {
+                    ErrorMessageMapper.UserFriendlyError("Unable to import alarms", "Please try again")
+                }
+                BackupState.Error(friendlyError.message)
             }
         }
     }
