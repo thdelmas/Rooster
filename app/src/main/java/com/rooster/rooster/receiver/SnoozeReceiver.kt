@@ -23,7 +23,6 @@ class SnoozeReceiver : BroadcastReceiver() {
     
     companion object {
         const val ACTION_SNOOZE = "com.rooster.rooster.ACTION_SNOOZE"
-        const val SNOOZE_DURATION_MINUTES = 10
         private const val TAG = "SnoozeReceiver"
     }
     
@@ -35,8 +34,6 @@ class SnoozeReceiver : BroadcastReceiver() {
             Log.e(TAG, "Invalid alarm ID")
             return
         }
-        
-        Log.i(TAG, "Snoozing alarm $alarmId for $SNOOZE_DURATION_MINUTES minutes")
         
         // Use coroutine scope to handle async operations
         receiverScope.launch {
@@ -55,15 +52,16 @@ class SnoozeReceiver : BroadcastReceiver() {
                 val alarm = alarmRepository.getAlarmById(alarmId)
                 
                 if (alarm != null) {
+                    // Use alarm's snooze duration (default to 10 minutes if not set)
+                    val snoozeDurationMinutes = if (alarm.snoozeDuration > 0) alarm.snoozeDuration else 10
+                    Log.i(TAG, "Snoozing alarm $alarmId for $snoozeDurationMinutes minutes")
+                    
                     // Calculate snooze time
-                    val snoozeTime = System.currentTimeMillis() + (SNOOZE_DURATION_MINUTES * 60 * 1000)
+                    val snoozeTime = System.currentTimeMillis() + (snoozeDurationMinutes * 60 * 1000L)
                     
-                    // Update calculated time in database
-                    alarmRepository.updateCalculatedTime(alarmId, snoozeTime)
-                    
-                    // Reschedule the alarm using ScheduleAlarmUseCase for consistency
-                    val updatedAlarm = alarm.copy(calculatedTime = snoozeTime)
-                    val result = scheduleAlarmUseCase.scheduleAlarm(updatedAlarm)
+                    // Schedule the alarm with the specific snooze time using ScheduleAlarmUseCase
+                    // This stores state in database and uses AlarmManager for reliability
+                    val result = scheduleAlarmUseCase.scheduleAlarmWithTime(alarm, snoozeTime)
                     
                     result.fold(
                         onSuccess = {
