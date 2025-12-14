@@ -112,33 +112,79 @@ class AlarmclockReceiver : BroadcastReceiver() {
             // Use coroutine scope for async operations
             receiverScope.launch {
                 try {
-                    // Get ScheduleAlarmUseCase from Hilt
-                    val scheduleAlarmUseCase = (context.applicationContext as? RoosterApplication)
-                        ?.provideScheduleAlarmUseCase()
+                    val app = context.applicationContext as? RoosterApplication
+                    val scheduleAlarmUseCase = app?.provideScheduleAlarmUseCase()
+                    val alarmRepository = app?.provideAlarmRepository()
                     
-                    if (scheduleAlarmUseCase != null) {
-                        // Validate and reschedule all alarms on boot
-                        // ScheduleAlarmUseCase.scheduleNextAlarm() already validates:
-                        // - Filters out disabled alarms
-                        // - Filters out past alarms (calculatedTime <= currentTime)
-                        // - Validates calculated times are in the future
+                    if (scheduleAlarmUseCase != null && alarmRepository != null) {
+                        // Explicitly validate all alarms before scheduling
+                        val currentTime = System.currentTimeMillis()
+                        val enabledAlarms = alarmRepository.getEnabledAlarms()
+                        
+                        Log.i("AlarmclockReceiver", "Found ${enabledAlarms.size} enabled alarm(s) to validate")
+                        
+                        var validAlarmsCount = 0
+                        var invalidAlarmsCount = 0
+                        var pastAlarmsCount = 0
+                        
+                        // Validate each alarm
+                        for (alarm in enabledAlarms) {
+                            try {
+                                // Validate alarm ID
+                                if (alarm.id <= 0) {
+                                    Log.w("AlarmclockReceiver", "Invalid alarm ID: ${alarm.id} for alarm '${alarm.label}', skipping")
+                                    invalidAlarmsCount++
+                                    continue
+                                }
+                                
+                                // Validate alarm label
+                                if (alarm.label.isBlank()) {
+                                    Log.w("AlarmclockReceiver", "Alarm ID ${alarm.id} has blank label, skipping")
+                                    invalidAlarmsCount++
+                                    continue
+                                }
+                                
+                                // Check if calculated time is in the past
+                                val calculatedTime = alarm.calculatedTime
+                                if (calculatedTime > 0 && calculatedTime <= currentTime) {
+                                    Log.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time in the past: $calculatedTime (current: $currentTime), will recalculate")
+                                    pastAlarmsCount++
+                                    // The time will be recalculated in scheduleNextAlarm()
+                                }
+                                
+                                // Validate calculated time is reasonable (not too far in the past)
+                                if (calculatedTime > 0 && calculatedTime < currentTime - 86400000) { // More than 24 hours in the past
+                                    Log.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time more than 24h in the past, will recalculate")
+                                }
+                                
+                                validAlarmsCount++
+                                Log.d("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) validated successfully")
+                            } catch (e: Exception) {
+                                Log.e("AlarmclockReceiver", "Error validating alarm '${alarm.label}' (ID: ${alarm.id})", e)
+                                invalidAlarmsCount++
+                            }
+                        }
+                        
+                        Log.i("AlarmclockReceiver", "Validation complete: $validAlarmsCount valid, $invalidAlarmsCount invalid, $pastAlarmsCount with past times")
+                        
+                        // Now reschedule all alarms (this will recalculate times and schedule the next one)
                         val result = scheduleAlarmUseCase.rescheduleAllAlarms()
                         result.fold(
                             onSuccess = {
-                                Log.i("AlarmclockReceiver", "Alarms validated and rescheduled after boot")
+                                Log.i("AlarmclockReceiver", "Alarms validated and rescheduled after boot successfully")
                             },
                             onFailure = { e ->
-                                Log.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)
+                                Log.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
                             }
                         )
                     } else {
-                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
+                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase or AlarmRepository not available, using fallback AlarmHandler")
                         // Fallback to AlarmHandler if Hilt is not available
                         // Note: AlarmHandler also validates alarms (skips disabled and past alarms)
                         AlarmHandler().setNextAlarm(context)
                     }
                 } catch (e: Exception) {
-                    Log.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
+                    Log.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)
                 }
             }
         }
