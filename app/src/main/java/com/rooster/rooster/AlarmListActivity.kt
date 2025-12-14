@@ -2,7 +2,6 @@ package com.rooster.rooster
 
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -94,11 +93,5 @@ class AlarmListActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    @Deprecated("No longer needed with LiveData observation")
-    fun reloadAlarmList() {
-        Log.e("Redraw", "Redraw")
-        // This is now handled automatically by LiveData observation
     }
 }
