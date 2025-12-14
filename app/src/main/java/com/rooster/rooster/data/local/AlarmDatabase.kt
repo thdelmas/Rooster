@@ -109,6 +109,7 @@ abstract class AlarmDatabase : RoomDatabase() {
                 """.trimIndent())
                 
                 // Copy data from old table to new table, using COALESCE for null values
+                // Normalize boolean values to ensure they're strictly 0 or 1
                 database.execSQL("""
                     INSERT INTO alarms_new (
                         id, label, enabled, mode, ringtoneUri, relative1, relative2,
@@ -118,22 +119,22 @@ abstract class AlarmDatabase : RoomDatabase() {
                     )
                     SELECT 
                         id, label, 
-                        CAST(enabled AS INTEGER), 
+                        CASE WHEN CAST(enabled AS INTEGER) = 0 THEN 0 ELSE 1 END, 
                         mode, ringtoneUri, relative1, relative2,
                         time1, time2, calculated_time, 
-                        CAST(monday AS INTEGER), 
-                        CAST(tuesday AS INTEGER), 
-                        CAST(wednesday AS INTEGER),
-                        CAST(thursday AS INTEGER), 
-                        CAST(friday AS INTEGER), 
-                        CAST(saturday AS INTEGER), 
-                        CAST(sunday AS INTEGER), 
-                        COALESCE(CAST(vibrate AS INTEGER), 1), 
-                        COALESCE(CAST(snooze_enabled AS INTEGER), 1),
+                        CASE WHEN CAST(monday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN CAST(tuesday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN CAST(wednesday AS INTEGER) = 0 THEN 0 ELSE 1 END,
+                        CASE WHEN CAST(thursday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN CAST(friday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN CAST(saturday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN CAST(sunday AS INTEGER) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN COALESCE(CAST(vibrate AS INTEGER), 1) = 0 THEN 0 ELSE 1 END, 
+                        CASE WHEN COALESCE(CAST(snooze_enabled AS INTEGER), 1) = 0 THEN 0 ELSE 1 END,
                         COALESCE(snooze_duration, 10), 
                         COALESCE(snooze_count, 3), 
                         COALESCE(volume, 80), 
-                        COALESCE(CAST(gradual_volume AS INTEGER), 0)
+                        CASE WHEN COALESCE(CAST(gradual_volume AS INTEGER), 0) = 0 THEN 0 ELSE 1 END
                     FROM alarms
                 """.trimIndent())
                 
