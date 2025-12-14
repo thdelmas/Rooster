@@ -64,6 +64,32 @@ class ScheduleAlarmUseCase @Inject constructor(
     }
     
     /**
+     * Schedule an alarm with a specific time (used for snooze)
+     * This bypasses time calculation and uses the provided time directly
+     */
+    suspend fun scheduleAlarmWithTime(alarm: Alarm, triggerTime: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // Validate the trigger time
+            if (triggerTime <= System.currentTimeMillis()) {
+                Log.e(TAG, "Trigger time is in the past for alarm '${alarm.label}' (ID: ${alarm.id})")
+                return@withContext Result.failure(IllegalStateException("Trigger time is in the past"))
+            }
+            
+            // Update the alarm's calculated time in database
+            val updatedAlarm = alarm.copy(calculatedTime = triggerTime)
+            alarmRepository.updateCalculatedTime(alarm.id, triggerTime)
+            
+            // Schedule with AlarmManager using the provided time
+            scheduleWithAlarmManager(updatedAlarm)
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id}) with specific time", e)
+            Result.failure(e)
+        }
+    }
+    
+    /**
      * Cancel a scheduled alarm
      */
     suspend fun cancelAlarm(alarm: Alarm): Result<Unit> = withContext(Dispatchers.IO) {
