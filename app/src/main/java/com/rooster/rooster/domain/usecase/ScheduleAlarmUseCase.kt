@@ -7,8 +7,8 @@ import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.os.Build
-import android.util.Log
 import com.rooster.rooster.Alarm
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.AlarmclockReceiver
 import com.rooster.rooster.data.repository.AlarmRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,7 +36,7 @@ class ScheduleAlarmUseCase @Inject constructor(
     suspend fun scheduleAlarm(alarm: Alarm): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (!alarm.enabled) {
-                Log.w(TAG, "Alarm '${alarm.label}' (ID: ${alarm.id}) is disabled, skipping")
+                Logger.w(TAG, "Alarm '${alarm.label}' (ID: ${alarm.id}) is disabled, skipping")
                 return@withContext Result.failure(IllegalArgumentException("Alarm is disabled"))
             }
             
@@ -45,7 +45,7 @@ class ScheduleAlarmUseCase @Inject constructor(
             
             // Validate the calculated time
             if (calculatedTime <= System.currentTimeMillis()) {
-                Log.e(TAG, "Calculated time is in the past for alarm '${alarm.label}' (ID: ${alarm.id})")
+                Logger.e(TAG, "Calculated time is in the past for alarm '${alarm.label}' (ID: ${alarm.id})")
                 return@withContext Result.failure(IllegalStateException("Calculated time is in the past"))
             }
             
@@ -58,7 +58,7 @@ class ScheduleAlarmUseCase @Inject constructor(
             
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id})", e)
+            Logger.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id})", e)
             Result.failure(e)
         }
     }
@@ -97,7 +97,7 @@ class ScheduleAlarmUseCase @Inject constructor(
             cancelWithAlarmManager(alarm.id)
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error cancelling alarm '${alarm.label}' (ID: ${alarm.id})", e)
+            Logger.e(TAG, "Error cancelling alarm '${alarm.label}' (ID: ${alarm.id})", e)
             Result.failure(e)
         }
     }
@@ -108,12 +108,12 @@ class ScheduleAlarmUseCase @Inject constructor(
      */
     suspend fun scheduleNextAlarm(): Result<Alarm?> = withContext(Dispatchers.IO) {
         try {
-            Log.i(TAG, "Scheduling next alarm")
+            Logger.i(TAG, "Scheduling next alarm")
             
             val enabledAlarms = alarmRepository.getEnabledAlarms()
             
             if (enabledAlarms.isEmpty()) {
-                Log.w(TAG, "No enabled alarms found")
+                Logger.w(TAG, "No enabled alarms found")
                 return@withContext Result.success(null)
             }
             
@@ -126,11 +126,11 @@ class ScheduleAlarmUseCase @Inject constructor(
                 val diff = calculatedTime - currentTime
                 
                 if (diff <= 0) {
-                    Log.d(TAG, "Alarm '${alarm.label}' (ID: ${alarm.id}) is in the past, skipping")
+                    Logger.d(TAG, "Alarm '${alarm.label}' (ID: ${alarm.id}) is in the past, skipping")
                     continue
                 }
                 
-                Log.d(TAG, "Alarm '${alarm.label}' scheduled in ${diff / 1000 / 60} minutes")
+                Logger.d(TAG, "Alarm '${alarm.label}' scheduled in ${diff / 1000 / 60} minutes")
                 
                 if (diff < minTimeDifference) {
                     closestAlarm = alarm.copy(calculatedTime = calculatedTime)
@@ -146,15 +146,15 @@ class ScheduleAlarmUseCase @Inject constructor(
                 scheduleWithAlarmManager(closestAlarm)
                 
                 val minutesUntil = minTimeDifference / 1000 / 60
-                Log.i(TAG, "Closest alarm set: '${closestAlarm.label}' (ID: ${closestAlarm.id}) in $minutesUntil minutes")
+                Logger.i(TAG, "Closest alarm set: '${closestAlarm.label}' (ID: ${closestAlarm.id}) in $minutesUntil minutes")
                 
                 Result.success(closestAlarm)
             } else {
-                Log.w(TAG, "No valid alarms found to schedule")
+                Logger.w(TAG, "No valid alarms found to schedule")
                 Result.success(null)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error scheduling next alarm", e)
+            Logger.e(TAG, "Error scheduling next alarm", e)
             Result.failure(e)
         }
     }
@@ -164,11 +164,11 @@ class ScheduleAlarmUseCase @Inject constructor(
      */
     suspend fun rescheduleAllAlarms(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            Log.i(TAG, "Rescheduling all alarms")
+            Logger.i(TAG, "Rescheduling all alarms")
             scheduleNextAlarm()
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error rescheduling all alarms", e)
+            Logger.e(TAG, "Error rescheduling all alarms", e)
             Result.failure(e)
         }
     }
@@ -177,7 +177,7 @@ class ScheduleAlarmUseCase @Inject constructor(
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         
         if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager is null")
+            Logger.e(TAG, "AlarmManager is null")
             throw IllegalStateException("AlarmManager is not available")
         }
         
@@ -200,7 +200,7 @@ class ScheduleAlarmUseCase @Inject constructor(
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val formattedDate = fullDateFormat.format(calendar.time)
         
-        Log.d(TAG, "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
+        Logger.d(TAG, "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
         
         val triggerTime = calendar.timeInMillis
         
@@ -217,7 +217,7 @@ class ScheduleAlarmUseCase @Inject constructor(
                 }
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "Permission denied for exact alarm", e)
+            Logger.e(TAG, "Permission denied for exact alarm", e)
             throw e
         }
     }
@@ -226,11 +226,11 @@ class ScheduleAlarmUseCase @Inject constructor(
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         
         if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager is null")
+            Logger.e(TAG, "AlarmManager is null")
             throw IllegalStateException("AlarmManager is not available")
         }
         
-        Log.d(TAG, "Cancelling alarm with ID: $alarmId")
+        Logger.d(TAG, "Cancelling alarm with ID: $alarmId")
         
         val intent = Intent(context, AlarmclockReceiver::class.java).apply {
             putExtra("message", "alarm time")

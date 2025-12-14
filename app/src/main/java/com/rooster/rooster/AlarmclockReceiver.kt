@@ -6,8 +6,8 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +24,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     override fun onReceive(context: Context, intent: Intent) {
-        Log.i("AlarmclockReceiver", "Received broadcast: ${intent?.action}")
+        Logger.i("AlarmclockReceiver", "Received broadcast: ${intent?.action}")
         
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
             // Safe null handling - validate alarm_id before use
@@ -32,11 +32,11 @@ class AlarmclockReceiver : BroadcastReceiver() {
             val alarmId = alarmIdStr?.toLongOrNull()
             
             if (alarmId == null || alarmId <= 0) {
-                Log.e("AlarmclockReceiver", "Invalid or missing alarm_id: $alarmIdStr")
+                Logger.e("AlarmclockReceiver", "Invalid or missing alarm_id: $alarmIdStr")
                 return
             }
             
-            Log.i("AlarmclockReceiver", "Processing alarm id: $alarmId")
+            Logger.i("AlarmclockReceiver", "Processing alarm id: $alarmId")
 
             // Create a notification channel.
             val notificationChannel =
@@ -89,26 +89,26 @@ class AlarmclockReceiver : BroadcastReceiver() {
                         result.fold(
                             onSuccess = { alarm ->
                                 if (alarm != null) {
-                                    Log.i("AlarmclockReceiver", "Next alarm scheduled successfully: ${alarm.label}")
+                                    Logger.i("AlarmclockReceiver", "Next alarm scheduled successfully: ${alarm.label}")
                                 } else {
-                                    Log.i("AlarmclockReceiver", "No enabled alarms to schedule")
+                                    Logger.i("AlarmclockReceiver", "No enabled alarms to schedule")
                                 }
                             },
                             onFailure = { e ->
-                                Log.e("AlarmclockReceiver", "Error scheduling next alarm", e)
+                                Logger.e("AlarmclockReceiver", "Error scheduling next alarm", e)
                             }
                         )
                     } else {
-                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
+                        Logger.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
                         // Fallback to AlarmHandler if Hilt is not available
                         AlarmHandler().setNextAlarm(context)
                     }
                 } catch (e: Exception) {
-                    Log.e("AlarmclockReceiver", "Error scheduling next alarm", e)
+                    Logger.e("AlarmclockReceiver", "Error scheduling next alarm", e)
                 }
             }
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-            Log.i("AlarmclockReceiver", "Boot completed, validating and rescheduling alarms")
+            Logger.i("AlarmclockReceiver", "Boot completed, validating and rescheduling alarms")
             // Use coroutine scope for async operations
             receiverScope.launch {
                 try {
@@ -121,7 +121,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
                         val currentTime = System.currentTimeMillis()
                         val enabledAlarms = alarmRepository.getEnabledAlarms()
                         
-                        Log.i("AlarmclockReceiver", "Found ${enabledAlarms.size} enabled alarm(s) to validate")
+                        Logger.i("AlarmclockReceiver", "Found ${enabledAlarms.size} enabled alarm(s) to validate")
                         
                         var validAlarmsCount = 0
                         var invalidAlarmsCount = 0
@@ -132,14 +132,14 @@ class AlarmclockReceiver : BroadcastReceiver() {
                             try {
                                 // Validate alarm ID
                                 if (alarm.id <= 0) {
-                                    Log.w("AlarmclockReceiver", "Invalid alarm ID: ${alarm.id} for alarm '${alarm.label}', skipping")
+                                    Logger.w("AlarmclockReceiver", "Invalid alarm ID: ${alarm.id} for alarm '${alarm.label}', skipping")
                                     invalidAlarmsCount++
                                     continue
                                 }
                                 
                                 // Validate alarm label
                                 if (alarm.label.isBlank()) {
-                                    Log.w("AlarmclockReceiver", "Alarm ID ${alarm.id} has blank label, skipping")
+                                    Logger.w("AlarmclockReceiver", "Alarm ID ${alarm.id} has blank label, skipping")
                                     invalidAlarmsCount++
                                     continue
                                 }
@@ -147,44 +147,44 @@ class AlarmclockReceiver : BroadcastReceiver() {
                                 // Check if calculated time is in the past
                                 val calculatedTime = alarm.calculatedTime
                                 if (calculatedTime > 0 && calculatedTime <= currentTime) {
-                                    Log.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time in the past: $calculatedTime (current: $currentTime), will recalculate")
+                                    Logger.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time in the past: $calculatedTime (current: $currentTime), will recalculate")
                                     pastAlarmsCount++
                                     // The time will be recalculated in scheduleNextAlarm()
                                 }
                                 
                                 // Validate calculated time is reasonable (not too far in the past)
                                 if (calculatedTime > 0 && calculatedTime < currentTime - 86400000) { // More than 24 hours in the past
-                                    Log.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time more than 24h in the past, will recalculate")
+                                    Logger.w("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) has calculated time more than 24h in the past, will recalculate")
                                 }
                                 
                                 validAlarmsCount++
-                                Log.d("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) validated successfully")
+                                Logger.d("AlarmclockReceiver", "Alarm '${alarm.label}' (ID: ${alarm.id}) validated successfully")
                             } catch (e: Exception) {
-                                Log.e("AlarmclockReceiver", "Error validating alarm '${alarm.label}' (ID: ${alarm.id})", e)
+                                Logger.e("AlarmclockReceiver", "Error validating alarm '${alarm.label}' (ID: ${alarm.id})", e)
                                 invalidAlarmsCount++
                             }
                         }
                         
-                        Log.i("AlarmclockReceiver", "Validation complete: $validAlarmsCount valid, $invalidAlarmsCount invalid, $pastAlarmsCount with past times")
+                        Logger.i("AlarmclockReceiver", "Validation complete: $validAlarmsCount valid, $invalidAlarmsCount invalid, $pastAlarmsCount with past times")
                         
                         // Now reschedule all alarms (this will recalculate times and schedule the next one)
                         val result = scheduleAlarmUseCase.rescheduleAllAlarms()
                         result.fold(
                             onSuccess = {
-                                Log.i("AlarmclockReceiver", "Alarms validated and rescheduled after boot successfully")
+                                Logger.i("AlarmclockReceiver", "Alarms validated and rescheduled after boot successfully")
                             },
                             onFailure = { e ->
-                                Log.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
+                                Logger.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
                             }
                         )
                     } else {
-                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase or AlarmRepository not available, using fallback AlarmHandler")
+                        Logger.w("AlarmclockReceiver", "ScheduleAlarmUseCase or AlarmRepository not available, using fallback AlarmHandler")
                         // Fallback to AlarmHandler if Hilt is not available
                         // Note: AlarmHandler also validates alarms (skips disabled and past alarms)
                         AlarmHandler().setNextAlarm(context)
                     }
                 } catch (e: Exception) {
-                    Log.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)
+                    Logger.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)
                 }
             }
         }

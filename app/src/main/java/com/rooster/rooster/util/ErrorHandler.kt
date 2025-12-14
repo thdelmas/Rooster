@@ -1,7 +1,6 @@
 package com.rooster.rooster.util
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +18,7 @@ object ErrorHandler {
      * Handle general exceptions with user feedback
      */
     fun handleError(context: Context, error: Throwable, userMessage: String? = null) {
-        Log.e(TAG, "Error occurred: ${error.message}", error)
+        Logger.e(TAG, "Error occurred: ${error.message}", error)
         
         val message = userMessage ?: getDefaultErrorMessage(error)
         showErrorToast(context, message)
@@ -29,18 +28,14 @@ object ErrorHandler {
      * Handle errors without user feedback (silent logging)
      */
     fun logError(tag: String, message: String, error: Throwable? = null) {
-        if (error != null) {
-            Log.e(tag, message, error)
-        } else {
-            Log.e(tag, message)
-        }
+        Logger.e(tag, message, error)
     }
     
     /**
      * Handle warnings
      */
     fun logWarning(tag: String, message: String) {
-        Log.w(tag, message)
+        Logger.w(tag, message)
     }
     
     /**
@@ -80,7 +75,7 @@ object ErrorHandler {
         onError: ((Throwable) -> Unit)? = null
     ): CoroutineExceptionHandler {
         return CoroutineExceptionHandler { _, exception ->
-            Log.e(tag, "Coroutine exception", exception)
+            Logger.e(tag, "Coroutine exception", exception)
             
             context?.let {
                 handleError(it, exception)
@@ -101,7 +96,7 @@ object ErrorHandler {
         return try {
             block()
         } catch (e: Exception) {
-            Log.e(tag, "Safe operation failed", e)
+            Logger.e(tag, "Safe operation failed", e)
             onError?.invoke(e)
             null
         }
@@ -118,7 +113,7 @@ object ErrorHandler {
         return try {
             block()
         } catch (e: Exception) {
-            Log.e(tag, "Safe suspend operation failed", e)
+            Logger.e(tag, "Safe suspend operation failed", e)
             onError?.invoke(e)
             null
         }

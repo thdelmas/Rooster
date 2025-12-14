@@ -55,7 +55,7 @@ object TimeUtils {
      * Convert hours and minutes to milliseconds since midnight
      */
     fun timeToMillis(hours: Int, minutes: Int): Long {
-        return (hours * 60L * 60L * 1000L) + (minutes * 60L * 1000L)
+        return (hours * AppConstants.MILLIS_PER_HOUR) + (minutes * AppConstants.MILLIS_PER_MINUTE)
     }
     
     /**
@@ -225,14 +225,14 @@ object TimeUtils {
      * Add hours to timestamp
      */
     fun addHours(millis: Long, hours: Int): Long {
-        return millis + (hours * 60 * 60 * 1000L)
+        return millis + (hours * AppConstants.MILLIS_PER_HOUR)
     }
     
     /**
      * Add minutes to timestamp
      */
     fun addMinutes(millis: Long, minutes: Int): Long {
-        return millis + (minutes * 60 * 1000L)
+        return millis + (minutes * AppConstants.MILLIS_PER_MINUTE)
     }
     
     /**
@@ -255,8 +255,7 @@ object TimeUtils {
         val now = now()
         val startOfDay = startOfToday()
         val elapsed = now - startOfDay
-        val dayLength = 24 * 60 * 60 * 1000L
-        return (elapsed.toFloat() / dayLength) * 100f
+        return (elapsed.toFloat() / AppConstants.MILLIS_PER_DAY) * 100f
     }
     
     /**

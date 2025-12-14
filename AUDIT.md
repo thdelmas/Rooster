@@ -319,9 +319,10 @@ CoroutineScope(Dispatchers.Main).launch {
 
 ---
 
-### 12. Hardcoded Values
+### 12. Hardcoded Values ✅ RESOLVED
 **Severity:** Medium  
-**Location:** Multiple files
+**Location:** Multiple files  
+**Status:** ✅ **FIXED** - 2025-01-27
 
 **Problem:**
 - Magic numbers throughout code (e.g., `30 * 1000L`, `10 * 60 * 1000L`)
@@ -333,16 +334,27 @@ CoroutineScope(Dispatchers.Main).launch {
 - Easy to introduce bugs
 - Inconsistent values
 
-**Recommendation:**
-- Create constants file
-- Use resource strings for user-facing text
-- Extract magic numbers to named constants
+**Resolution:**
+✅ **COMPLETED** - All hardcoded values have been extracted to constants:
+- ✅ Enhanced `AppConstants.kt` with comprehensive time unit conversions (MILLIS_PER_SECOND, MILLIS_PER_MINUTE, MILLIS_PER_HOUR, MILLIS_PER_DAY, etc.)
+- ✅ Added time interval constants (LOCATION_UPDATE_DELAY_MS, ASTRONOMY_UPDATE_INTERVAL_MS, etc.)
+- ✅ Added string constants for alarm modes (ALARM_MODE_AT, ALARM_MODE_BEFORE, ALARM_MODE_AFTER, ALARM_MODE_BETWEEN)
+- ✅ Added string constants for relative times (RELATIVE_TIME_PICK_TIME)
+- ✅ Added string constants for solar events (SOLAR_EVENT_SUNRISE, SOLAR_EVENT_SUNSET, etc.)
+- ✅ Replaced all hardcoded time values in AlarmActivity.kt, SnoozeReceiver.kt, service files, and utility files
+- ✅ Replaced all hardcoded string values in CalculateAlarmTimeUseCase.kt, ValidationHelper.kt, and AlarmEditorActivity.kt
+- ✅ Updated repository and DAO files to use constants
+- ✅ Updated worker files to use constants
+- ✅ All magic numbers now use named constants from AppConstants
+- ✅ All alarm mode and relative time strings now use constants
+- ✅ Improved maintainability and consistency across the codebase
 
 ---
 
 ### 13. Missing Input Validation
 **Severity:** Medium  
 **Location:** `AlarmEditorActivity.kt` (not reviewed but likely)
+**Status:** ✅ **RESOLVED**
 
 **Problem:**
 - Validation exists in `ValidationHelper` but may not be used everywhere
@@ -358,6 +370,22 @@ CoroutineScope(Dispatchers.Main).launch {
 - Validate all user inputs
 - Show clear error messages
 - Prevent invalid configurations
+
+**Resolution:**
+- Enhanced `ValidationHelper` with comprehensive validation methods:
+  - `validateOffsetMinutes()`: Validates offset minutes (0-1440)
+  - `validateSelectedTime()`: Validates selected time for classic mode
+  - `validateSolarEventCombination()`: Validates solar event order for "Between" mode
+  - `validateDaySelection()`: Ensures at least one day is selected
+  - `validateSnoozeSettings()`: Validates snooze duration (5-30 min) and count (1-10)
+  - `validateVolume()`: Validates volume (0-100)
+  - `validateAlarmEditorInputs()`: Comprehensive validation for all AlarmEditorActivity inputs
+- Updated `AlarmEditorActivity.saveAlarm()` to:
+  - Use `ValidationHelper.validateAlarmEditorInputs()` before saving
+  - Display clear error messages via Snackbar when validation fails
+  - Sanitize label using `ValidationHelper.sanitizeLabel()`
+  - Properly handle both new and existing alarm creation/updates
+- All user inputs are now validated with clear error messages shown to users
 
 ---
 

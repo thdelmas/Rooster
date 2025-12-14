@@ -94,7 +94,7 @@ fun <T> Flow<T>.logErrors(tag: String): Flow<T> {
 
 fun <T> Flow<T>.onEachLog(tag: String, message: (T) -> String): Flow<T> {
     return this.onEach { value ->
-        android.util.Log.d(tag, message(value))
+        Logger.d(tag, message(value))
     }
 }
 

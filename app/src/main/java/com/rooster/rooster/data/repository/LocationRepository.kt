@@ -1,8 +1,9 @@
 package com.rooster.rooster.data.repository
 
 import android.location.Location
-import android.util.Log
 import com.rooster.rooster.data.local.dao.LocationDao
+import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.data.local.entity.LocationEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -18,7 +19,6 @@ class LocationRepository @Inject constructor(
     
     companion object {
         private const val TAG = "LocationRepository"
-        private const val LOCATION_VALIDITY_MS = 24 * 60 * 60 * 1000L // 24 hours
     }
     
     /**
@@ -48,7 +48,7 @@ class LocationRepository @Inject constructor(
         )
         
         locationDao.insertLocation(locationEntity)
-        Log.i(TAG, "Location saved: ${location.latitude}, ${location.longitude}")
+        Logger.i(TAG, "Location saved: ${location.latitude}, ${location.longitude}")
     }
     
     /**
@@ -64,13 +64,13 @@ class LocationRepository @Inject constructor(
         )
         
         locationDao.insertLocation(locationEntity)
-        Log.i(TAG, "Location saved: $latitude, $longitude")
+        Logger.i(TAG, "Location saved: $latitude, $longitude")
     }
     
     /**
      * Check if location data is stale
      */
-    suspend fun isLocationStale(maxAge: Long = LOCATION_VALIDITY_MS): Boolean {
+    suspend fun isLocationStale(maxAge: Long = AppConstants.LOCATION_VALIDITY_MS): Boolean {
         return locationDao.isLocationStale(System.currentTimeMillis(), maxAge) ?: true
     }
     
@@ -79,6 +79,6 @@ class LocationRepository @Inject constructor(
      */
     suspend fun clearLocation() {
         locationDao.deleteAll()
-        Log.i(TAG, "Location data cleared")
+        Logger.i(TAG, "Location data cleared")
     }
 }

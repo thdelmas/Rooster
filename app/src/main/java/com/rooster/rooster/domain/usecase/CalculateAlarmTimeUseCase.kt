@@ -7,6 +7,7 @@ import android.icu.util.TimeZone
 import android.util.Log
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AstronomyRepository
+import com.rooster.rooster.util.AppConstants
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
@@ -38,21 +39,21 @@ class CalculateAlarmTimeUseCase @Inject constructor(
     
     private fun calculateTimeInner(alarm: Alarm): Long {
         return when (alarm.mode) {
-            "At" -> {
-                if (alarm.relative1 == "Pick Time") {
+            AppConstants.ALARM_MODE_AT -> {
+                if (alarm.relative1 == AppConstants.RELATIVE_TIME_PICK_TIME) {
                     alarm.time1
                 } else {
                     getRelativeTime(alarm.relative1)
                 }
             }
-            "Between" -> {
-                val time1 = if (alarm.relative1 != "Pick Time") {
+            AppConstants.ALARM_MODE_BETWEEN -> {
+                val time1 = if (alarm.relative1 != AppConstants.RELATIVE_TIME_PICK_TIME) {
                     getRelativeTime(alarm.relative1)
                 } else {
                     alarm.time1
                 }
                 
-                val time2 = if (alarm.relative2 != "Pick Time") {
+                val time2 = if (alarm.relative2 != AppConstants.RELATIVE_TIME_PICK_TIME) {
                     getRelativeTime(alarm.relative2)
                 } else {
                     alarm.time2
@@ -60,12 +61,12 @@ class CalculateAlarmTimeUseCase @Inject constructor(
                 
                 calculateBetweenTime(time1, time2)
             }
-            "After" -> {
+            AppConstants.ALARM_MODE_AFTER -> {
                 val time1 = getRelativeTime(alarm.relative2)
                 val time2 = alarm.time1
                 time1 + time2
             }
-            "Before" -> {
+            AppConstants.ALARM_MODE_BEFORE -> {
                 val time1 = getRelativeTime(alarm.relative2)
                 val time2 = alarm.time1
                 time1 - time2
@@ -137,29 +138,29 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         val timeInMillis = if (astronomyData != null) {
             // Use data from Room database
             when (relative) {
-                "Astronomical Dawn" -> astronomyData.astroDawn
-                "Nautical Dawn" -> astronomyData.nauticalDawn
-                "Civil Dawn" -> astronomyData.civilDawn
-                "Sunrise" -> astronomyData.sunrise
-                "Sunset" -> astronomyData.sunset
-                "Civil Dusk" -> astronomyData.civilDusk
-                "Nautical Dusk" -> astronomyData.nauticalDusk
-                "Astronomical Dusk" -> astronomyData.astroDusk
-                "Solar Noon" -> astronomyData.solarNoon
+                AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN -> astronomyData.astroDawn
+                AppConstants.SOLAR_EVENT_NAUTICAL_DAWN -> astronomyData.nauticalDawn
+                AppConstants.SOLAR_EVENT_CIVIL_DAWN -> astronomyData.civilDawn
+                AppConstants.SOLAR_EVENT_SUNRISE -> astronomyData.sunrise
+                AppConstants.SOLAR_EVENT_SUNSET -> astronomyData.sunset
+                AppConstants.SOLAR_EVENT_CIVIL_DUSK -> astronomyData.civilDusk
+                AppConstants.SOLAR_EVENT_NAUTICAL_DUSK -> astronomyData.nauticalDusk
+                AppConstants.SOLAR_EVENT_ASTRONOMICAL_DUSK -> astronomyData.astroDusk
+                AppConstants.SOLAR_EVENT_SOLAR_NOON -> astronomyData.solarNoon
                 else -> 0
             }
         } else {
             // Fallback to SharedPreferences if not in database (for migration period)
             when (relative) {
-                "Astronomical Dawn" -> sharedPreferences.getLong("astroDawn", 0)
-                "Nautical Dawn" -> sharedPreferences.getLong("nauticalDawn", 0)
-                "Civil Dawn" -> sharedPreferences.getLong("civilDawn", 0)
-                "Sunrise" -> sharedPreferences.getLong("sunrise", 0)
-                "Sunset" -> sharedPreferences.getLong("sunset", 0)
-                "Civil Dusk" -> sharedPreferences.getLong("civilDusk", 0)
-                "Nautical Dusk" -> sharedPreferences.getLong("nauticalDusk", 0)
-                "Astronomical Dusk" -> sharedPreferences.getLong("astroDusk", 0)
-                "Solar Noon" -> sharedPreferences.getLong("solarNoon", 0)
+                AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN -> sharedPreferences.getLong("astroDawn", 0)
+                AppConstants.SOLAR_EVENT_NAUTICAL_DAWN -> sharedPreferences.getLong("nauticalDawn", 0)
+                AppConstants.SOLAR_EVENT_CIVIL_DAWN -> sharedPreferences.getLong("civilDawn", 0)
+                AppConstants.SOLAR_EVENT_SUNRISE -> sharedPreferences.getLong("sunrise", 0)
+                AppConstants.SOLAR_EVENT_SUNSET -> sharedPreferences.getLong("sunset", 0)
+                AppConstants.SOLAR_EVENT_CIVIL_DUSK -> sharedPreferences.getLong("civilDusk", 0)
+                AppConstants.SOLAR_EVENT_NAUTICAL_DUSK -> sharedPreferences.getLong("nauticalDusk", 0)
+                AppConstants.SOLAR_EVENT_ASTRONOMICAL_DUSK -> sharedPreferences.getLong("astroDusk", 0)
+                AppConstants.SOLAR_EVENT_SOLAR_NOON -> sharedPreferences.getLong("solarNoon", 0)
                 else -> 0
             }
         }

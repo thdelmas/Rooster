@@ -3,8 +3,9 @@ package com.rooster.rooster.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.rooster.rooster.RoosterApplication
+import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import com.rooster.rooster.util.AlarmNotificationHelper
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +32,7 @@ class SnoozeReceiver : BroadcastReceiver() {
         
         val alarmId = intent.getLongExtra("alarm_id", -1)
         if (alarmId == -1L) {
-            Log.e(TAG, "Invalid alarm ID")
+            Logger.e(TAG, "Invalid alarm ID")
             return
         }
         
@@ -40,7 +41,7 @@ class SnoozeReceiver : BroadcastReceiver() {
             try {
                 val application = context.applicationContext as? RoosterApplication
                 if (application == null) {
-                    Log.e(TAG, "RoosterApplication not available")
+                    Logger.e(TAG, "RoosterApplication not available")
                     return@launch
                 }
                 
@@ -53,11 +54,11 @@ class SnoozeReceiver : BroadcastReceiver() {
                 
                 if (alarm != null) {
                     // Use alarm's snooze duration (default to 10 minutes if not set)
-                    val snoozeDurationMinutes = if (alarm.snoozeDuration > 0) alarm.snoozeDuration else 10
-                    Log.i(TAG, "Snoozing alarm $alarmId for $snoozeDurationMinutes minutes")
+                    val snoozeDurationMinutes = if (alarm.snoozeDuration > 0) alarm.snoozeDuration else AppConstants.DEFAULT_SNOOZE_DURATION_MINUTES
+                    Logger.i(TAG, "Snoozing alarm $alarmId for $snoozeDurationMinutes minutes")
                     
                     // Calculate snooze time
-                    val snoozeTime = System.currentTimeMillis() + (snoozeDurationMinutes * 60 * 1000L)
+                    val snoozeTime = System.currentTimeMillis() + (snoozeDurationMinutes * AppConstants.MILLIS_PER_MINUTE)
                     
                     // Schedule the alarm with the specific snooze time using ScheduleAlarmUseCase
                     // This stores state in database and uses AlarmManager for reliability
@@ -67,17 +68,17 @@ class SnoozeReceiver : BroadcastReceiver() {
                         onSuccess = {
                             // Cancel the notification
                             AlarmNotificationHelper.cancelNotification(context, alarmId)
-                            Log.i(TAG, "Alarm snoozed successfully and rescheduled")
+                            Logger.i(TAG, "Alarm snoozed successfully and rescheduled")
                         },
                         onFailure = { e ->
-                            Log.e(TAG, "Error scheduling snoozed alarm", e)
+                            Logger.e(TAG, "Error scheduling snoozed alarm", e)
                         }
                     )
                 } else {
-                    Log.e(TAG, "Alarm not found: $alarmId")
+                    Logger.e(TAG, "Alarm not found: $alarmId")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error snoozing alarm", e)
+                Logger.e(TAG, "Error snoozing alarm", e)
             }
         }
     }

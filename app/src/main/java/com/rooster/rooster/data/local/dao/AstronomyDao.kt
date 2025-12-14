@@ -23,8 +23,9 @@ interface AstronomyDao {
     suspend fun deleteAll()
     
     /**
-     * Check if astronomy data is stale (older than 6 hours)
+     * Check if astronomy data is stale (older than specified age)
+     * Default maxAge is 6 hours (use AppConstants.ASTRONOMY_DATA_VALIDITY_MS)
      */
     @Query("SELECT ((:currentTime - lastUpdated) > :maxAge) FROM astronomy_data WHERE id = 1")
-    suspend fun isDataStale(currentTime: Long, maxAge: Long = 6 * 60 * 60 * 1000): Boolean?
+    suspend fun isDataStale(currentTime: Long, maxAge: Long): Boolean?
 }

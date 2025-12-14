@@ -2,12 +2,12 @@ package com.rooster.rooster.worker
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.data.repository.LocationRepository
+import com.rooster.rooster.util.Logger
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -30,7 +30,7 @@ class AstronomyUpdateWorker @AssistedInject constructor(
     }
     
     override suspend fun doWork(): Result {
-        Log.i(TAG, "Starting astronomy data update (attempt ${runAttemptCount + 1})")
+        Logger.i(TAG, "Starting astronomy data update (attempt ${runAttemptCount + 1})")
         
         // Try to get location from Room database first
         var location = locationRepository.getLocation()
@@ -39,22 +39,22 @@ class AstronomyUpdateWorker @AssistedInject constructor(
         
         // Fallback to SharedPreferences if not in database (for migration period)
         if (latitude == 0f && longitude == 0f) {
-            Log.d(TAG, "No location in database, checking SharedPreferences")
+            Logger.d(TAG, "No location in database, checking SharedPreferences")
             latitude = sharedPreferences.getFloat("latitude", 0f)
             longitude = sharedPreferences.getFloat("longitude", 0f)
             
             // If found in SharedPreferences, migrate to database
             if (latitude != 0f || longitude != 0f) {
-                Log.d(TAG, "Migrating location from SharedPreferences to database")
+                Logger.d(TAG, "Migrating location from SharedPreferences to database")
                 val altitude = sharedPreferences.getFloat("altitude", 0f)
                 locationRepository.saveLocation(latitude, longitude, altitude)
             }
         }
         
-        Log.d(TAG, "Location: lat=$latitude, lng=$longitude")
+        Logger.d(TAG, "Location: lat=$latitude, lng=$longitude")
         
         if (latitude == 0f && longitude == 0f) {
-            Log.w(TAG, "No location available, skipping astronomy update")
+            Logger.w(TAG, "No location available, skipping astronomy update")
             return Result.retry()
         }
         
@@ -67,15 +67,15 @@ class AstronomyUpdateWorker @AssistedInject constructor(
                 // Also update SharedPreferences for backward compatibility
                 saveToSharedPreferences(astronomyData)
                 
-                Log.i(TAG, "Astronomy data updated successfully")
+                Logger.i(TAG, "Astronomy data updated successfully")
                 Result.success()
             } else {
-                Log.w(TAG, "Failed to fetch astronomy data: ${result.exceptionOrNull()?.message}")
+                Logger.w(TAG, "Failed to fetch astronomy data: ${result.exceptionOrNull()?.message}")
                 
                 // Check if we have valid cached data
                 val cachedData = astronomyRepository.getAstronomyData(forceRefresh = false)
                 if (cachedData != null) {
-                    Log.i(TAG, "Using cached astronomy data")
+                    Logger.i(TAG, "Using cached astronomy data")
                     saveToSharedPreferences(cachedData)
                     Result.success()
                 } else {
@@ -83,18 +83,18 @@ class AstronomyUpdateWorker @AssistedInject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error updating astronomy data", e)
+            Logger.e(TAG, "Error updating astronomy data", e)
             
             // Try to use cached data on error
             try {
                 val cachedData = astronomyRepository.getAstronomyData(forceRefresh = false)
                 if (cachedData != null) {
-                    Log.i(TAG, "Using cached astronomy data after error")
+                    Logger.i(TAG, "Using cached astronomy data after error")
                     saveToSharedPreferences(cachedData)
                     return Result.success()
                 }
             } catch (cacheError: Exception) {
-                Log.e(TAG, "Error loading cached data", cacheError)
+                Logger.e(TAG, "Error loading cached data", cacheError)
             }
             
             Result.failure()
@@ -120,9 +120,9 @@ class AstronomyUpdateWorker @AssistedInject constructor(
                 .putLong("astronomy_last_updated", data.lastUpdated)
                 .apply()
             
-            Log.d(TAG, "Astronomy data saved to SharedPreferences")
+            Logger.d(TAG, "Astronomy data saved to SharedPreferences")
         } catch (e: Exception) {
-            Log.e(TAG, "Error saving to SharedPreferences", e)
+            Logger.e(TAG, "Error saving to SharedPreferences", e)
         }
     }
 }

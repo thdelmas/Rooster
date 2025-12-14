@@ -5,8 +5,8 @@ import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.MenuItem
+import com.rooster.rooster.util.Logger
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ProgressBar
@@ -45,11 +45,11 @@ class MainActivity() : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.d("MainActivity", "onCreate started")
+        Logger.d("MainActivity", "onCreate started")
         
         // USE FIXED MAIN LAYOUT
         setContentView(R.layout.activity_main)
-        Log.d("MainActivity", "Layout set")
+        Logger.d("MainActivity", "Layout set")
         
         // Setup toolbar
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.topAppBar)
@@ -67,7 +67,7 @@ class MainActivity() : ComponentActivity() {
         linkButtons()
         refreshCycle()
         animateViews()
-        Log.d("MainActivity", "onCreate completed")
+        Logger.d("MainActivity", "onCreate completed")
     }
 
     private fun getPermissions() {
@@ -116,7 +116,7 @@ class MainActivity() : ComponentActivity() {
         }
         builder.setNegativeButton("Skip") { dialog, _ ->
             dialog.dismiss()
-            Log.w("MainActivity", "User skipped location permission")
+            Logger.w("MainActivity", "User skipped location permission")
         }
         builder.setCancelable(false)
         builder.show()
@@ -125,7 +125,7 @@ class MainActivity() : ComponentActivity() {
     private fun requestLocationUpdatesIfPermitted() {
         // Verify permission is granted before requesting location updates
         if (!PermissionHelper.isLocationPermissionGranted(this)) {
-            Log.w("MainActivity", "Location permission not granted, cannot request location updates")
+            Logger.w("MainActivity", "Location permission not granted, cannot request location updates")
             return
         }
         
@@ -134,12 +134,12 @@ class MainActivity() : ComponentActivity() {
             val locationRequest = LocationRequest.create()
             locationRequest.interval = 10000 // milliseconds
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-            Log.i("MainActivity", "Location updates requested successfully")
+            Logger.i("MainActivity", "Location updates requested successfully")
         } catch (e: SecurityException) {
-            Log.e("MainActivity", "SecurityException when requesting location updates", e)
+            Logger.e("MainActivity", "SecurityException when requesting location updates", e)
             Toast.makeText(this, "Location permission error. Please grant location permission in settings.", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error requesting location updates", e)
+            Logger.e("MainActivity", "Error requesting location updates", e)
         }
     }
 
@@ -201,9 +201,8 @@ class MainActivity() : ComponentActivity() {
         midnight.set(Calendar.SECOND, 0)
         midnight.set(Calendar.MILLISECOND, 0)
 
-        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / 1000).toFloat()
-        val secondsInDay = 24 * 60 * 60
-        val percentage = (totalSeconds / secondsInDay) * 100
+        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / com.rooster.rooster.util.AppConstants.MILLIS_PER_SECOND).toFloat()
+        val percentage = (totalSeconds / com.rooster.rooster.util.AppConstants.SECONDS_PER_DAY) * 100
         return percentage.toFloat()
     }
     private fun refreshCycle() {
@@ -230,11 +229,11 @@ class MainActivity() : ComponentActivity() {
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        Log.i("MainActivity", "Permission callback for request code: $requestCode")
+        Logger.i("MainActivity", "Permission callback for request code: $requestCode")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
         if (grantResults.isEmpty()) {
-            Log.w("MainActivity", "Permission request cancelled or empty results")
+            Logger.w("MainActivity", "Permission request cancelled or empty results")
             return
         }
         
@@ -272,7 +271,7 @@ class MainActivity() : ComponentActivity() {
             val systemPermissionGranted = hasCoarseLocation || hasFineLocation
             
             if (locationPermissionsGranted && systemPermissionGranted) {
-                Log.i("MainActivity", "Location permissions granted, scheduling updates")
+                Logger.i("MainActivity", "Location permissions granted, scheduling updates")
                 // Schedule WorkManager tasks and trigger immediate updates
                 WorkManagerHelper.scheduleLocationUpdates(this)
                 WorkManagerHelper.scheduleAstronomyUpdates(this)
@@ -281,7 +280,7 @@ class MainActivity() : ComponentActivity() {
                 // Request location updates with proper permission check
                 requestLocationUpdatesIfPermitted()
             } else {
-                Log.w("MainActivity", "Location permissions denied, location features may not work")
+                Logger.w("MainActivity", "Location permissions denied, location features may not work")
                 // Check if user permanently denied (should not show rationale)
                 val permanentlyDenied = !shouldShowLocationRationale() && !systemPermissionGranted
                 
@@ -316,7 +315,7 @@ class MainActivity() : ComponentActivity() {
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            Log.e("Rooster", "Location Callback")
+            Logger.i("MainActivity", "Location Callback")
             super.onLocationResult(locationResult)
             val location = locationResult.lastLocation
             val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)

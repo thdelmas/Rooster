@@ -1,23 +1,45 @@
 package com.rooster.rooster.util
 
 import android.util.Log
+import com.rooster.rooster.BuildConfig
 
 /**
- * Centralized logging utility with consistent tag naming and log levels
+ * Centralized logging utility with consistent tag naming, log levels, and sensitive data sanitization.
+ * 
+ * Features:
+ * - Debug logs are automatically disabled in release builds
+ * - Sensitive data (passwords, tokens, keys) is sanitized
+ * - Consistent tag naming with prefix
+ * - Configurable minimum log level
  */
 object Logger {
     private const val DEFAULT_TAG = "Rooster"
     private const val MAX_TAG_LENGTH = 23 // Android's limit
     
+    // Minimum log level (can be configured)
+    // In release builds, debug logs are automatically disabled via BuildConfig.DEBUG
+    private val isDebugEnabled: Boolean = BuildConfig.DEBUG
+    
+    // Patterns for sensitive data that should be sanitized
+    private val sensitivePatterns = listOf(
+        Regex("(?i)(password|passwd|pwd)\\s*[:=]\\s*[^\\s,}]+", RegexOption.IGNORE_CASE),
+        Regex("(?i)(token|api[_-]?key|secret|auth[_-]?key)\\s*[:=]\\s*[^\\s,}]+", RegexOption.IGNORE_CASE),
+        Regex("(?i)(authorization|bearer)\\s+[^\\s]+", RegexOption.IGNORE_CASE),
+        Regex("(?i)(credit[_-]?card|card[_-]?number|cc[_-]?number)\\s*[:=]\\s*[^\\s,}]+", RegexOption.IGNORE_CASE),
+    )
+    
     /**
-     * Log debug message
+     * Log debug message (only in debug builds)
      */
     fun d(tag: String, message: String, throwable: Throwable? = null) {
+        if (!isDebugEnabled) return
+        
         val fullTag = formatTag(tag)
+        val sanitizedMessage = sanitizeSensitiveData(message)
         if (throwable != null) {
-            Log.d(fullTag, message, throwable)
+            Log.d(fullTag, sanitizedMessage, throwable)
         } else {
-            Log.d(fullTag, message)
+            Log.d(fullTag, sanitizedMessage)
         }
     }
     
@@ -26,10 +48,11 @@ object Logger {
      */
     fun i(tag: String, message: String, throwable: Throwable? = null) {
         val fullTag = formatTag(tag)
+        val sanitizedMessage = sanitizeSensitiveData(message)
         if (throwable != null) {
-            Log.i(fullTag, message, throwable)
+            Log.i(fullTag, sanitizedMessage, throwable)
         } else {
-            Log.i(fullTag, message)
+            Log.i(fullTag, sanitizedMessage)
         }
     }
     
@@ -38,10 +61,11 @@ object Logger {
      */
     fun w(tag: String, message: String, throwable: Throwable? = null) {
         val fullTag = formatTag(tag)
+        val sanitizedMessage = sanitizeSensitiveData(message)
         if (throwable != null) {
-            Log.w(fullTag, message, throwable)
+            Log.w(fullTag, sanitizedMessage, throwable)
         } else {
-            Log.w(fullTag, message)
+            Log.w(fullTag, sanitizedMessage)
         }
     }
     
@@ -50,10 +74,11 @@ object Logger {
      */
     fun e(tag: String, message: String, throwable: Throwable? = null) {
         val fullTag = formatTag(tag)
+        val sanitizedMessage = sanitizeSensitiveData(message)
         if (throwable != null) {
-            Log.e(fullTag, message, throwable)
+            Log.e(fullTag, sanitizedMessage, throwable)
         } else {
-            Log.e(fullTag, message)
+            Log.e(fullTag, sanitizedMessage)
         }
     }
     
@@ -67,6 +92,34 @@ object Logger {
         } else {
             fullTag
         }
+    }
+    
+    /**
+     * Sanitize sensitive data from log messages
+     */
+    private fun sanitizeSensitiveData(message: String): String {
+        var sanitized = message
+        sensitivePatterns.forEach { pattern ->
+            sanitized = pattern.replace(sanitized) { matchResult ->
+                val match = matchResult.value
+                val keyValue = match.split(Regex("[:=]"), 2)
+                if (keyValue.size == 2) {
+                    val key = keyValue[0].trim()
+                    val value = keyValue[1].trim()
+                    // Replace value with masked version
+                    "$key: ***REDACTED***"
+                } else {
+                    // For patterns like "Bearer token123", replace token part
+                    val parts = match.split(Regex("\\s+"), 2)
+                    if (parts.size == 2) {
+                        "${parts[0]} ***REDACTED***"
+                    } else {
+                        "***REDACTED***"
+                    }
+                }
+            }
+        }
+        return sanitized
     }
 }
 
