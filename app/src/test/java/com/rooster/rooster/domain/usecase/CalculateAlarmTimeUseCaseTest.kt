@@ -3,6 +3,8 @@ package com.rooster.rooster.domain.usecase
 import android.content.SharedPreferences
 import android.icu.util.Calendar
 import com.rooster.rooster.Alarm
+import com.rooster.rooster.data.repository.AstronomyRepository
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -20,6 +22,7 @@ class CalculateAlarmTimeUseCaseTest {
     
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
+    private lateinit var astronomyRepository: AstronomyRepository
     private lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     
     @Before
@@ -34,7 +37,12 @@ class CalculateAlarmTimeUseCaseTest {
             }
         }
         
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences)
+        // Mock AstronomyRepository to return null (will fallback to SharedPreferences)
+        astronomyRepository = mock {
+            onBlocking { getAstronomyData(any()) } doReturn null
+        }
+        
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository)
     }
     
     @Test

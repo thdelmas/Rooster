@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.rooster.rooster.data.local.AlarmDatabase
 import com.rooster.rooster.data.local.dao.AlarmDao
 import com.rooster.rooster.data.local.dao.AstronomyDao
+import com.rooster.rooster.data.local.dao.LocationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,7 +31,8 @@ object DatabaseModule {
                 AlarmDatabase.MIGRATION_1_2,
                 AlarmDatabase.MIGRATION_2_3,
                 AlarmDatabase.MIGRATION_3_4,
-                AlarmDatabase.MIGRATION_4_5
+                AlarmDatabase.MIGRATION_4_5,
+                AlarmDatabase.MIGRATION_5_6
             )
             .build()
     }
@@ -45,5 +47,11 @@ object DatabaseModule {
     @Singleton
     fun provideAstronomyDao(database: AlarmDatabase): AstronomyDao {
         return database.astronomyDao()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideLocationDao(database: AlarmDatabase): LocationDao {
+        return database.locationDao()
     }
 }

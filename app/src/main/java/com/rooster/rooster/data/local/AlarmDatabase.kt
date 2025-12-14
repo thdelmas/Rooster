@@ -6,17 +6,20 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rooster.rooster.data.local.dao.AlarmDao
 import com.rooster.rooster.data.local.dao.AstronomyDao
+import com.rooster.rooster.data.local.dao.LocationDao
 import com.rooster.rooster.data.local.entity.AlarmEntity
 import com.rooster.rooster.data.local.entity.AstronomyDataEntity
+import com.rooster.rooster.data.local.entity.LocationEntity
 
 @Database(
-    entities = [AlarmEntity::class, AstronomyDataEntity::class],
-    version = 5,
+    entities = [AlarmEntity::class, AstronomyDataEntity::class, LocationEntity::class],
+    version = 6,
     exportSchema = false
 )
 abstract class AlarmDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
     abstract fun astronomyDao(): AstronomyDao
+    abstract fun locationDao(): LocationDao
     
     companion object {
         const val DATABASE_NAME = "alarm_db"
@@ -143,6 +146,24 @@ abstract class AlarmDatabase : RoomDatabase() {
                 
                 // Rename new table to alarms
                 database.execSQL("ALTER TABLE alarms_new RENAME TO alarms")
+            }
+        }
+        
+        /**
+         * Migration from version 5 to 6: Add location_data table
+         * Moves location storage from SharedPreferences to Room database
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS location_data (
+                        id INTEGER PRIMARY KEY NOT NULL,
+                        latitude REAL NOT NULL,
+                        longitude REAL NOT NULL,
+                        altitude REAL NOT NULL,
+                        lastUpdated INTEGER NOT NULL
+                    )
+                """.trimIndent())
             }
         }
     }

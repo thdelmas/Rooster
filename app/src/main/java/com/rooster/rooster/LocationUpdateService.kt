@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.*
+import com.rooster.rooster.data.repository.LocationRepository
 
 class LocationUpdateService : Service() {
 
@@ -75,12 +76,26 @@ class LocationUpdateService : Service() {
     private fun updateLocation(location: Location) {
         Log.i("LocationUpdateService", "Location updated: ${location.latitude}, ${location.longitude}")
         
-        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-        sharedPreferences.edit()
-            .putFloat("altitude", location.altitude.toFloat())
-            .putFloat("longitude", location.longitude.toFloat())
-            .putFloat("latitude", location.latitude.toFloat())
-            .apply()
+        // Save to Room database via LocationRepository
+        val locationRepository = (applicationContext as? RoosterApplication)?.provideLocationRepository()
+        if (locationRepository != null) {
+            serviceScope.launch(Dispatchers.IO) {
+                try {
+                    locationRepository.saveLocation(location)
+                } catch (e: Exception) {
+                    Log.e("LocationUpdateService", "Error saving location to database", e)
+                }
+            }
+        } else {
+            Log.w("LocationUpdateService", "Could not get LocationRepository, falling back to SharedPreferences")
+            // Fallback to SharedPreferences if repository not available
+            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+            sharedPreferences.edit()
+                .putFloat("altitude", location.altitude.toFloat())
+                .putFloat("longitude", location.longitude.toFloat())
+                .putFloat("latitude", location.latitude.toFloat())
+                .apply()
+        }
     }
 
     private fun isLocationPermissionGranted(): Boolean {
