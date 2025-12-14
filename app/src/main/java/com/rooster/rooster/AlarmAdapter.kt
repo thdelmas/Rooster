@@ -19,12 +19,16 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.materialswitch.MaterialSwitch
 import androidx.recyclerview.widget.RecyclerView
+import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.HapticFeedbackHelper
 import java.util.Calendar
 
 
-class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmDbHelper) : RecyclerView.Adapter<AlarmAdapter.ViewHolder>() {
+class AlarmAdapter(
+    private val alarmList: List<Alarm>, 
+    private val viewModel: AlarmListViewModel
+) : RecyclerView.Adapter<AlarmAdapter.ViewHolder>() {
 
     val alarmModes = arrayOf("At", "Before", "Between", "After")
     var alarmRelatives = arrayOf(
@@ -73,8 +77,8 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 .setPositiveButton("Save") { _, _ ->
                     HapticFeedbackHelper.performSuccessFeedback(context)
                     alarm.label = input.text.toString()
-                    alarmDbHelper.updateAlarm(alarm)
-                    reloadAlarmList(holder)
+                    viewModel.updateAlarm(alarm)
+                    // Alarm list will update automatically via LiveData
                 }
                 .setNegativeButton("Cancel") { _, _ -> }
                 .create()
@@ -115,7 +119,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         swicthEnabled.setOnCheckedChangeListener { view, isChecked ->
             HapticFeedbackHelper.performToggleFeedback(view)
             alarm.enabled = isChecked
-            alarmDbHelper.updateAlarm(alarm)
+            viewModel.updateAlarm(alarm)
         }
 
         // Week Days
@@ -160,9 +164,9 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         deleteButton.setOnClickListener{
             HapticFeedbackHelper.performHeavyClick(it)
             HapticFeedbackHelper.performDeleteFeedback(context)
-            Log.e("Delete", "Alarm ID: " + alarm.id.toString())
-            alarmDbHelper.deleteAlarm(alarm.id)
-            reloadAlarmList(holder)
+            Log.i("Delete", "Alarm ID: " + alarm.id.toString())
+            viewModel.deleteAlarm(alarm)
+            // Alarm list will update automatically via LiveData
         }
     }
 
@@ -177,7 +181,7 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             .setItems(alarmModes) { dialog, which ->
                 // Update the alarm mode
                 alarm.mode = alarmModes[which]
-                alarmDbHelper.updateAlarm(alarm)
+                viewModel.updateAlarm(alarm)
                 arrangeLayout(context, container, alarm, alarmModes[which], holder)
             }
             .create()
@@ -293,21 +297,23 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                             }
                             alarm.enabled = true
                             swicthEnabled.isChecked = alarm.enabled
-                            alarmDbHelper.updateAlarm(alarm)
+                            viewModel.updateAlarm(alarm)
                             arrangeLayout(context, container, alarm, alarm.mode, holder)
                         }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
                     }
                     else -> {
                         // Update the alarm in the database
+                        // Get relative time from SharedPreferences (astronomy data)
+                        val sharedPrefs = context.getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
                         if (index == 1) {
-                            alarm.time1 = alarmDbHelper.getRelativeTime(alarm.relative1)
+                            alarm.time1 = getRelativeTimeFromPrefs(context, alarm.relative1, sharedPrefs)
                         } else if (index == 2) {
-                            alarm.time2 = alarmDbHelper.getRelativeTime(alarm.relative2)
+                            alarm.time2 = getRelativeTimeFromPrefs(context, alarm.relative2, sharedPrefs)
                         }
 
                         val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
                         swicthEnabled.isChecked = alarm.enabled
-                        alarmDbHelper.updateAlarm(alarm)
+                        viewModel.updateAlarm(alarm)
                         arrangeLayout(context, container, alarm, alarm.mode, holder)
                         null
                     }
@@ -355,8 +361,8 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
                 alarm.time1 = (hour.toLong() * 60 + minute) * 60
                 alarm.enabled = true
                 swicthEnabled.isChecked = alarm.enabled
-                Log.e("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
-                alarmDbHelper.updateAlarm(alarm)
+                Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
+                viewModel.updateAlarm(alarm)
                 arrangeLayout(context, container, alarm, alarm.mode, holder)
             }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
             picker.show()
@@ -448,10 +454,6 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
         return alarmList.size
     }
 
-    private fun reloadAlarmList(holder: ViewHolder) {
-        val activity = holder.alarmContainer.context as AlarmListActivity
-        activity.reloadAlarmList()
-    }
 
     fun onDaysClicked(view: View, alarm: Alarm) {
         Log.e("Update", "Alarm ID: " + alarm.id.toString())
@@ -469,8 +471,39 @@ class AlarmAdapter(private val alarmList: List<Alarm>, val alarmDbHelper: AlarmD
             val isChecked = !view.isSelected
             view.isSelected = isChecked
             alarm.setDayEnabled(day, isChecked)
-            alarmDbHelper.updateAlarm(alarm)
+            viewModel.updateAlarm(alarm)
+            // Alarm list will update automatically via LiveData
         }
+    }
+    
+    /**
+     * Helper function to get relative time from SharedPreferences
+     * This replaces AlarmDbHelper.getRelativeTime() which reads astronomy data
+     */
+    private fun getRelativeTimeFromPrefs(context: Context, relative: String, sharedPrefs: android.content.SharedPreferences): Long {
+        var timeInMillis = 0L
+        when (relative) {
+            "Astronomical Dawn" -> timeInMillis = sharedPrefs.getLong("astroDawn", 0)
+            "Nautical Dawn" -> timeInMillis = sharedPrefs.getLong("nauticalDawn", 0)
+            "Civil Dawn" -> timeInMillis = sharedPrefs.getLong("civilDawn", 0)
+            "Sunrise" -> timeInMillis = sharedPrefs.getLong("sunrise", 0)
+            "Sunset" -> timeInMillis = sharedPrefs.getLong("sunset", 0)
+            "Civil Dusk" -> timeInMillis = sharedPrefs.getLong("civilDusk", 0)
+            "Nautical Dusk" -> timeInMillis = sharedPrefs.getLong("nauticalDusk", 0)
+            "Astronomical Dusk" -> timeInMillis = sharedPrefs.getLong("astroDusk", 0)
+            "Solar Noon" -> timeInMillis = sharedPrefs.getLong("solarNoon", 0)
+        }
+        // Calculate the time difference in milliseconds between local time and GMT+0
+        val fullDateFormat = java.text.SimpleDateFormat("HH:mm")
+        var calendar = Calendar.getInstance()
+        val timeZone = java.util.TimeZone.getTimeZone("GMT")
+        fullDateFormat.timeZone = timeZone
+        calendar.timeInMillis = timeInMillis
+        if (timeZone.inDaylightTime(calendar.time)) {
+            val dstOffsetInMillis = timeZone.dstSavings
+            calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+        }
+        return calendar.timeInMillis
     }
 
     private fun setButtonState(button: Button?, isSelected: Boolean) {

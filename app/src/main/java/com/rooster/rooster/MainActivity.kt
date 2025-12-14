@@ -176,10 +176,11 @@ class MainActivity() : ComponentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
         // Check if location permissions were granted
+        val hasCoarseLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasFineLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val locationPermissionGranted = grantResults.isNotEmpty() && 
             grantResults.all { it == PackageManager.PERMISSION_GRANTED } &&
-            (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+            (hasCoarseLocation || hasFineLocation)
         
         if (locationPermissionGranted) {
             Log.i("MainActivity", "Location permissions granted, scheduling updates")
@@ -189,16 +190,29 @@ class MainActivity() : ComponentActivity() {
             WorkManagerHelper.triggerLocationUpdate(this)
             
             // Get the fused location provider for initial location
-            // Only request if permission is granted
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-                val locationRequest = LocationRequest.create()
-                locationRequest.interval = 10000 // milliseconds
-                fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            // Double-check permission before requesting location updates to prevent SecurityException
+            val currentCoarsePermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val currentFinePermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            
+            if (currentCoarsePermission || currentFinePermission) {
+                try {
+                    val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+                    val locationRequest = LocationRequest.create()
+                    locationRequest.interval = 10000 // milliseconds
+                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+                    Log.i("MainActivity", "Location updates requested successfully")
+                } catch (e: SecurityException) {
+                    Log.e("MainActivity", "SecurityException when requesting location updates", e)
+                    Toast.makeText(this, "Location permission error. Please grant location permission in settings.", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error requesting location updates", e)
+                }
+            } else {
+                Log.w("MainActivity", "Location permission not granted, cannot request location updates")
             }
         } else {
             Log.w("MainActivity", "Location permissions denied, location features may not work")
+            Toast.makeText(this, "Location permission is required for astronomy-based alarms.", Toast.LENGTH_LONG).show()
         }
     }
 

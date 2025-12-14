@@ -24,6 +24,7 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.observe
 import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,30 +56,41 @@ class AlarmActivity : FragmentActivity() {
     private var refreshJob: Job? = null
     private var volumeIncreaseJob: Job? = null
 
-    // Assume AlarmDbHelper is a helper class for database operations
-    private lateinit var alarmDbHelper: AlarmDbHelper
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_alarm)
 
-        // Initialize AlarmDbHelper
-        alarmDbHelper = AlarmDbHelper(this)
-
         alarmId = intent.getStringExtra("alarm_id")?.toLong() ?: -1 // Handle the null case
-        Log.e("AlarmActivity", "Alarm id: $alarmId")
+        if (alarmId <= 0) {
+            Log.e("AlarmActivity", "Invalid alarm ID: $alarmId")
+            finish()
+            return
+        }
+        
+        Log.i("AlarmActivity", "Alarm id: $alarmId")
 
         alarmIsRunning = true
         setShowWhenLocked(true)
         setTurnScreenOn(true)
 
-        currentAlarm = alarmDbHelper.getAlarm(alarmId)
-        if (currentAlarm != null) {
-            maxSnoozeCount = currentAlarm!!.snoozeCount
-            setupSnoozeButton()
-            setupDismissButton()
-            setupToolbar()
-            alarmRing(currentAlarm!!.ringtoneUri, currentAlarm!!)
+        // Load alarm from ViewModel (uses AlarmRepository)
+        viewModel.loadAlarm(alarmId)
+        
+        // Observe alarm data from ViewModel
+        viewModel.getAlarmLiveData(alarmId).observe(this) { alarm ->
+            if (alarm != null && currentAlarm == null) {
+                // Only initialize once when alarm is first loaded
+                currentAlarm = alarm
+                maxSnoozeCount = alarm.snoozeCount
+                setupSnoozeButton()
+                setupDismissButton()
+                setupToolbar()
+                alarmRing(alarm.ringtoneUri, alarm)
+            } else if (alarm == null && currentAlarm == null) {
+                // Alarm not found
+                Log.e("AlarmActivity", "Alarm with ID $alarmId not found")
+                finish()
+            }
         }
 
         setupSeekBar()
@@ -421,9 +433,8 @@ class AlarmActivity : FragmentActivity() {
         alarmIsRunning = false
         isVibrating = false
         
-        // Dismiss the alarm through ViewModel
-        val alarm = alarmDbHelper.getAlarm(alarmId)
-        if (alarm != null) {
+        // Dismiss the alarm through ViewModel (uses AlarmRepository)
+        currentAlarm?.let { alarm ->
             viewModel.dismissAlarm(alarm)
         }
         

@@ -17,8 +17,6 @@ class AlarmListActivity : AppCompatActivity() {
 
     private val viewModel: AlarmListViewModel by viewModels()
     private lateinit var alarmAdapter: AlarmAdapter
-    @Deprecated("Use repository through ViewModel instead")
-    val alarmDbHelper = AlarmDbHelper(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +34,7 @@ class AlarmListActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         val recyclerView = findViewById<RecyclerView>(R.id.alarmListView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        alarmAdapter = AlarmAdapter(emptyList(), alarmDbHelper)
+        alarmAdapter = AlarmAdapter(emptyList(), viewModel)
         recyclerView.adapter = alarmAdapter
     }
 
@@ -68,22 +66,18 @@ class AlarmListActivity : AppCompatActivity() {
     
     private fun createNewAlarm() {
         val alarm = AlarmCreation("Alarm", false, "At", "Default", "Pick Time", "Pick Time", 0, 0, 0)
-        val alarmId = viewModel.insertAlarm(alarm)
-        // Wait a moment for insertion, then open editor
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            val allAlarms = alarmDbHelper.getAllAlarms()
-            val newAlarm = allAlarms.maxByOrNull { it.id }
-            newAlarm?.let { alarm ->
-                val intent = android.content.Intent(this, AlarmEditorActivity::class.java)
-                intent.putExtra("alarm_id", alarm.id)
-                startActivity(intent)
-            }
-        }, 200)
+        viewModel.insertAlarm(alarm) { alarmId ->
+            // Open editor with the new alarm ID
+            val intent = android.content.Intent(this, AlarmEditorActivity::class.java)
+            intent.putExtra("alarm_id", alarmId)
+            startActivity(intent)
+        }
     }
 
     private fun updateAlarmList(alarms: List<Alarm>) {
         val recyclerView = findViewById<RecyclerView>(R.id.alarmListView)
-        recyclerView.adapter = ImprovedAlarmAdapter(alarms, alarmDbHelper)
+        // Use ImprovedAlarmAdapter with ViewModel instead of AlarmDbHelper
+        recyclerView.adapter = ImprovedAlarmAdapter(alarms, viewModel)
     }
 
     private fun updateEmptyState(isEmpty: Boolean) {

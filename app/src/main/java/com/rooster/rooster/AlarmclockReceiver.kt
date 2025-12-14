@@ -6,18 +6,26 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Handler
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.os.postDelayed
+import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
+/**
+ * BroadcastReceiver for handling alarm triggers and boot completion
+ * Uses ScheduleAlarmUseCase for reliable alarm scheduling
+ */
 class AlarmclockReceiver : BroadcastReceiver() {
-    private var alarmHandler = AlarmHandler()
+    
+    // Use application-level scope for background operations
+    private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    
     override fun onReceive(context: Context, intent: Intent) {
         Log.i("AlarmclockReceiver", "Received broadcast: ${intent?.action}")
+        
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
             // Safe null handling - validate alarm_id before use
             val alarmIdStr = intent.getStringExtra("alarm_id")
@@ -68,24 +76,67 @@ class AlarmclockReceiver : BroadcastReceiver() {
             notificationManager.notify(1, notification)
             context.applicationContext.startActivity(alarmActivityIntent)
             
-            // Schedule next alarm immediately instead of delayed to avoid race conditions
-            // Use coroutine scope for async operations
-            CoroutineScope(Dispatchers.IO).launch {
+            // Schedule next alarm immediately using ScheduleAlarmUseCase
+            // This ensures reliable scheduling even if app is killed
+            receiverScope.launch {
                 try {
-                    alarmHandler.setNextAlarm(context)
-                    Log.i("AlarmclockReceiver", "Next alarm scheduled successfully")
+                    // Get ScheduleAlarmUseCase from Hilt
+                    val scheduleAlarmUseCase = (context.applicationContext as? RoosterApplication)
+                        ?.provideScheduleAlarmUseCase()
+                    
+                    if (scheduleAlarmUseCase != null) {
+                        val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                        result.fold(
+                            onSuccess = { alarm ->
+                                if (alarm != null) {
+                                    Log.i("AlarmclockReceiver", "Next alarm scheduled successfully: ${alarm.label}")
+                                } else {
+                                    Log.i("AlarmclockReceiver", "No enabled alarms to schedule")
+                                }
+                            },
+                            onFailure = { e ->
+                                Log.e("AlarmclockReceiver", "Error scheduling next alarm", e)
+                            }
+                        )
+                    } else {
+                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
+                        // Fallback to AlarmHandler if Hilt is not available
+                        AlarmHandler().setNextAlarm(context)
+                    }
                 } catch (e: Exception) {
                     Log.e("AlarmclockReceiver", "Error scheduling next alarm", e)
                 }
             }
         } else if (intent != null && "android.intent.action.BOOT_COMPLETED" == intent.action) {
-            Log.i("AlarmclockReceiver", "Boot completed, rescheduling alarms")
+            Log.i("AlarmclockReceiver", "Boot completed, validating and rescheduling alarms")
             // Use coroutine scope for async operations
-            CoroutineScope(Dispatchers.IO).launch {
+            receiverScope.launch {
                 try {
-                    // Validate and reschedule all alarms on boot
-                    alarmHandler.setNextAlarm(context)
-                    Log.i("AlarmclockReceiver", "Alarms rescheduled after boot")
+                    // Get ScheduleAlarmUseCase from Hilt
+                    val scheduleAlarmUseCase = (context.applicationContext as? RoosterApplication)
+                        ?.provideScheduleAlarmUseCase()
+                    
+                    if (scheduleAlarmUseCase != null) {
+                        // Validate and reschedule all alarms on boot
+                        // ScheduleAlarmUseCase.scheduleNextAlarm() already validates:
+                        // - Filters out disabled alarms
+                        // - Filters out past alarms (calculatedTime <= currentTime)
+                        // - Validates calculated times are in the future
+                        val result = scheduleAlarmUseCase.rescheduleAllAlarms()
+                        result.fold(
+                            onSuccess = {
+                                Log.i("AlarmclockReceiver", "Alarms validated and rescheduled after boot")
+                            },
+                            onFailure = { e ->
+                                Log.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)
+                            }
+                        )
+                    } else {
+                        Log.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
+                        // Fallback to AlarmHandler if Hilt is not available
+                        // Note: AlarmHandler also validates alarms (skips disabled and past alarms)
+                        AlarmHandler().setNextAlarm(context)
+                    }
                 } catch (e: Exception) {
                     Log.e("AlarmclockReceiver", "Error rescheduling alarms after boot", e)
                 }
