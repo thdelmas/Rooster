@@ -24,7 +24,8 @@ interface LocationDao {
     
     /**
      * Check if location data is stale (older than specified age)
+     * Default maxAge is 24 hours (use AppConstants.LOCATION_VALIDITY_MS)
      */
     @Query("SELECT ((:currentTime - lastUpdated) > :maxAge) FROM location_data WHERE id = 1")
-    suspend fun isLocationStale(currentTime: Long, maxAge: Long = 24 * 60 * 60 * 1000): Boolean? // Default 24 hours
+    suspend fun isLocationStale(currentTime: Long, maxAge: Long): Boolean?
 }

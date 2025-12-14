@@ -13,6 +13,7 @@ import android.os.PowerManager
 import android.os.Vibrator
 import android.util.Log
 import android.view.View
+import com.rooster.rooster.util.Logger
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ProgressBar
@@ -26,6 +27,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import com.rooster.rooster.receiver.SnoozeReceiver
 import com.rooster.rooster.util.AlarmNotificationHelper
+import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.ErrorHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
@@ -63,12 +65,12 @@ class AlarmActivity : FragmentActivity() {
 
         alarmId = intent.getStringExtra("alarm_id")?.toLong() ?: -1 // Handle the null case
         if (alarmId <= 0) {
-            Log.e("AlarmActivity", "Invalid alarm ID: $alarmId")
+            Logger.e("AlarmActivity", "Invalid alarm ID: $alarmId")
             finish()
             return
         }
         
-        Log.i("AlarmActivity", "Alarm id: $alarmId")
+        Logger.i("AlarmActivity", "Alarm id: $alarmId")
 
         alarmIsRunning = true
         setShowWhenLocked(true)
@@ -89,7 +91,7 @@ class AlarmActivity : FragmentActivity() {
                 alarmRing(alarm.ringtoneUri, alarm)
             } else if (alarm == null && currentAlarm == null) {
                 // Alarm not found
-                Log.e("AlarmActivity", "Alarm with ID $alarmId not found")
+                Logger.e("AlarmActivity", "Alarm with ID $alarmId not found")
                 finish()
             }
         }
@@ -102,9 +104,9 @@ class AlarmActivity : FragmentActivity() {
         val seekBar = findViewById<SeekBar>(R.id.seekBar)
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                if (progress >= 90) {
-                    stopAlarm(seekBar)
-                }
+            if (progress >= AppConstants.ALARM_DISMISS_THRESHOLD) {
+                stopAlarm(seekBar)
+            }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -169,9 +171,9 @@ class AlarmActivity : FragmentActivity() {
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
                         PowerManager.ON_AFTER_RELEASE, "rooster:wakelock"
             )
-            wakeLock?.acquire(10 * 60 * 1000L /*10 minutes*/)
+            wakeLock?.acquire(AppConstants.ALARM_WAKE_LOCK_TIMEOUT_MS)
         } catch (e: Exception) {
-            Log.e("AlarmActivity", "Error acquiring wake lock", e)
+            Logger.e("AlarmActivity", "Error acquiring wake lock", e)
             // Continue without wake lock - screen should still turn on
         }
     }
@@ -185,8 +187,7 @@ class AlarmActivity : FragmentActivity() {
         if (alarm.vibrate) {
             vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             vibrator?.cancel()
-            val pattern = longArrayOf(0, 1000, 1000) // Vibrate for 1s, pause 1s, repeat
-            vibrator?.vibrate(pattern, 0) // 0 means repeat indefinitely
+            vibrator?.vibrate(AppConstants.VIBRATION_PATTERN, 0) // 0 means repeat indefinitely
         }
         
         // Start playback with retry logic
@@ -326,8 +327,7 @@ class AlarmActivity : FragmentActivity() {
             // Ensure vibration continues even if audio fails
             if (alarm.vibrate && vibrator == null) {
                 vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-                val pattern = longArrayOf(0, 1000, 1000)
-                vibrator?.vibrate(pattern, 0)
+                vibrator?.vibrate(AppConstants.VIBRATION_PATTERN, 0)
             }
             // Retry with exponential backoff
             retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
@@ -374,8 +374,7 @@ class AlarmActivity : FragmentActivity() {
         // Ensure vibration continues even if audio fails
         if (alarm.vibrate && vibrator == null) {
             vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-            val pattern = longArrayOf(0, 1000, 1000)
-            vibrator?.vibrate(pattern, 0)
+            vibrator?.vibrate(AppConstants.VIBRATION_PATTERN, 0)
         }
         
         Log.w("AlarmActivity", "Alarm will continue with vibration only")
@@ -386,7 +385,7 @@ class AlarmActivity : FragmentActivity() {
         volumeIncreaseJob?.cancel()
         
         volumeIncreaseJob = lifecycleScope.launch {
-            val steps = 30 // Increase over 30 seconds
+            val steps = AppConstants.ALARM_GRADUAL_VOLUME_STEPS
             val increment = (targetVolume - currentVolume) / steps
             
             repeat(steps) {
@@ -394,7 +393,7 @@ class AlarmActivity : FragmentActivity() {
                 if (currentVolume < targetVolume) {
                     currentVolume += increment
                     mediaPlayer?.setVolume(currentVolume, currentVolume)
-                    delay(1000L)
+                    delay(AppConstants.UI_REFRESH_INTERVAL_MS)
                 }
             }
             
@@ -413,7 +412,7 @@ class AlarmActivity : FragmentActivity() {
         }
         
         snoozeCount++
-        val snoozeDuration = currentAlarm?.snoozeDuration ?: 10
+        val snoozeDuration = currentAlarm?.snoozeDuration ?: AppConstants.DEFAULT_SNOOZE_DURATION_MINUTES
         
         Log.i("AlarmActivity", "Snoozing alarm for $snoozeDuration minutes (count: $snoozeCount/$maxSnoozeCount)")
         
@@ -530,7 +529,7 @@ class AlarmActivity : FragmentActivity() {
                 progressText.text = formattedTime
                 progressBar.progress = percentage
                 
-                delay(1000L)
+                delay(AppConstants.UI_REFRESH_INTERVAL_MS)
             }
         }
     }
@@ -543,9 +542,8 @@ class AlarmActivity : FragmentActivity() {
         midnight.set(Calendar.SECOND, 0)
         midnight.set(Calendar.MILLISECOND, 0)
 
-        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / 1000).toFloat()
-        val secondsInDay = 24 * 60 * 60
-        val percentage = (totalSeconds / secondsInDay) * 100
+        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / AppConstants.MILLIS_PER_SECOND).toFloat()
+        val percentage = (totalSeconds / AppConstants.SECONDS_PER_DAY) * 100
         return percentage.toFloat()
     }
 }

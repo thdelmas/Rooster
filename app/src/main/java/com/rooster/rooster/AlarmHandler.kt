@@ -8,8 +8,8 @@ import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.os.Build
-import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import com.rooster.rooster.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -27,7 +27,7 @@ class AlarmHandler {
         val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         
         if (am == null) {
-            Log.e("AlarmHandler", "AlarmManager is null")
+            Logger.e("AlarmHandler", "AlarmManager is null")
             return
         }
 
@@ -47,7 +47,7 @@ class AlarmHandler {
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         val formattedDate = fullDateFormat.format(calendar.time)
 
-        Log.d("AlarmHandler", "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
+        Logger.d("AlarmHandler", "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
 
         val triggerTime = calendar.timeInMillis
         
@@ -64,7 +64,7 @@ class AlarmHandler {
                 }
             }
         } catch (e: SecurityException) {
-            Log.e("AlarmHandler", "Permission denied for exact alarm", e)
+            Logger.e("AlarmHandler", "Permission denied for exact alarm", e)
         }
     }
 
@@ -76,11 +76,11 @@ class AlarmHandler {
         val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         
         if (am == null) {
-            Log.e("AlarmHandler", "AlarmManager is null")
+            Logger.e("AlarmHandler", "AlarmManager is null")
             return
         }
         
-        Log.d("AlarmHandler", "Unsetting alarm with ID: $id")
+        Logger.d("AlarmHandler", "Unsetting alarm with ID: $id")
         
         val intent = Intent(context, AlarmclockReceiver::class.java).apply {
             putExtra("message", "alarm time")
@@ -105,7 +105,7 @@ class AlarmHandler {
      */
     @Deprecated("Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
     fun setNextAlarm(context: Context) {
-        Log.w(TAG, "setNextAlarm() is deprecated. Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
+        Logger.w(TAG, "setNextAlarm() is deprecated. Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
         
         // Try to use ScheduleAlarmUseCase if available
         val scheduleAlarmUseCase = (context.applicationContext as? RoosterApplication)
@@ -118,13 +118,13 @@ class AlarmHandler {
                 result.fold(
                     onSuccess = { alarm ->
                         if (alarm != null) {
-                            Log.i(TAG, "Next alarm scheduled successfully: ${alarm.label}")
+                            Logger.i(TAG, "Next alarm scheduled successfully: ${alarm.label}")
                         } else {
-                            Log.i(TAG, "No enabled alarms to schedule")
+                            Logger.i(TAG, "No enabled alarms to schedule")
                         }
                     },
                     onFailure = { e ->
-                        Log.e(TAG, "Error scheduling next alarm", e)
+                        Logger.e(TAG, "Error scheduling next alarm", e)
                         // Fallback to legacy implementation
                         setNextAlarmLegacy(context)
                     }
@@ -142,8 +142,8 @@ class AlarmHandler {
      */
     @Deprecated("Use ScheduleAlarmUseCase instead")
     private fun setNextAlarmLegacy(context: Context) {
-        Log.e(TAG, "setNextAlarmLegacy() called - this should not happen in a properly configured app")
-        Log.e(TAG, "ScheduleAlarmUseCase should be available through Hilt. Falling back is not supported.")
+        Logger.e(TAG, "setNextAlarmLegacy() called - this should not happen in a properly configured app")
+        Logger.e(TAG, "ScheduleAlarmUseCase should be available through Hilt. Falling back is not supported.")
         // This method should never be called if Hilt is properly configured
         // If it is called, it means ScheduleAlarmUseCase was not available, which is a configuration error
         // We cannot use AlarmDbHelper here as it's being removed

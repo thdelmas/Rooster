@@ -1,7 +1,8 @@
 package com.rooster.rooster.data.repository
 
-import android.util.Log
 import com.rooster.rooster.data.local.dao.AstronomyDao
+import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.data.local.entity.AstronomyDataEntity
 import kotlinx.coroutines.flow.Flow
 import org.json.JSONObject
@@ -21,7 +22,6 @@ class AstronomyRepository @Inject constructor(
     companion object {
         private const val TAG = "AstronomyRepository"
         private const val API_URL = "https://api.sunrise-sunset.org/json"
-        private const val DATA_VALIDITY_MS = 6 * 60 * 60 * 1000L // 6 hours
     }
     
     /**
@@ -39,16 +39,16 @@ class AstronomyRepository @Inject constructor(
         
         // Return cached data if valid and not forcing refresh
         if (!forceRefresh && cachedData != null && isDataValid(cachedData)) {
-            Log.d(TAG, "Returning cached astronomy data")
+            Logger.d(TAG, "Returning cached astronomy data")
             return cachedData
         }
         
         // If data is stale or force refresh, but we still have old data, return it
         // The caller should use fetchAndCacheAstronomyData to get fresh data
         if (cachedData != null) {
-            Log.d(TAG, "Returning stale cached astronomy data (age: ${System.currentTimeMillis() - cachedData.lastUpdated}ms)")
+            Logger.d(TAG, "Returning stale cached astronomy data (age: ${System.currentTimeMillis() - cachedData.lastUpdated}ms)")
         } else {
-            Log.d(TAG, "No cached astronomy data available")
+            Logger.d(TAG, "No cached astronomy data available")
         }
         
         return cachedData
@@ -59,7 +59,7 @@ class AstronomyRepository @Inject constructor(
      */
     suspend fun fetchAndCacheAstronomyData(latitude: Float, longitude: Float): Result<AstronomyDataEntity> {
         return try {
-            Log.i(TAG, "Fetching astronomy data for location: $latitude, $longitude")
+            Logger.i(TAG, "Fetching astronomy data for location: $latitude, $longitude")
             
             val jsonData = fetchFromApi(latitude, longitude)
                 ?: return Result.failure(Exception("Failed to fetch astronomy data"))
@@ -67,10 +67,10 @@ class AstronomyRepository @Inject constructor(
             val astronomyData = parseAstronomyData(jsonData, latitude, longitude)
             astronomyDao.insertAstronomyData(astronomyData)
             
-            Log.i(TAG, "Astronomy data cached successfully")
+            Logger.i(TAG, "Astronomy data cached successfully")
             Result.success(astronomyData)
         } catch (e: Exception) {
-            Log.e(TAG, "Error fetching astronomy data", e)
+            Logger.e(TAG, "Error fetching astronomy data", e)
             Result.failure(e)
         }
     }
@@ -80,7 +80,7 @@ class AstronomyRepository @Inject constructor(
      */
     private fun isDataValid(data: AstronomyDataEntity): Boolean {
         val age = System.currentTimeMillis() - data.lastUpdated
-        return age < DATA_VALIDITY_MS
+        return age < AppConstants.ASTRONOMY_DATA_VALIDITY_MS
     }
     
     /**
@@ -114,7 +114,7 @@ class AstronomyRepository @Inject constructor(
                 connection.disconnect()
                 
             } catch (e: Exception) {
-                Log.e(TAG, "Attempt ${attempt + 1} failed", e)
+                Logger.e(TAG, "Attempt ${attempt + 1} failed", e)
                 
                 if (attempt < maxRetries - 1) {
                     kotlinx.coroutines.delay(2000L * (attempt + 1))
@@ -134,9 +134,9 @@ class AstronomyRepository @Inject constructor(
         
         // Get day length from API, or calculate from sunrise/sunset as fallback
         val dayLength = try {
-            data.getLong("day_length") * 1000 // Convert seconds to milliseconds
+            data.getLong("day_length") * AppConstants.MILLIS_PER_SECOND // Convert seconds to milliseconds
         } catch (e: Exception) {
-            Log.w(TAG, "Could not get day_length from API, calculating from sunrise/sunset", e)
+            Logger.w(TAG, "Could not get day_length from API, calculating from sunrise/sunset", e)
             sunset - sunrise
         }
         
@@ -165,7 +165,7 @@ class AstronomyRepository @Inject constructor(
         return try {
             java.time.Instant.parse(isoTime).toEpochMilli()
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing time: $isoTime", e)
+            Logger.e(TAG, "Error parsing time: $isoTime", e)
             0L
         }
     }
@@ -175,6 +175,6 @@ class AstronomyRepository @Inject constructor(
      */
     suspend fun clearCache() {
         astronomyDao.deleteAll()
-        Log.i(TAG, "Astronomy data cache cleared")
+        Logger.i(TAG, "Astronomy data cache cleared")
     }
 }

@@ -8,8 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import androidx.core.app.ActivityCompat
+import com.rooster.rooster.util.Logger
 import androidx.core.content.ContextCompat
 
 /**
@@ -115,14 +115,14 @@ object PermissionHelper {
         val missingPermissions = getMissingPermissions(activity)
         
         if (missingPermissions.isNotEmpty()) {
-            Log.i(TAG, "Requesting permissions: $missingPermissions")
+            Logger.i(TAG, "Requesting permissions: $missingPermissions")
             ActivityCompat.requestPermissions(
                 activity,
                 missingPermissions.toTypedArray(),
                 REQUEST_CODE_ALL_PERMISSIONS
             )
         } else {
-            Log.i(TAG, "All permissions already granted")
+            Logger.i(TAG, "All permissions already granted")
         }
     }
     
@@ -168,7 +168,7 @@ object PermissionHelper {
                 }
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Error opening exact alarm settings", e)
+                Logger.e(TAG, "Error opening exact alarm settings", e)
                 // Fallback to app settings
                 openAppSettings(context)
             }
@@ -187,7 +187,7 @@ object PermissionHelper {
                 )
                 context.startActivity(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Error opening overlay settings", e)
+                Logger.e(TAG, "Error opening overlay settings", e)
                 openAppSettings(context)
             }
         }
@@ -203,7 +203,7 @@ object PermissionHelper {
             }
             context.startActivity(intent)
         } catch (e: Exception) {
-            Log.e(TAG, "Error opening app settings", e)
+            Logger.e(TAG, "Error opening app settings", e)
         }
     }
     

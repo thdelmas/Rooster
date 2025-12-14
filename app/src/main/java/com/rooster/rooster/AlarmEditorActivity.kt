@@ -20,7 +20,9 @@ import com.google.android.material.textfield.TextInputEditText
 import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.ValidationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +47,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     private var alarmId: Long = -1
     private var currentAlarm: Alarm? = null
     private var currentMode: String = "sun" // "sun" or "classic"
-    private var sunTimingMode: String = "At" // "At", "Before", "After", "Between"
+    private var sunTimingMode: String = AppConstants.ALARM_MODE_AT // "At", "Before", "After", "Between"
     private var offsetMinutes: Int = 30
     private var selectedTime: Long = 0
     private var solarEvent1: String = "Sunrise"
@@ -177,13 +179,13 @@ class AlarmEditorActivity : AppCompatActivity() {
                 alarmLabelInput.setText(alarm.label)
                 
                 // Determine mode based on alarm data
-                if (alarm.relative1 != "Pick Time" || alarm.mode != "At") {
+                if (alarm.relative1 != AppConstants.RELATIVE_TIME_PICK_TIME || alarm.mode != AppConstants.ALARM_MODE_AT) {
                     currentMode = "sun"
                     sunTimingMode = alarm.mode
                     solarEvent1 = alarm.relative1
                     solarEvent2 = alarm.relative2
                     // Load offset from time1 (stored in milliseconds)
-                    if (alarm.mode == "Before" || alarm.mode == "After") {
+                    if (alarm.mode == AppConstants.ALARM_MODE_BEFORE || alarm.mode == AppConstants.ALARM_MODE_AFTER) {
                         offsetMinutes = (alarm.time1 / 1000 / 60).toInt()
                     }
                 } else {
@@ -252,11 +254,11 @@ class AlarmEditorActivity : AppCompatActivity() {
             if (isChecked) {
                 HapticFeedbackHelper.performClick(group)
                 sunTimingMode = when (checkedId) {
-                    R.id.atButton -> "At"
-                    R.id.beforeButton -> "Before"
-                    R.id.afterButton -> "After"
-                    R.id.betweenButton -> "Between"
-                    else -> "At"
+                    R.id.atButton -> AppConstants.ALARM_MODE_AT
+                    R.id.beforeButton -> AppConstants.ALARM_MODE_BEFORE
+                    R.id.afterButton -> AppConstants.ALARM_MODE_AFTER
+                    R.id.betweenButton -> AppConstants.ALARM_MODE_BETWEEN
+                    else -> AppConstants.ALARM_MODE_AT
                 }
                 updateSunModeUI()
                 updateCalculatedTime()
@@ -292,7 +294,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             HapticFeedbackHelper.performClick(it)
             AnimationHelper.scaleWithBounce(it)
             solarEvent1 = "Sunrise"
-            sunTimingMode = "At"
+            sunTimingMode = AppConstants.ALARM_MODE_AT
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
@@ -302,7 +304,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             HapticFeedbackHelper.performClick(it)
             AnimationHelper.scaleWithBounce(it)
             solarEvent1 = "Sunset"
-            sunTimingMode = "At"
+            sunTimingMode = AppConstants.ALARM_MODE_AT
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
@@ -312,7 +314,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             HapticFeedbackHelper.performClick(it)
             AnimationHelper.scaleWithBounce(it)
             solarEvent1 = "Civil Dawn"
-            sunTimingMode = "At"
+            sunTimingMode = AppConstants.ALARM_MODE_AT
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
@@ -322,7 +324,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         sunCourseView.onSolarEventSelected = { eventName ->
             HapticFeedbackHelper.performClick(sunCourseView)
             solarEvent1 = eventName
-            sunTimingMode = "At"
+            sunTimingMode = AppConstants.ALARM_MODE_AT
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
@@ -482,10 +484,10 @@ class AlarmEditorActivity : AppCompatActivity() {
             
             // Set sun timing mode
             when (sunTimingMode) {
-                "At" -> sunTimingToggle.check(R.id.atButton)
-                "Before" -> sunTimingToggle.check(R.id.beforeButton)
-                "After" -> sunTimingToggle.check(R.id.afterButton)
-                "Between" -> sunTimingToggle.check(R.id.betweenButton)
+                AppConstants.ALARM_MODE_AT -> sunTimingToggle.check(R.id.atButton)
+                AppConstants.ALARM_MODE_BEFORE -> sunTimingToggle.check(R.id.beforeButton)
+                AppConstants.ALARM_MODE_AFTER -> sunTimingToggle.check(R.id.afterButton)
+                AppConstants.ALARM_MODE_BETWEEN -> sunTimingToggle.check(R.id.betweenButton)
             }
             
             updateSunModeUI()
@@ -522,7 +524,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     
     private fun updateSunModeUI() {
         when (sunTimingMode) {
-            "At" -> {
+            AppConstants.ALARM_MODE_AT -> {
                 if (offsetTimeLayout.visibility == View.VISIBLE) {
                     AnimationHelper.fadeOut(offsetTimeLayout) { offsetTimeLayout.visibility = View.GONE }
                 }
@@ -530,7 +532,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                     AnimationHelper.fadeOut(solarEvent2Layout) { solarEvent2Layout.visibility = View.GONE }
                 }
             }
-            "Before", "After" -> {
+            AppConstants.ALARM_MODE_BEFORE, AppConstants.ALARM_MODE_AFTER -> {
                 if (offsetTimeLayout.visibility != View.VISIBLE) {
                     offsetTimeLayout.visibility = View.VISIBLE
                     AnimationHelper.fadeIn(offsetTimeLayout)
@@ -574,7 +576,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         }
         solarEvent1Button.text = "$emoji $solarEvent1"
         
-        if (sunTimingMode == "Between") {
+        if (sunTimingMode == AppConstants.ALARM_MODE_BETWEEN) {
             val emoji2 = when (solarEvent2) {
                 "Astronomical Dawn" -> "🌄"
                 "Nautical Dawn" -> "🌅"
@@ -623,10 +625,10 @@ class AlarmEditorActivity : AppCompatActivity() {
                         // Set marker based on current alarm configuration
                         if (currentMode == "sun") {
                             val markerTime = when (sunTimingMode) {
-                                "At" -> getSolarEventTime(solarEvent1, astronomyData)
-                                "Before" -> getSolarEventTime(solarEvent1, astronomyData) - (offsetMinutes * 60 * 1000)
-                                "After" -> getSolarEventTime(solarEvent1, astronomyData) + (offsetMinutes * 60 * 1000)
-                                "Between" -> {
+                                AppConstants.ALARM_MODE_AT -> getSolarEventTime(solarEvent1, astronomyData)
+                                AppConstants.ALARM_MODE_BEFORE -> getSolarEventTime(solarEvent1, astronomyData) - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                                AppConstants.ALARM_MODE_AFTER -> getSolarEventTime(solarEvent1, astronomyData) + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                                AppConstants.ALARM_MODE_BETWEEN -> {
                                     val time1 = getSolarEventTime(solarEvent1, astronomyData)
                                     val time2 = getSolarEventTime(solarEvent2, astronomyData)
                                     (time1 + time2) / 2
@@ -635,10 +637,10 @@ class AlarmEditorActivity : AppCompatActivity() {
                             }
                             
                             val markerLabel = when (sunTimingMode) {
-                                "At" -> "Alarm"
-                                "Before" -> "${offsetMinutes}m before"
-                                "After" -> "${offsetMinutes}m after"
-                                "Between" -> "Between"
+                                AppConstants.ALARM_MODE_AT -> "Alarm"
+                                AppConstants.ALARM_MODE_BEFORE -> "${offsetMinutes}m before"
+                                AppConstants.ALARM_MODE_AFTER -> "${offsetMinutes}m after"
+                                AppConstants.ALARM_MODE_BETWEEN -> "Between"
                                 else -> "Alarm"
                             }
                             
@@ -667,10 +669,10 @@ class AlarmEditorActivity : AppCompatActivity() {
                         
                         if (currentMode == "sun") {
                             val markerTime = when (sunTimingMode) {
-                                "At" -> getSolarEventTime(solarEvent1, sharedPreferences)
-                                "Before" -> getSolarEventTime(solarEvent1, sharedPreferences) - (offsetMinutes * 60 * 1000)
-                                "After" -> getSolarEventTime(solarEvent1, sharedPreferences) + (offsetMinutes * 60 * 1000)
-                                "Between" -> {
+                                AppConstants.ALARM_MODE_AT -> getSolarEventTime(solarEvent1, sharedPreferences)
+                                AppConstants.ALARM_MODE_BEFORE -> getSolarEventTime(solarEvent1, sharedPreferences) - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                                AppConstants.ALARM_MODE_AFTER -> getSolarEventTime(solarEvent1, sharedPreferences) + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                                AppConstants.ALARM_MODE_BETWEEN -> {
                                     val time1 = getSolarEventTime(solarEvent1, sharedPreferences)
                                     val time2 = getSolarEventTime(solarEvent2, sharedPreferences)
                                     (time1 + time2) / 2
@@ -679,10 +681,10 @@ class AlarmEditorActivity : AppCompatActivity() {
                             }
                             
                             val markerLabel = when (sunTimingMode) {
-                                "At" -> "Alarm"
-                                "Before" -> "${offsetMinutes}m before"
-                                "After" -> "${offsetMinutes}m after"
-                                "Between" -> "Between"
+                                AppConstants.ALARM_MODE_AT -> "Alarm"
+                                AppConstants.ALARM_MODE_BEFORE -> "${offsetMinutes}m before"
+                                AppConstants.ALARM_MODE_AFTER -> "${offsetMinutes}m after"
+                                AppConstants.ALARM_MODE_BETWEEN -> "Between"
                                 else -> "Alarm"
                             }
                             
@@ -727,10 +729,10 @@ class AlarmEditorActivity : AppCompatActivity() {
         val event1Time = getSolarEventTime(solarEvent1, sharedPreferences)
         
         val calculatedTime = when (sunTimingMode) {
-            "At" -> event1Time
-            "Before" -> event1Time - (offsetMinutes * 60 * 1000)
-            "After" -> event1Time + (offsetMinutes * 60 * 1000)
-            "Between" -> {
+            AppConstants.ALARM_MODE_AT -> event1Time
+            AppConstants.ALARM_MODE_BEFORE -> event1Time - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+            AppConstants.ALARM_MODE_AFTER -> event1Time + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+            AppConstants.ALARM_MODE_BETWEEN -> {
                 val event2Time = getSolarEventTime(solarEvent2, sharedPreferences)
                 (event1Time + event2Time) / 2
             }
@@ -900,77 +902,148 @@ class AlarmEditorActivity : AppCompatActivity() {
         // Get day selections
         val daysMap = dayButtons.mapValues { it.value.isSelected }
         
-        // Validate that at least one day is selected
-        if (!daysMap.values.any { it }) {
+        // Comprehensive validation using ValidationHelper
+        val validationResult = ValidationHelper.validateAlarmEditorInputs(
+            label = label,
+            mode = currentMode,
+            sunTimingMode = sunTimingMode,
+            solarEvent1 = solarEvent1,
+            solarEvent2 = solarEvent2,
+            offsetMinutes = offsetMinutes,
+            selectedTime = selectedTime,
+            monday = daysMap["monday"] ?: false,
+            tuesday = daysMap["tuesday"] ?: false,
+            wednesday = daysMap["wednesday"] ?: false,
+            thursday = daysMap["thursday"] ?: false,
+            friday = daysMap["friday"] ?: false,
+            saturday = daysMap["saturday"] ?: false,
+            sunday = daysMap["sunday"] ?: false,
+            snoozeDuration = snoozeDuration,
+            snoozeCount = snoozeCount,
+            volume = alarmVolume
+        )
+        
+        // If validation fails, show error messages and return
+        if (validationResult.isError()) {
             HapticFeedbackHelper.performErrorFeedback(this)
+            val errorMessage = validationResult.getErrorMessage()
             com.google.android.material.snackbar.Snackbar.make(
                 findViewById(android.R.id.content),
-                "Please select at least one day",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+                errorMessage,
+                com.google.android.material.snackbar.Snackbar.LENGTH_LONG
             ).show()
             return
         }
         
-        val alarm = if (alarmId != -1L && currentAlarm != null) {
-            currentAlarm!!.apply {
-                this.label = label
-                this.monday = daysMap["monday"] ?: false
-                this.tuesday = daysMap["tuesday"] ?: false
-                this.wednesday = daysMap["wednesday"] ?: false
-                this.thursday = daysMap["thursday"] ?: false
-                this.friday = daysMap["friday"] ?: false
-                this.saturday = daysMap["saturday"] ?: false
-                this.sunday = daysMap["sunday"] ?: false
-            }
-        } else {
-            null
-        }
+        // Sanitize label using ValidationHelper
+        val sanitizedLabel = ValidationHelper.sanitizeLabel(label)
+        
+        // Determine time values based on mode
+        val time1: Long
+        val time2: Long
+        val mode: String
+        val relative1: String
+        val relative2: String
         
         if (currentMode == "sun") {
             // Sun mode
-            alarm?.apply {
-                this.mode = sunTimingMode
-                this.relative1 = solarEvent1
-                this.relative2 = if (sunTimingMode == "Between") solarEvent2 else ""
-                this.time1 = if (sunTimingMode == "Before" || sunTimingMode == "After") {
-                    offsetMinutes * 60 * 1000L
-                } else {
-                    0L
-                }
-                this.time2 = 0L
+            mode = sunTimingMode
+            relative1 = solarEvent1
+            relative2 = if (sunTimingMode == AppConstants.ALARM_MODE_BETWEEN) solarEvent2 else ""
+            time1 = if (sunTimingMode == AppConstants.ALARM_MODE_BEFORE || sunTimingMode == AppConstants.ALARM_MODE_AFTER) {
+                offsetMinutes * AppConstants.MILLIS_PER_MINUTE
+            } else {
+                0L
             }
+            time2 = 0L
         } else {
             // Classic mode
-            alarm?.apply {
-                this.mode = "At"
-                this.relative1 = "Pick Time"
-                this.relative2 = ""
-                this.time1 = selectedTime
-                this.time2 = 0L
+            mode = AppConstants.ALARM_MODE_AT
+            relative1 = AppConstants.RELATIVE_TIME_PICK_TIME
+            relative2 = ""
+            time1 = selectedTime
+            time2 = 0L
+        }
+        
+        // Get ringtone URI from current alarm or use default
+        val existingAlarm = currentAlarm
+        val ringtoneUri = existingAlarm?.ringtoneUri ?: AppConstants.DEFAULT_RINGTONE_URI
+        
+        if (alarmId != -1L && existingAlarm != null) {
+            // Update existing alarm
+            val updatedAlarm = existingAlarm.copy(
+                label = sanitizedLabel,
+                mode = mode,
+                relative1 = relative1,
+                relative2 = relative2,
+                time1 = time1,
+                time2 = time2,
+                monday = daysMap["monday"] ?: false,
+                tuesday = daysMap["tuesday"] ?: false,
+                wednesday = daysMap["wednesday"] ?: false,
+                thursday = daysMap["thursday"] ?: false,
+                friday = daysMap["friday"] ?: false,
+                saturday = daysMap["saturday"] ?: false,
+                sunday = daysMap["sunday"] ?: false,
+                enabled = true,
+                vibrate = vibrateEnabled,
+                snoozeEnabled = snoozeEnabled,
+                snoozeDuration = snoozeDuration,
+                snoozeCount = snoozeCount,
+                volume = alarmVolume,
+                gradualVolume = gradualVolumeEnabled
+            )
+            
+            // Use ViewModel to update alarm (which uses Repository and recalculates time)
+            viewModel.updateAlarm(updatedAlarm)
+        } else {
+            // Create new alarm
+            // First, create a basic AlarmCreation to insert
+            val alarmCreation = AlarmCreation(
+                label = sanitizedLabel,
+                enabled = true,
+                mode = mode,
+                ringtoneUri = ringtoneUri,
+                relative1 = relative1,
+                relative2 = relative2,
+                time1 = time1,
+                time2 = time2,
+                calculatedTime = 0L // Will be calculated by ViewModel
+            )
+            
+            // Insert the alarm and get its ID, then update it with all fields
+            viewModel.insertAlarm(alarmCreation) { newAlarmId ->
+                // After insertion, create a full Alarm with all settings and update it
+                val fullAlarm = Alarm(
+                    id = newAlarmId,
+                    label = sanitizedLabel,
+                    enabled = true,
+                    mode = mode,
+                    ringtoneUri = ringtoneUri,
+                    relative1 = relative1,
+                    relative2 = relative2,
+                    time1 = time1,
+                    time2 = time2,
+                    calculatedTime = 0L, // Will be calculated by ViewModel
+                    monday = daysMap["monday"] ?: false,
+                    tuesday = daysMap["tuesday"] ?: false,
+                    wednesday = daysMap["wednesday"] ?: false,
+                    thursday = daysMap["thursday"] ?: false,
+                    friday = daysMap["friday"] ?: false,
+                    saturday = daysMap["saturday"] ?: false,
+                    sunday = daysMap["sunday"] ?: false,
+                    vibrate = vibrateEnabled,
+                    snoozeEnabled = snoozeEnabled,
+                    snoozeDuration = snoozeDuration,
+                    snoozeCount = snoozeCount,
+                    volume = alarmVolume,
+                    gradualVolume = gradualVolumeEnabled
+                )
+                
+                // Update with all fields (this will also recalculate the time)
+                viewModel.updateAlarm(fullAlarm)
             }
         }
-        
-        if (alarm == null) {
-            Log.e("AlarmEditorActivity", "Cannot save: alarm is null")
-            com.google.android.material.snackbar.Snackbar.make(
-                findViewById(android.R.id.content),
-                "Error: Alarm not found",
-                com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
-            ).show()
-            return
-        }
-        
-        // Update alarm with all settings
-        alarm.enabled = true
-        alarm.vibrate = vibrateEnabled
-        alarm.snoozeEnabled = snoozeEnabled
-        alarm.snoozeDuration = snoozeDuration
-        alarm.snoozeCount = snoozeCount
-        alarm.volume = alarmVolume
-        alarm.gradualVolume = gradualVolumeEnabled
-        
-        // Use ViewModel to update alarm (which uses Repository)
-        viewModel.updateAlarm(alarm)
         
         finish()
     }

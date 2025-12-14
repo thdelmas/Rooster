@@ -11,8 +11,9 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.ActivityCompat
+import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import kotlinx.coroutines.*
 import com.rooster.rooster.data.repository.LocationRepository
 
@@ -22,16 +23,16 @@ class LocationUpdateService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val delay = 3 * 60 * 60 * 1000L // 3 hours
+        val delay = AppConstants.LOCATION_UPDATE_DELAY_MS
         
         getLastKnownPosition()
-        Log.i("LocationUpdateService", "Started")
+        Logger.i("LocationUpdateService", "Started")
         
         // Use coroutines for periodic updates
         serviceScope.launch {
             while (isActive) {
                 delay(delay)
-                Log.i("LocationUpdateService", "Running periodic update")
+                Logger.i("LocationUpdateService", "Running periodic update")
                 getLastKnownPosition()
             }
         }
@@ -40,7 +41,7 @@ class LocationUpdateService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.i("Rooster Location Service", "Bind")
+        Logger.i("LocationUpdateService", "Bind")
         // This service is not designed to be bound, return null
         return null
     }
@@ -48,7 +49,7 @@ class LocationUpdateService : Service() {
     private fun getLastKnownPosition() {
         // Check for location permission before requesting updates.
         if (!isLocationPermissionGranted()) {
-            Log.e("LocationUpdateService", "Location permission not granted")
+            Logger.e("LocationUpdateService", "Location permission not granted")
             return
         }
         
@@ -69,12 +70,12 @@ class LocationUpdateService : Service() {
                 )
             }
         } catch (e: SecurityException) {
-            Log.e("LocationUpdateService", "Security exception getting location", e)
+            Logger.e("LocationUpdateService", "Security exception getting location", e)
         }
     }
     
     private fun updateLocation(location: Location) {
-        Log.i("LocationUpdateService", "Location updated: ${location.latitude}, ${location.longitude}")
+        Logger.i("LocationUpdateService", "Location updated: ${location.latitude}, ${location.longitude}")
         
         // Save to Room database via LocationRepository
         val locationRepository = (applicationContext as? RoosterApplication)?.provideLocationRepository()
@@ -83,11 +84,11 @@ class LocationUpdateService : Service() {
                 try {
                     locationRepository.saveLocation(location)
                 } catch (e: Exception) {
-                    Log.e("LocationUpdateService", "Error saving location to database", e)
+                    Logger.e("LocationUpdateService", "Error saving location to database", e)
                 }
             }
         } else {
-            Log.w("LocationUpdateService", "Could not get LocationRepository, falling back to SharedPreferences")
+            Logger.w("LocationUpdateService", "Could not get LocationRepository, falling back to SharedPreferences")
             // Fallback to SharedPreferences if repository not available
             val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
             sharedPreferences.edit()
@@ -105,7 +106,7 @@ class LocationUpdateService : Service() {
 
     private val networkLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            Log.i("LocationUpdateService", "Location changed: $location")
+            Logger.i("LocationUpdateService", "Location changed: $location")
             updateLocation(location)
 
             // Trigger astronomy data update
@@ -118,7 +119,7 @@ class LocationUpdateService : Service() {
         }
         
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            Log.d("LocationUpdateService", "Provider status changed: $provider, status: $status")
+            Logger.d("LocationUpdateService", "Provider status changed: $provider, status: $status")
         }
     }
 
@@ -126,7 +127,7 @@ class LocationUpdateService : Service() {
         super.onDestroy()
         locationManager?.removeUpdates(networkLocationListener)
         serviceScope.cancel()
-        Log.i("LocationUpdateService", "Service destroyed")
+        Logger.i("LocationUpdateService", "Service destroyed")
     }
 
     companion object {

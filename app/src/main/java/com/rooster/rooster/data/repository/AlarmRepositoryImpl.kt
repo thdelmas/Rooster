@@ -1,7 +1,7 @@
 package com.rooster.rooster.data.repository
 
-import android.util.Log
 import com.rooster.rooster.Alarm
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.AlarmCreation
 import com.rooster.rooster.data.local.dao.AlarmDao
 import com.rooster.rooster.data.mapper.toAlarm
@@ -74,12 +74,12 @@ class AlarmRepositoryImpl @Inject constructor(
         val validationResult = ValidationHelper.validateExistingAlarm(alarm)
         if (validationResult.isError()) {
             val errorMsg = validationResult.getErrorMessage()
-            Log.e(TAG, "Alarm validation failed: $errorMsg")
+            Logger.e(TAG, "Alarm validation failed: $errorMsg")
             throw IllegalArgumentException(errorMsg)
         }
         
         if (validationResult.isWarning()) {
-            Log.w(TAG, "Alarm validation warning: ${validationResult.getErrorMessage()}")
+            Logger.w(TAG, "Alarm validation warning: ${validationResult.getErrorMessage()}")
         }
         
         alarmDao.updateAlarm(alarm.toEntity())

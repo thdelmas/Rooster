@@ -5,8 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.os.IBinder
-import android.util.Log
 import kotlinx.coroutines.*
+import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
@@ -21,7 +22,7 @@ class AstronomyUpdateService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.i("AstronomyUpdateService", "Service created")
+        Logger.i("AstronomyUpdateService", "Service created")
 
         // Initial data retrieval
         serviceScope.launch {
@@ -32,14 +33,14 @@ class AstronomyUpdateService : Service() {
             
             // Schedule periodic updates every 23 hours
             while (isActive) {
-                delay(23 * 60 * 60 * 1000L) // 23 hours
+                delay(AppConstants.ASTRONOMY_UPDATE_INTERVAL_MS)
                 retrieveSunCourse()
             }
         }
     }
 
     private suspend fun retrieveSunCourse() {
-        Log.i("AstronomyUpdateService", "Retrieving sun course data")
+        Logger.i("AstronomyUpdateService", "Retrieving sun course data")
         
         // Retry up to 3 times with 60 second delays
         repeat(3) { attempt ->
@@ -47,23 +48,23 @@ class AstronomyUpdateService : Service() {
                 val apiResponse = getSunriseSunset()
                 
                 if (apiResponse != null) {
-                    Log.i("AstronomyUpdateService", "API response received")
+                    Logger.i("AstronomyUpdateService", "API response received")
                     val results = parseResponse(apiResponse)
                     saveData(results)
                     return // Success, exit the function
                 }
                 
-                Log.w("AstronomyUpdateService", "API response was null, attempt ${attempt + 1}/3")
+                Logger.w("AstronomyUpdateService", "API response was null, attempt ${attempt + 1}/3")
             } catch (e: Exception) {
-                Log.e("AstronomyUpdateService", "Error retrieving sun course, attempt ${attempt + 1}/3", e)
+                Logger.e("AstronomyUpdateService", "Error retrieving sun course, attempt ${attempt + 1}/3", e)
             }
             
             if (attempt < 2) {
-                delay(60000) // Wait 60 seconds before retry
+                delay(AppConstants.ASTRONOMY_RETRY_DELAY_MS)
             }
         }
         
-        Log.e("AstronomyUpdateService", "Failed to retrieve sun course data after 3 attempts")
+        Logger.e("AstronomyUpdateService", "Failed to retrieve sun course data after 3 attempts")
     }
 
     private fun saveData(results: Map<String, String>) {
@@ -108,14 +109,14 @@ class AstronomyUpdateService : Service() {
             // Get day length from API, or calculate from sunrise/sunset as fallback
             val dayLengthMillis = try {
                 results["day_length"]?.let { 
-                    it.toLong() * 1000
+                    it.toLong() * AppConstants.MILLIS_PER_SECOND
                 } ?: if (sunriseMillis != null && sunsetMillis != null) {
                     sunsetMillis!! - sunriseMillis!!
                 } else {
                     null
                 }
             } catch (e: Exception) {
-                Log.w("AstronomyUpdateService", "Could not parse day_length, calculating from sunrise/sunset", e)
+                Logger.w("AstronomyUpdateService", "Could not parse day_length, calculating from sunrise/sunset", e)
                 if (sunriseMillis != null && sunsetMillis != null) {
                     sunsetMillis!! - sunriseMillis!!
                 } else {
@@ -128,9 +129,9 @@ class AstronomyUpdateService : Service() {
             }
             
             editor.apply()
-            Log.i("AstronomyUpdateService", "Astronomy data saved successfully")
+            Logger.i("AstronomyUpdateService", "Astronomy data saved successfully")
         } catch (e: Exception) {
-            Log.e("AstronomyUpdateService", "Error saving astronomy data", e)
+            Logger.e("AstronomyUpdateService", "Error saving astronomy data", e)
         }
     }
 
@@ -144,7 +145,7 @@ class AstronomyUpdateService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
-        Log.i("AstronomyUpdateService", "Service destroyed")
+        Logger.i("AstronomyUpdateService", "Service destroyed")
     }
 
     private suspend fun getSunriseSunset(): String? = withContext(Dispatchers.IO) {
@@ -153,7 +154,7 @@ class AstronomyUpdateService : Service() {
         val lng = sharedPrefs.getFloat("longitude", 0F)
         
         if (lat == 0F && lng == 0F) {
-            Log.w("AstronomyUpdateService", "No location data available")
+            Logger.w("AstronomyUpdateService", "No location data available")
             return@withContext null
         }
         
@@ -169,10 +170,10 @@ class AstronomyUpdateService : Service() {
             connection.readTimeout = 10000
             
             val response = connection.inputStream.reader().readText()
-            Log.d("AstronomyUpdateService", "API call successful for location: $latStr, $lngStr")
+            Logger.d("AstronomyUpdateService", "API call successful for location: $latStr, $lngStr")
             return@withContext response
         } catch (e: Exception) {
-            Log.e("AstronomyUpdateService", "Error fetching sunrise/sunset data", e)
+            Logger.e("AstronomyUpdateService", "Error fetching sunrise/sunset data", e)
             return@withContext null
         } finally {
             connection?.disconnect()
