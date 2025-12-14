@@ -1,7 +1,5 @@
 package com.rooster.rooster
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
@@ -11,7 +9,6 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.os.PowerManager
 import android.os.Vibrator
 import android.util.Log
@@ -27,9 +24,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
+import com.rooster.rooster.receiver.SnoozeReceiver
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -319,50 +315,19 @@ class AlarmActivity : FragmentActivity() {
         alarmIsRunning = false
         releaseResources()
         
-        // Schedule snooze using AlarmManager for reliability
+        // Send broadcast to SnoozeReceiver to handle snooze reliably
+        // This uses AlarmManager, stores state in database, and survives app kills/reboots
         currentAlarm?.let { alarm ->
             try {
-                val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-                if (alarmManager == null) {
-                    Log.e("AlarmActivity", "AlarmManager is null, cannot schedule snooze")
-                    finish()
-                    return
+                val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
+                    action = SnoozeReceiver.ACTION_SNOOZE
+                    putExtra("alarm_id", alarmId)
                 }
                 
-                val snoozeTime = System.currentTimeMillis() + (snoozeDuration * 60 * 1000L)
-                
-                val intent = Intent(this, AlarmclockReceiver::class.java).apply {
-                    putExtra("message", "alarm time")
-                    putExtra("alarm_id", alarmId.toString())
-                    action = "com.rooster.alarmmanager"
-                }
-                
-                // Use unique request code for snooze (negative to distinguish from regular alarms)
-                val pendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    (-alarmId).toInt(),
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                
-                // Schedule snooze alarm
-                when {
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
-                    }
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> {
-                        alarmManager.setExact(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
-                    }
-                    else -> {
-                        alarmManager.set(AlarmManager.RTC_WAKEUP, snoozeTime, pendingIntent)
-                    }
-                }
-                
-                Log.i("AlarmActivity", "Snooze alarm scheduled for ${java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date(snoozeTime))}")
-            } catch (e: SecurityException) {
-                Log.e("AlarmActivity", "Permission denied for exact alarm (snooze)", e)
+                sendBroadcast(snoozeIntent)
+                Log.i("AlarmActivity", "Snooze broadcast sent for alarm $alarmId")
             } catch (e: Exception) {
-                Log.e("AlarmActivity", "Error scheduling snooze alarm", e)
+                Log.e("AlarmActivity", "Error sending snooze broadcast", e)
             }
         }
         
