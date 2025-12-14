@@ -25,6 +25,8 @@ import androidx.lifecycle.observe
 import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import com.rooster.rooster.receiver.SnoozeReceiver
+import com.rooster.rooster.util.AlarmNotificationHelper
+import com.rooster.rooster.util.ErrorHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,6 +53,9 @@ class AlarmActivity : FragmentActivity() {
     private var currentAlarm: Alarm? = null
     private var refreshJob: Job? = null
     private var volumeIncreaseJob: Job? = null
+    private var playbackRetryCount = 0
+    private var playbackFailed = false
+    private val maxRetryAttempts = 3
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -172,6 +177,10 @@ class AlarmActivity : FragmentActivity() {
     }
 
     private fun playRingtone(ringtoneUri: String, alarm: Alarm) {
+        // Reset retry state
+        playbackRetryCount = 0
+        playbackFailed = false
+        
         // Handle vibration
         if (alarm.vibrate) {
             vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
@@ -180,15 +189,29 @@ class AlarmActivity : FragmentActivity() {
             vibrator?.vibrate(pattern, 0) // 0 means repeat indefinitely
         }
         
-        val uri = when {
-            ringtoneUri.isEmpty() || ringtoneUri.equals("default", ignoreCase = true) || ringtoneUri == "Default" -> 
-                Uri.parse("android.resource://$packageName/raw/alarmclock")
-            else -> {
-                try {
-                    Uri.parse(ringtoneUri)
-                } catch (e: Exception) {
-                    Log.w("AlarmActivity", "Invalid ringtone URI: $ringtoneUri, using default", e)
+        // Start playback with retry logic
+        playRingtoneWithRetry(ringtoneUri, alarm, useDefault = false)
+    }
+    
+    private fun playRingtoneWithRetry(ringtoneUri: String, alarm: Alarm, useDefault: Boolean) {
+        if (playbackRetryCount >= maxRetryAttempts) {
+            handlePlaybackFailure(alarm)
+            return
+        }
+        
+        val uri = if (useDefault) {
+            Uri.parse("android.resource://$packageName/raw/alarmclock")
+        } else {
+            when {
+                ringtoneUri.isEmpty() || ringtoneUri.equals("default", ignoreCase = true) || ringtoneUri == "Default" -> 
                     Uri.parse("android.resource://$packageName/raw/alarmclock")
+                else -> {
+                    try {
+                        Uri.parse(ringtoneUri)
+                    } catch (e: Exception) {
+                        ErrorHandler.logWarning("AlarmActivity", "Invalid ringtone URI: $ringtoneUri, using default")
+                        Uri.parse("android.resource://$packageName/raw/alarmclock")
+                    }
                 }
             }
         }
@@ -197,6 +220,10 @@ class AlarmActivity : FragmentActivity() {
             // Calculate initial volume
             val targetVolume = alarm.volume / 100f
             currentVolume = if (alarm.gradualVolume) 0.1f else targetVolume
+            
+            // Release existing MediaPlayer if any
+            mediaPlayer?.release()
+            mediaPlayer = null
             
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
@@ -210,16 +237,22 @@ class AlarmActivity : FragmentActivity() {
                 try {
                     setDataSource(applicationContext, uri)
                     dataSourceSet = true
+                    Log.i("AlarmActivity", "Data source set successfully: $uri")
                 } catch (e: Exception) {
-                    Log.e("AlarmActivity", "Error setting data source with URI: $uri", e)
-                    // Fallback to default ringtone
-                    try {
-                        val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
-                        setDataSource(applicationContext, defaultUri)
-                        dataSourceSet = true
-                        Log.i("AlarmActivity", "Using default ringtone as fallback")
-                    } catch (fallbackException: Exception) {
-                        Log.e("AlarmActivity", "Error setting default ringtone", fallbackException)
+                    ErrorHandler.logError("AlarmActivity", "Error setting data source with URI: $uri", e)
+                    
+                    // Fallback to default ringtone if not already using it
+                    if (!useDefault) {
+                        try {
+                            val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                            setDataSource(applicationContext, defaultUri)
+                            dataSourceSet = true
+                            Log.i("AlarmActivity", "Using default ringtone as fallback")
+                        } catch (fallbackException: Exception) {
+                            ErrorHandler.logError("AlarmActivity", "Error setting default ringtone", fallbackException)
+                            dataSourceSet = false
+                        }
+                    } else {
                         dataSourceSet = false
                     }
                 }
@@ -227,21 +260,31 @@ class AlarmActivity : FragmentActivity() {
                 if (!dataSourceSet) {
                     release()
                     mediaPlayer = null
-                    Log.e("AlarmActivity", "Failed to set data source, alarm will only vibrate")
+                    // Retry with exponential backoff
+                    retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
                     return
                 }
                 
                 setOnErrorListener { mp, what, extra ->
-                    Log.e("AlarmActivity", "MediaPlayer error - What: $what, Extra: $extra")
-                    // Try to recover by using default ringtone
-                    try {
-                        mp?.reset()
-                        val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
-                        mp?.setDataSource(applicationContext, defaultUri)
-                        mp?.prepareAsync()
-                        Log.i("AlarmActivity", "Attempting recovery with default ringtone")
-                    } catch (e: Exception) {
-                        Log.e("AlarmActivity", "Failed to recover from MediaPlayer error", e)
+                    ErrorHandler.logError("AlarmActivity", "MediaPlayer error - What: $what, Extra: $extra", null)
+                    
+                    // Try to recover by using default ringtone if not already using it
+                    if (!useDefault && playbackRetryCount < maxRetryAttempts) {
+                        try {
+                            mp?.reset()
+                            val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                            mp?.setDataSource(applicationContext, defaultUri)
+                            mp?.prepareAsync()
+                            playbackRetryCount++
+                            Log.i("AlarmActivity", "Attempting recovery with default ringtone (attempt $playbackRetryCount)")
+                        } catch (e: Exception) {
+                            ErrorHandler.logError("AlarmActivity", "Failed to recover from MediaPlayer error", e)
+                            // Retry with exponential backoff
+                            retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault = true)
+                        }
+                    } else {
+                        // Retry with exponential backoff
+                        retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
                     }
                     true // Error handled
                 }
@@ -252,12 +295,26 @@ class AlarmActivity : FragmentActivity() {
                         mp.setVolume(currentVolume, currentVolume)
                         mp.start()
                         
+                        // Reset retry count on successful playback
+                        playbackRetryCount = 0
+                        playbackFailed = false
+                        
                         // Start gradual volume increase if enabled
                         if (alarm.gradualVolume) {
                             startGradualVolumeIncrease(targetVolume)
                         }
                     } catch (e: Exception) {
-                        Log.e("AlarmActivity", "Error starting MediaPlayer", e)
+                        ErrorHandler.logError("AlarmActivity", "Error starting MediaPlayer", e)
+                        // Retry with exponential backoff
+                        retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
+                    }
+                }
+                
+                setOnCompletionListener { mp ->
+                    // If playback completes unexpectedly (shouldn't happen with looping), retry
+                    if (alarmIsRunning && !playbackFailed) {
+                        Log.w("AlarmActivity", "MediaPlayer completed unexpectedly, retrying")
+                        retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
                     }
                 }
                 
@@ -265,14 +322,63 @@ class AlarmActivity : FragmentActivity() {
                 prepareAsync() // Use async preparation for better performance
             }
         } catch (e: Exception) {
-            Log.e("AlarmActivity", "Error initializing MediaPlayer", e)
+            ErrorHandler.logError("AlarmActivity", "Error initializing MediaPlayer", e)
             // Ensure vibration continues even if audio fails
             if (alarm.vibrate && vibrator == null) {
                 vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
                 val pattern = longArrayOf(0, 1000, 1000)
                 vibrator?.vibrate(pattern, 0)
             }
+            // Retry with exponential backoff
+            retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
         }
+    }
+    
+    private fun retryPlaybackWithBackoff(ringtoneUri: String, alarm: Alarm, useDefault: Boolean) {
+        playbackRetryCount++
+        
+        if (playbackRetryCount >= maxRetryAttempts) {
+            handlePlaybackFailure(alarm)
+            return
+        }
+        
+        // Exponential backoff: 1s, 2s, 4s
+        val delayMs = (1000L * (1 shl (playbackRetryCount - 1))).coerceAtMost(4000L)
+        
+        Log.i("AlarmActivity", "Retrying playback in ${delayMs}ms (attempt $playbackRetryCount/$maxRetryAttempts)")
+        
+        lifecycleScope.launch {
+            delay(delayMs)
+            if (alarmIsRunning && !playbackFailed) {
+                playRingtoneWithRetry(ringtoneUri, alarm, useDefault = useDefault || playbackRetryCount > 1)
+            }
+        }
+    }
+    
+    private fun handlePlaybackFailure(alarm: Alarm) {
+        playbackFailed = true
+        ErrorHandler.logError("AlarmActivity", "Alarm playback failed after $maxRetryAttempts attempts", null)
+        
+        // Show notification to user
+        try {
+            val alarmTitle = alarm.label.ifEmpty { "Alarm" }
+            AlarmNotificationHelper.showAlarmPlaybackErrorNotification(
+                this,
+                alarmId,
+                alarmTitle
+            )
+        } catch (e: Exception) {
+            ErrorHandler.logError("AlarmActivity", "Failed to show error notification", e)
+        }
+        
+        // Ensure vibration continues even if audio fails
+        if (alarm.vibrate && vibrator == null) {
+            vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            val pattern = longArrayOf(0, 1000, 1000)
+            vibrator?.vibrate(pattern, 0)
+        }
+        
+        Log.w("AlarmActivity", "Alarm will continue with vibration only")
     }
     
     private fun startGradualVolumeIncrease(targetVolume: Float) {

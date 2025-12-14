@@ -82,4 +82,43 @@ object AlarmNotificationHelper {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.cancel(alarmId.toInt())
     }
+    
+    /**
+     * Show an error notification when alarm fails to play
+     */
+    fun showAlarmPlaybackErrorNotification(
+        context: Context,
+        alarmId: Long,
+        alarmTitle: String = "Alarm"
+    ) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        // Intent to open the alarm activity
+        val activityIntent = Intent(context, AlarmActivity::class.java).apply {
+            putExtra("alarm_id", alarmId.toString())
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        
+        val activityPendingIntent = PendingIntent.getActivity(
+            context,
+            alarmId.toInt() + 10000, // Different request code to avoid conflicts
+            activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        // Build the error notification
+        val notification = NotificationCompat.Builder(context, RoosterApplication.ALARM_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Alarm Playback Failed")
+            .setContentText("$alarmTitle failed to play. Please check your ringtone settings.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setContentIntent(activityPendingIntent)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("The alarm \"$alarmTitle\" failed to play. The alarm may still be active with vibration only. Please check your ringtone settings."))
+            .build()
+        
+        notificationManager.notify(alarmId.toInt() + 20000, notification) // Different notification ID
+    }
 }
