@@ -24,24 +24,23 @@ import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.rooster.rooster.data.repository.LocationRepository
+import com.rooster.rooster.presentation.viewmodel.SettingsViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.AstronomyUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.activity.viewModels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.Calendar
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var locationRepository: LocationRepository
+    private val viewModel: SettingsViewModel by viewModels()
     
     private var locationManager: LocationManager? = null
     private val activityJob = SupervisorJob()
@@ -261,10 +260,10 @@ class SettingsActivity : AppCompatActivity() {
         val dlMinutes = (dayLength / 60) % 60
         tv?.text = String.format("%02d:%02d", dlHours, dlMinutes)
 
-        // Read location from Room database
+        // Read location from ViewModel (which uses Repository)
         activityScope.launch(Dispatchers.IO) {
             try {
-                val location = locationRepository.getLocation()
+                val location = viewModel.getLocation()
                 launch(Dispatchers.Main) {
                     if (location != null) {
                         val coordinates = mapOf(
@@ -308,30 +307,27 @@ class SettingsActivity : AppCompatActivity() {
         override fun onLocationChanged(location: Location) {
             Log.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
 
-            // Store the location in Room database
-            activityScope.launch(Dispatchers.IO) {
+            // Store the location through ViewModel (which uses Repository)
+            viewModel.saveLocation(location)
+            
+            // Trigger astronomy data update using WorkManager
+            activityScope.launch(Dispatchers.Main) {
                 try {
-                    locationRepository.saveLocation(location)
-                    // Trigger astronomy data update using WorkManager
-                    launch(Dispatchers.Main) {
-                        val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
-                        WorkManager.getInstance(applicationContext).enqueue(workRequest)
-                        
-                        // Update UI
-                        updateValues()
-                    }
+                    val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
+                    WorkManager.getInstance(applicationContext).enqueue(workRequest)
+                    
+                    // Update UI
+                    updateValues()
                 } catch (e: Exception) {
-                    Log.e("SettingsActivity", "Error saving location", e)
-                    // Fallback to SharedPreferences if database save fails
-                    launch(Dispatchers.Main) {
-                        getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
-                            putFloat("altitude", location.altitude.toFloat())
-                            putFloat("longitude", location.longitude.toFloat())
-                            putFloat("latitude", location.latitude.toFloat())
-                            apply()
-                        }
-                        updateValues()
+                    Log.e("SettingsActivity", "Error triggering astronomy update", e)
+                    // Fallback to SharedPreferences if update fails
+                    getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
+                        putFloat("altitude", location.altitude.toFloat())
+                        putFloat("longitude", location.longitude.toFloat())
+                        putFloat("latitude", location.latitude.toFloat())
+                        apply()
                     }
+                    updateValues()
                 }
             }
             

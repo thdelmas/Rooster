@@ -17,8 +17,8 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
-import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
+import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.HapticFeedbackHelper
@@ -32,15 +32,12 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class AlarmEditorActivity : AppCompatActivity() {
 
-    @Inject
-    lateinit var astronomyRepository: AstronomyRepository
-    
     private val viewModel: AlarmListViewModel by viewModels()
+    private val editorViewModel: AlarmEditorViewModel by viewModels()
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
@@ -610,8 +607,11 @@ class AlarmEditorActivity : AppCompatActivity() {
     private fun updateSunCourseVisualization() {
         activityScope.launch(Dispatchers.IO) {
             try {
-                // Get astronomy data from Room database
-                val astronomyData = astronomyRepository.getAstronomyData(forceRefresh = false)
+                // Get astronomy data from ViewModel (which uses Repository)
+                editorViewModel.getAstronomyData(forceRefresh = false)
+                // Wait a bit for the data to load
+                kotlinx.coroutines.delay(100)
+                val astronomyData = editorViewModel.astronomyData.value
                 
                 if (astronomyData != null) {
                     launch(Dispatchers.Main) {

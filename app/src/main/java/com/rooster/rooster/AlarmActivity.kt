@@ -165,6 +165,9 @@ class AlarmActivity : FragmentActivity() {
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         
+        // Release any existing WakeLock before acquiring a new one
+        releaseWakeLock()
+        
         try {
             wakeLock = powerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK or
@@ -172,9 +175,32 @@ class AlarmActivity : FragmentActivity() {
                         PowerManager.ON_AFTER_RELEASE, "rooster:wakelock"
             )
             wakeLock?.acquire(AppConstants.ALARM_WAKE_LOCK_TIMEOUT_MS)
+            Log.d("AlarmActivity", "WakeLock acquired successfully")
         } catch (e: Exception) {
             Logger.e("AlarmActivity", "Error acquiring wake lock", e)
+            // Ensure cleanup on failure
+            releaseWakeLock()
             // Continue without wake lock - screen should still turn on
+        }
+    }
+    
+    /**
+     * Safely releases the WakeLock if it exists and is held.
+     * This method is idempotent and safe to call multiple times.
+     */
+    private fun releaseWakeLock() {
+        val lock = wakeLock
+        if (lock != null) {
+            try {
+                if (lock.isHeld) {
+                    lock.release()
+                    Log.d("AlarmActivity", "WakeLock released")
+                }
+            } catch (e: Exception) {
+                Log.e("AlarmActivity", "Error releasing WakeLock", e)
+            } finally {
+                wakeLock = null
+            }
         }
     }
 
@@ -465,18 +491,7 @@ class AlarmActivity : FragmentActivity() {
         }
         
         // Release WakeLock with proper error handling
-        val lock = wakeLock
-        if (lock != null) {
-            try {
-                if (lock.isHeld) {
-                    lock.release()
-                    Log.d("AlarmActivity", "WakeLock released")
-                }
-            } catch (e: Exception) {
-                Log.e("AlarmActivity", "Error releasing WakeLock", e)
-            }
-        }
-        wakeLock = null
+        releaseWakeLock()
         
         // Cancel vibration
         try {
@@ -488,6 +503,12 @@ class AlarmActivity : FragmentActivity() {
         }
     }
     
+    override fun onPause() {
+        super.onPause()
+        // Note: We don't release resources here because the alarm should continue
+        // even if the activity is paused. Resources are released in onDestroy().
+    }
+    
     override fun onDestroy() {
         super.onDestroy()
         // Cancel all coroutines to prevent memory leaks
@@ -495,6 +516,7 @@ class AlarmActivity : FragmentActivity() {
         volumeIncreaseJob?.cancel()
         refreshJob = null
         volumeIncreaseJob = null
+        // Always release resources, including WakeLock, when activity is destroyed
         releaseResources()
         Log.i("AlarmActivity", "Activity destroyed")
     }
