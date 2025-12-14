@@ -84,7 +84,7 @@ class LocationUpdateWorker @AssistedInject constructor(
                 val currentLocationRequest = com.google.android.gms.location.CurrentLocationRequest.Builder()
                     .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
                     .setMaxUpdateAgeMillis(AppConstants.LOCATION_ACCEPT_MAX_AGE_MS) // Accept location up to 1 hour old
-                    .setDurationMillis(10 * AppConstants.MILLIS_PER_SECOND.toInt()) // Wait up to 10 seconds for a location
+                    .setDurationMillis(AppConstants.LOCATION_REQUEST_DURATION_MS.toInt()) // Wait up to 10 seconds for a location
                     .build()
                 
                 val currentLocation = fusedLocationClient.getCurrentLocation(currentLocationRequest, null).await()

@@ -27,6 +27,7 @@ object AppConstants {
     const val LOCATION_UPDATE_DELAY_MS = 3 * MILLIS_PER_HOUR // 3 hours
     const val LOCATION_VALIDITY_MS = MILLIS_PER_DAY // 24 hours
     const val LOCATION_ACCEPT_MAX_AGE_MS = MILLIS_PER_HOUR // 1 hour
+    const val LOCATION_REQUEST_DURATION_MS = 10 * MILLIS_PER_SECOND // 10 seconds
     
     // ========== Astronomy Data ==========
     const val ASTRONOMY_DATA_VALIDITY_MS = 6 * MILLIS_PER_HOUR // 6 hours
