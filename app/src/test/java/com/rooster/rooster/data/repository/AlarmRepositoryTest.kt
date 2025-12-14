@@ -214,7 +214,7 @@ class AlarmRepositoryTest {
             time1 = System.currentTimeMillis(),
             time2 = 0,
             calculatedTime = System.currentTimeMillis(),
-            monday = false,
+            monday = true,
             tuesday = false,
             wednesday = false,
             thursday = false,
