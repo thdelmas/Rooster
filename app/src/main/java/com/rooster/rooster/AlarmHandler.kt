@@ -9,6 +9,9 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.os.Build
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
@@ -96,8 +99,51 @@ class AlarmHandler {
         pi.cancel()
     }
 
+    /**
+     * @deprecated Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.
+     * This method is kept for backward compatibility but should not be used in new code.
+     * It still uses AlarmDbHelper which is being phased out.
+     */
+    @Deprecated("Use ScheduleAlarmUseCase.scheduleNextAlarm() instead. This method uses legacy AlarmDbHelper.")
     fun setNextAlarm(context: Context) {
-        Log.i(TAG, "Setting Next Alarm")
+        Log.w(TAG, "setNextAlarm() is deprecated. Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
+        
+        // Try to use ScheduleAlarmUseCase if available
+        val scheduleAlarmUseCase = (context.applicationContext as? RoosterApplication)
+            ?.provideScheduleAlarmUseCase()
+        
+        if (scheduleAlarmUseCase != null) {
+            // Use the modern approach with coroutines
+            CoroutineScope(Dispatchers.IO).launch {
+                val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                result.fold(
+                    onSuccess = { alarm ->
+                        if (alarm != null) {
+                            Log.i(TAG, "Next alarm scheduled successfully: ${alarm.label}")
+                        } else {
+                            Log.i(TAG, "No enabled alarms to schedule")
+                        }
+                    },
+                    onFailure = { e ->
+                        Log.e(TAG, "Error scheduling next alarm", e)
+                        // Fallback to legacy implementation
+                        setNextAlarmLegacy(context)
+                    }
+                )
+            }
+        } else {
+            // Fallback to legacy implementation if Hilt is not available
+            setNextAlarmLegacy(context)
+        }
+    }
+    
+    /**
+     * Legacy implementation using AlarmDbHelper
+     * @deprecated This will be removed once all code is migrated to Room
+     */
+    @Deprecated("Use ScheduleAlarmUseCase instead")
+    private fun setNextAlarmLegacy(context: Context) {
+        Log.i(TAG, "Setting Next Alarm (legacy mode)")
         val alarmDbHelper = AlarmDbHelper(context)
         val alarms = alarmDbHelper.getAllAlarms()
 

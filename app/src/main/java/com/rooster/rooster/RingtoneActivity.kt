@@ -7,12 +7,21 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rooster.rooster.R
+import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.ui.SoundPreviewHelper
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class RingtoneActivity : AppCompatActivity() {
+    
+    @Inject
+    lateinit var alarmRepository: AlarmRepository
 
     private lateinit var soundPreviewHelper: SoundPreviewHelper
     private lateinit var recyclerView: RecyclerView
@@ -144,14 +153,24 @@ class RingtoneActivity : AppCompatActivity() {
         }
 
         soundPreviewHelper.stopPreview()
-        val alarmDbHelper = AlarmDbHelper(this)
-        val alarm = alarmDbHelper.getAlarm(alarmId)
-        Log.w("Update", "Ringtone update Intent for alarm $alarmId")
-        alarm?.let {
-            it.ringtoneUri = ringtoneUri
-            alarmDbHelper.updateAlarm(it)
-            Log.i("Update", "Ringtone updated for alarm $alarmId")
+        Log.i("RingtoneActivity", "Updating ringtone for alarm $alarmId")
+        
+        // Use Repository to update alarm ringtone
+        lifecycleScope.launch {
+            try {
+                val alarm = alarmRepository.getAlarmById(alarmId)
+                if (alarm != null) {
+                    alarm.ringtoneUri = ringtoneUri
+                    alarmRepository.updateAlarm(alarm)
+                    Log.i("RingtoneActivity", "Ringtone updated for alarm $alarmId")
+                } else {
+                    Log.e("RingtoneActivity", "Alarm not found: $alarmId")
+                }
+            } catch (e: Exception) {
+                Log.e("RingtoneActivity", "Error updating ringtone", e)
+            } finally {
+                finish()
+            }
         }
-        finish()
     }
 }
