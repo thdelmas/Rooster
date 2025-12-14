@@ -81,8 +81,66 @@ class MainActivity() : ComponentActivity() {
             showExactAlarmPermissionDialog()
         }
         
-        // Request all other required permissions
-        PermissionHelper.requestAllPermissions(this)
+        // Check location permission and show rationale if needed
+        if (!PermissionHelper.isLocationPermissionGranted(this)) {
+            if (shouldShowLocationRationale()) {
+                showLocationPermissionRationale()
+            } else {
+                PermissionHelper.requestAllPermissions(this)
+            }
+        } else {
+            // Permission already granted, request location updates
+            requestLocationUpdatesIfPermitted()
+            // Request other permissions if needed
+            PermissionHelper.requestAllPermissions(this)
+        }
+    }
+    
+    private fun shouldShowLocationRationale(): Boolean {
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+            this,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) || ActivityCompat.shouldShowRequestPermissionRationale(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
+    
+    private fun showLocationPermissionRationale() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Location Permission Required")
+        builder.setMessage("Rooster needs location access to:\n\n  • Calculate sunrise and sunset times\n  • Provide accurate astronomy-based alarms\n  • Adjust alarms based on your location\n\nYour location data is only used locally and never shared.")
+        builder.setPositiveButton("Grant Permission") { dialog, _ ->
+            PermissionHelper.requestAllPermissions(this)
+            dialog.dismiss()
+        }
+        builder.setNegativeButton("Skip") { dialog, _ ->
+            dialog.dismiss()
+            Log.w("MainActivity", "User skipped location permission")
+        }
+        builder.setCancelable(false)
+        builder.show()
+    }
+    
+    private fun requestLocationUpdatesIfPermitted() {
+        // Verify permission is granted before requesting location updates
+        if (!PermissionHelper.isLocationPermissionGranted(this)) {
+            Log.w("MainActivity", "Location permission not granted, cannot request location updates")
+            return
+        }
+        
+        try {
+            val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+            val locationRequest = LocationRequest.create()
+            locationRequest.interval = 10000 // milliseconds
+            fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            Log.i("MainActivity", "Location updates requested successfully")
+        } catch (e: SecurityException) {
+            Log.e("MainActivity", "SecurityException when requesting location updates", e)
+            Toast.makeText(this, "Location permission error. Please grant location permission in settings.", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error requesting location updates", e)
+        }
     }
 
     private fun showExactAlarmPermissionDialog() {
@@ -175,45 +233,85 @@ class MainActivity() : ComponentActivity() {
         Log.i("MainActivity", "Permission callback for request code: $requestCode")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
-        // Check if location permissions were granted
-        val hasCoarseLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val hasFineLocation = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val locationPermissionGranted = grantResults.isNotEmpty() && 
-            grantResults.all { it == PackageManager.PERMISSION_GRANTED } &&
-            (hasCoarseLocation || hasFineLocation)
-        
-        if (locationPermissionGranted) {
-            Log.i("MainActivity", "Location permissions granted, scheduling updates")
-            // Schedule WorkManager tasks and trigger immediate updates
-            WorkManagerHelper.scheduleLocationUpdates(this)
-            WorkManagerHelper.scheduleAstronomyUpdates(this)
-            WorkManagerHelper.triggerLocationUpdate(this)
-            
-            // Get the fused location provider for initial location
-            // Double-check permission before requesting location updates to prevent SecurityException
-            val currentCoarsePermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            val currentFinePermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            
-            if (currentCoarsePermission || currentFinePermission) {
-                try {
-                    val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-                    val locationRequest = LocationRequest.create()
-                    locationRequest.interval = 10000 // milliseconds
-                    fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
-                    Log.i("MainActivity", "Location updates requested successfully")
-                } catch (e: SecurityException) {
-                    Log.e("MainActivity", "SecurityException when requesting location updates", e)
-                    Toast.makeText(this, "Location permission error. Please grant location permission in settings.", Toast.LENGTH_LONG).show()
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Error requesting location updates", e)
-                }
-            } else {
-                Log.w("MainActivity", "Location permission not granted, cannot request location updates")
-            }
-        } else {
-            Log.w("MainActivity", "Location permissions denied, location features may not work")
-            Toast.makeText(this, "Location permission is required for astronomy-based alarms.", Toast.LENGTH_LONG).show()
+        if (grantResults.isEmpty()) {
+            Log.w("MainActivity", "Permission request cancelled or empty results")
+            return
         }
+        
+        // Check if location permissions were requested and granted
+        val locationPermissionsRequested = permissions.any { permission ->
+            permission == Manifest.permission.ACCESS_COARSE_LOCATION ||
+            permission == Manifest.permission.ACCESS_FINE_LOCATION
+        }
+        
+        if (locationPermissionsRequested) {
+            // Verify location permissions were actually granted by checking grantResults
+            val locationPermissionIndices = permissions.mapIndexedNotNull { index, permission ->
+                if (permission == Manifest.permission.ACCESS_COARSE_LOCATION ||
+                    permission == Manifest.permission.ACCESS_FINE_LOCATION) {
+                    index
+                } else {
+                    null
+                }
+            }
+            
+            val locationPermissionsGranted = locationPermissionIndices.isNotEmpty() &&
+                locationPermissionIndices.all { index ->
+                    index < grantResults.size && grantResults[index] == PackageManager.PERMISSION_GRANTED
+                }
+            
+            // Double-check with system permission check for security
+            val hasCoarseLocation = ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val hasFineLocation = ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val systemPermissionGranted = hasCoarseLocation || hasFineLocation
+            
+            if (locationPermissionsGranted && systemPermissionGranted) {
+                Log.i("MainActivity", "Location permissions granted, scheduling updates")
+                // Schedule WorkManager tasks and trigger immediate updates
+                WorkManagerHelper.scheduleLocationUpdates(this)
+                WorkManagerHelper.scheduleAstronomyUpdates(this)
+                WorkManagerHelper.triggerLocationUpdate(this)
+                
+                // Request location updates with proper permission check
+                requestLocationUpdatesIfPermitted()
+            } else {
+                Log.w("MainActivity", "Location permissions denied, location features may not work")
+                // Check if user permanently denied (should not show rationale)
+                val permanentlyDenied = !shouldShowLocationRationale() && !systemPermissionGranted
+                
+                if (permanentlyDenied) {
+                    // Show dialog to guide user to settings
+                    showLocationPermissionDeniedDialog()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Location permission is required for astronomy-based alarms.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+    
+    private fun showLocationPermissionDeniedDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Location Permission Required")
+        builder.setMessage("Location permission was denied. To use astronomy-based alarms, please grant location permission in app settings.")
+        builder.setPositiveButton("Open Settings") { dialog, _ ->
+            PermissionHelper.openAppSettings(this)
+            dialog.dismiss()
+        }
+        builder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        builder.setCancelable(true)
+        builder.show()
     }
 
     private val locationCallback = object : LocationCallback() {
