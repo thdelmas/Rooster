@@ -417,6 +417,7 @@ val alarmDbHelper = AlarmDbHelper(this)
 ### 15. No Offline Handling for Astronomy API
 **Severity:** Medium  
 **Location:** `AstronomyRepository.kt` (implied from usage)
+**Status:** ✅ **ADDRESSED**
 
 **Problem:**
 - No clear offline fallback strategy
@@ -431,6 +432,19 @@ val alarmDbHelper = AlarmDbHelper(this)
 - Implement robust caching
 - Use cached data when offline
 - Show user notification if data is stale
+
+**Resolution:**
+- ✅ Created `NetworkConnectivityHelper` utility for network availability checks
+- ✅ Added `AstronomyDataResult` sealed class to indicate data freshness (Fresh/Cached/Failure)
+- ✅ Updated `AstronomyRepository.fetchAndCacheAstronomyData()` to:
+  - Check network connectivity before attempting API calls
+  - Automatically fall back to cached data when offline
+  - Fall back to cached data when API calls fail
+  - Validate cached data before returning
+- ✅ Added data validation in `validateAstronomyData()` method
+- ✅ Updated `AstronomyUpdateWorker` to handle new result type and show notifications for stale data
+- ✅ Added `getAstronomyDataWithFreshness()` method for callers that need freshness information
+- ✅ Added helper methods: `isDataValid()`, `isDataStale()`, `getDataAge()`
 
 ---
 
