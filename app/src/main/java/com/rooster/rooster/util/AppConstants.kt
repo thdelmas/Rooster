@@ -48,3 +48,4 @@ object AppConstants {
     // SeekBar threshold for alarm dismissal
     const val ALARM_DISMISS_THRESHOLD = 90
 }
+
