@@ -1,7 +1,6 @@
 package com.rooster.rooster.util
 
 import android.util.Log
-import com.rooster.rooster.BuildConfig
 
 /**
  * Centralized logging utility with consistent tag naming, log levels, and sensitive data sanitization.
@@ -17,8 +16,18 @@ object Logger {
     private const val MAX_TAG_LENGTH = 23 // Android's limit
     
     // Minimum log level (can be configured)
-    // In release builds, debug logs are automatically disabled via BuildConfig.DEBUG
-    private val isDebugEnabled: Boolean = BuildConfig.DEBUG
+    // In release builds, debug logs are automatically disabled
+    // BuildConfig.DEBUG is checked at compile time, so we check if the class exists
+    private val isDebugEnabled: Boolean = 
+        try {
+            val buildConfigClass = Class.forName("com.rooster.rooster.BuildConfig")
+            buildConfigClass.getDeclaredField("DEBUG").getBoolean(null)
+        } catch (e: ClassNotFoundException) {
+            // BuildConfig not available yet (e.g., during annotation processing)
+            true // Default to enabled during development
+        } catch (e: Exception) {
+            true // Default to enabled if there's any issue
+        }
     
     // Patterns for sensitive data that should be sanitized
     private val sensitivePatterns = listOf(

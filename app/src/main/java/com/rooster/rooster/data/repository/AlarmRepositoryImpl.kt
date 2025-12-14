@@ -58,12 +58,12 @@ class AlarmRepositoryImpl @Inject constructor(
         val validationResult = ValidationHelper.validateAlarm(alarm)
         if (validationResult.isError()) {
             val errorMsg = validationResult.getErrorMessage()
-            Log.e(TAG, "Alarm validation failed: $errorMsg")
+            Logger.e(TAG, "Alarm validation failed: $errorMsg")
             throw IllegalArgumentException(errorMsg)
         }
         
         if (validationResult.isWarning()) {
-            Log.w(TAG, "Alarm validation warning: ${validationResult.getErrorMessage()}")
+            Logger.w(TAG, "Alarm validation warning: ${validationResult.getErrorMessage()}")
         }
         
         return alarmDao.insertAlarm(alarm.toEntity())

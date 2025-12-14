@@ -71,7 +71,7 @@ class ScheduleAlarmUseCase @Inject constructor(
         try {
             // Validate the trigger time
             if (triggerTime <= System.currentTimeMillis()) {
-                Log.e(TAG, "Trigger time is in the past for alarm '${alarm.label}' (ID: ${alarm.id})")
+                Logger.e(TAG, "Trigger time is in the past for alarm '${alarm.label}' (ID: ${alarm.id})")
                 return@withContext Result.failure(IllegalStateException("Trigger time is in the past"))
             }
             
@@ -84,7 +84,7 @@ class ScheduleAlarmUseCase @Inject constructor(
             
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id}) with specific time", e)
+            Logger.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id}) with specific time", e)
             Result.failure(e)
         }
     }
