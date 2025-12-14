@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
 import java.text.SimpleDateFormat
@@ -17,7 +18,7 @@ import java.util.*
 
 class ImprovedAlarmAdapter(
     private val alarmList: List<Alarm>,
-    private val alarmDbHelper: AlarmDbHelper
+    private val viewModel: AlarmListViewModel
 ) : RecyclerView.Adapter<ImprovedAlarmAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -55,8 +56,7 @@ class ImprovedAlarmAdapter(
         // Set alarm label
         holder.alarmLabel.text = alarm.label
 
-        // Calculate and display time
-        alarmDbHelper.calculateTime(alarm)
+        // Display time (calculatedTime should already be set from repository)
         val timeStr = formatTime(alarm.calculatedTime)
         holder.alarmTime.text = timeStr
 
@@ -81,7 +81,8 @@ class ImprovedAlarmAdapter(
         holder.enableSwitch.setOnCheckedChangeListener { view, isChecked ->
             HapticFeedbackHelper.performToggleFeedback(view)
             alarm.enabled = isChecked
-            alarmDbHelper.updateAlarm(alarm)
+            viewModel.updateAlarm(alarm)
+            // Alarm list will update automatically via LiveData
         }
 
         // Click to edit with animation

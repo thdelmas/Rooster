@@ -26,6 +26,8 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
     val context = context
 
     override fun onCreate(db: SQLiteDatabase) {
+        // Use INTEGER for boolean values to match Room database schema
+        // SQLite doesn't have a native BOOLEAN type, so INTEGER (0/1) is used
         db.execSQL(
             """
             CREATE TABLE alarms (
@@ -38,20 +40,20 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
     time1 INTEGER,
     time2 INTEGER,
     calculated_time INTEGER,
-    enabled BOOLEAN,
-    monday BOOLEAN,
-    tuesday BOOLEAN,
-    wednesday BOOLEAN,
-    thursday BOOLEAN,
-    friday BOOLEAN,
-    saturday BOOLEAN,
-    sunday BOOLEAN,
-    vibrate BOOLEAN DEFAULT 1,
-    snooze_enabled BOOLEAN DEFAULT 1,
-    snooze_duration INTEGER DEFAULT 10,
-    snooze_count INTEGER DEFAULT 3,
-    volume INTEGER DEFAULT 80,
-    gradual_volume BOOLEAN DEFAULT 0
+    enabled INTEGER NOT NULL DEFAULT 0,
+    monday INTEGER NOT NULL DEFAULT 0,
+    tuesday INTEGER NOT NULL DEFAULT 0,
+    wednesday INTEGER NOT NULL DEFAULT 0,
+    thursday INTEGER NOT NULL DEFAULT 0,
+    friday INTEGER NOT NULL DEFAULT 0,
+    saturday INTEGER NOT NULL DEFAULT 0,
+    sunday INTEGER NOT NULL DEFAULT 0,
+    vibrate INTEGER NOT NULL DEFAULT 1,
+    snooze_enabled INTEGER NOT NULL DEFAULT 1,
+    snooze_duration INTEGER NOT NULL DEFAULT 10,
+    snooze_count INTEGER NOT NULL DEFAULT 3,
+    volume INTEGER NOT NULL DEFAULT 80,
+    gradual_volume INTEGER NOT NULL DEFAULT 0
 );"""
         )
     }
@@ -66,12 +68,14 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
         }
         if (oldVersion < 4) {
             // Add new alarm feature columns
-            db.execSQL("ALTER TABLE alarms ADD COLUMN vibrate BOOLEAN DEFAULT 1")
-            db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_enabled BOOLEAN DEFAULT 1")
+            // Note: SQLite doesn't have native BOOLEAN, uses INTEGER (0/1) internally
+            // Using INTEGER explicitly for consistency with Room schema
+            db.execSQL("ALTER TABLE alarms ADD COLUMN vibrate INTEGER DEFAULT 1")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_enabled INTEGER DEFAULT 1")
             db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_duration INTEGER DEFAULT 10")
             db.execSQL("ALTER TABLE alarms ADD COLUMN snooze_count INTEGER DEFAULT 3")
             db.execSQL("ALTER TABLE alarms ADD COLUMN volume INTEGER DEFAULT 80")
-            db.execSQL("ALTER TABLE alarms ADD COLUMN gradual_volume BOOLEAN DEFAULT 0")
+            db.execSQL("ALTER TABLE alarms ADD COLUMN gradual_volume INTEGER DEFAULT 0")
         }
         if (oldVersion < 5) {
             // Version 5 changes (if any)
@@ -88,6 +92,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
 
     fun insertAlarm(alarm: AlarmCreation) {
         val db = writableDatabase
+        // Use INTEGER (0/1) for boolean values to match Room schema
         val values = ContentValues().apply {
             put("label", alarm.label)
             put("mode", alarm.mode)
@@ -97,20 +102,20 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             put("time1", alarm.time1)
             put("time2", alarm.time2)
             put("calculated_time", alarm.calculatedTime)
-            put("enabled", alarm.enabled)
-            put("monday", false)
-            put("tuesday", false)
-            put("wednesday", false)
-            put("thursday", false)
-            put("friday", false)
-            put("saturday", false)
-            put("sunday", false)
-            put("vibrate", true)
-            put("snooze_enabled", true)
+            put("enabled", if (alarm.enabled) 1 else 0)
+            put("monday", 0)
+            put("tuesday", 0)
+            put("wednesday", 0)
+            put("thursday", 0)
+            put("friday", 0)
+            put("saturday", 0)
+            put("sunday", 0)
+            put("vibrate", 1)
+            put("snooze_enabled", 1)
             put("snooze_duration", 10)
             put("snooze_count", 3)
             put("volume", 80)
-            put("gradual_volume", false)
+            put("gradual_volume", 0)
         }
 
         db.insert("alarms", null, values)
@@ -174,6 +179,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
         }
         alarm.calculatedTime = calculateTime(alarm)
         Log.e("Update Alarm", alarm.calculatedTime.toString())
+        // Use INTEGER (0/1) for boolean values to match Room schema
         val values = ContentValues().apply {
             put("label", alarm.label)
             put("mode", alarm.mode)
@@ -183,20 +189,20 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             put("time1", alarm.time1)
             put("time2", alarm.time2)
             put("calculated_time", alarm.calculatedTime)
-            put("enabled", alarm.enabled)
-            put("monday", alarm.monday)
-            put("tuesday", alarm.tuesday)
-            put("wednesday", alarm.wednesday)
-            put("thursday", alarm.thursday)
-            put("friday", alarm.friday)
-            put("saturday", alarm.saturday)
-            put("sunday", alarm.sunday)
-            put("vibrate", alarm.vibrate)
-            put("snooze_enabled", alarm.snoozeEnabled)
+            put("enabled", if (alarm.enabled) 1 else 0)
+            put("monday", if (alarm.monday) 1 else 0)
+            put("tuesday", if (alarm.tuesday) 1 else 0)
+            put("wednesday", if (alarm.wednesday) 1 else 0)
+            put("thursday", if (alarm.thursday) 1 else 0)
+            put("friday", if (alarm.friday) 1 else 0)
+            put("saturday", if (alarm.saturday) 1 else 0)
+            put("sunday", if (alarm.sunday) 1 else 0)
+            put("vibrate", if (alarm.vibrate) 1 else 0)
+            put("snooze_enabled", if (alarm.snoozeEnabled) 1 else 0)
             put("snooze_duration", alarm.snoozeDuration)
             put("snooze_count", alarm.snoozeCount)
             put("volume", alarm.volume)
-            put("gradual_volume", alarm.gradualVolume)
+            put("gradual_volume", if (alarm.gradualVolume) 1 else 0)
         }
         db.update("alarms", values, "id = ?", arrayOf(alarm.id.toString()))
         alarmHandler.setNextAlarm(context)

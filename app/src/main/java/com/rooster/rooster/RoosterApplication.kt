@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.WorkManagerHelper
 import dagger.hilt.android.HiltAndroidApp
@@ -16,6 +17,9 @@ class RoosterApplication : Application(), Configuration.Provider {
     
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+    
+    @Inject
+    lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
     
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -28,6 +32,14 @@ class RoosterApplication : Application(), Configuration.Provider {
         ThemeHelper.applyTheme(this)
         createNotificationChannels()
         scheduleBackgroundWork()
+    }
+    
+    /**
+     * Get ScheduleAlarmUseCase for use in BroadcastReceivers
+     * BroadcastReceivers cannot use Hilt directly, so we provide access through Application
+     */
+    fun provideScheduleAlarmUseCase(): ScheduleAlarmUseCase {
+        return scheduleAlarmUseCase
     }
     
     private fun createNotificationChannels() {
