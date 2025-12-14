@@ -11,17 +11,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rooster.rooster.R
-import com.rooster.rooster.data.repository.AlarmRepository
+import com.rooster.rooster.presentation.viewmodel.RingtoneViewModel
 import com.rooster.rooster.ui.SoundPreviewHelper
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.activity.viewModels
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class RingtoneActivity : AppCompatActivity() {
     
-    @Inject
-    lateinit var alarmRepository: AlarmRepository
+    private val viewModel: RingtoneViewModel by viewModels()
 
     private lateinit var soundPreviewHelper: SoundPreviewHelper
     private lateinit var recyclerView: RecyclerView
@@ -69,6 +70,28 @@ class RingtoneActivity : AppCompatActivity() {
         )
 
         recyclerView.adapter = adapter
+        
+        // Observe update result
+        observeUpdateResult()
+    }
+    
+    private fun observeUpdateResult() {
+        lifecycleScope.launch {
+            viewModel.updateResult.collectLatest { result ->
+                result?.let {
+                    when (it) {
+                        is RingtoneViewModel.UpdateResult.Success -> {
+                            Log.i("RingtoneActivity", "Ringtone updated successfully")
+                        }
+                        is RingtoneViewModel.UpdateResult.Error -> {
+                            Log.e("RingtoneActivity", "Error updating ringtone: ${it.message}")
+                        }
+                    }
+                    viewModel.resetUpdateResult()
+                    finish()
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -155,22 +178,7 @@ class RingtoneActivity : AppCompatActivity() {
         soundPreviewHelper.stopPreview()
         Log.i("RingtoneActivity", "Updating ringtone for alarm $alarmId")
         
-        // Use Repository to update alarm ringtone
-        lifecycleScope.launch {
-            try {
-                val alarm = alarmRepository.getAlarmById(alarmId)
-                if (alarm != null) {
-                    alarm.ringtoneUri = ringtoneUri
-                    alarmRepository.updateAlarm(alarm)
-                    Log.i("RingtoneActivity", "Ringtone updated for alarm $alarmId")
-                } else {
-                    Log.e("RingtoneActivity", "Alarm not found: $alarmId")
-                }
-            } catch (e: Exception) {
-                Log.e("RingtoneActivity", "Error updating ringtone", e)
-            } finally {
-                finish()
-            }
-        }
+        // Use ViewModel to update alarm ringtone
+        viewModel.updateAlarmRingtone(alarmId, ringtoneUri)
     }
 }

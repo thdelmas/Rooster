@@ -32,9 +32,15 @@ import com.rooster.rooster.util.PermissionHelper
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.worker.WorkManagerHelper
+import com.rooster.rooster.presentation.viewmodel.MainViewModel
+import androidx.activity.viewModels
+import dagger.hilt.android.AndroidEntryPoint
 
 
+@AndroidEntryPoint
 class MainActivity() : ComponentActivity() {
+    
+    private val viewModel: MainViewModel by viewModels()
     private val REQUEST_CODE_PERMISSIONS = 4
     val coarseLocationPermissionRequestCode = 1
     val notificationPermissionRequestCode = 2
@@ -318,13 +324,13 @@ class MainActivity() : ComponentActivity() {
             Logger.i("MainActivity", "Location Callback")
             super.onLocationResult(locationResult)
             val location = locationResult.lastLocation
-            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
             location?.let {
-                sharedPreferences.edit()
-                    .putFloat("altitude", it.altitude.toFloat())
-                    .putFloat("longitude", it.longitude.toFloat())
-                    .putFloat("latitude", it.latitude.toFloat())
-                    .apply()
+                // Save location through ViewModel (which uses Repository)
+                viewModel.saveLocation(
+                    it.latitude.toFloat(),
+                    it.longitude.toFloat(),
+                    it.altitude.toFloat()
+                )
             }
         }
     }
