@@ -2,7 +2,6 @@ package com.rooster.rooster.worker
 
 import android.Manifest
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.util.Log
@@ -12,6 +11,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.rooster.rooster.data.repository.LocationRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.tasks.await
@@ -23,7 +23,7 @@ import kotlinx.coroutines.tasks.await
 class LocationUpdateWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val sharedPreferences: SharedPreferences
+    private val locationRepository: LocationRepository
 ) : CoroutineWorker(context, workerParams) {
     
     companion object {
@@ -127,13 +127,8 @@ class LocationUpdateWorker @AssistedInject constructor(
         return locationAge < maxAge
     }
     
-    private fun saveLocation(location: Location) {
-        sharedPreferences.edit()
-            .putFloat("altitude", location.altitude.toFloat())
-            .putFloat("longitude", location.longitude.toFloat())
-            .putFloat("latitude", location.latitude.toFloat())
-            .putLong("location_update_time", System.currentTimeMillis())
-            .apply()
+    private suspend fun saveLocation(location: Location) {
+        locationRepository.saveLocation(location)
     }
     
     private fun isLocationPermissionGranted(): Boolean {

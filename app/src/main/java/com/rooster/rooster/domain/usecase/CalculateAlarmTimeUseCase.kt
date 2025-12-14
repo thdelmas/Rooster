@@ -6,6 +6,8 @@ import android.icu.util.Calendar
 import android.icu.util.TimeZone
 import android.util.Log
 import com.rooster.rooster.Alarm
+import com.rooster.rooster.data.repository.AstronomyRepository
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
 
@@ -13,7 +15,8 @@ import javax.inject.Inject
  * Use case for calculating alarm trigger times
  */
 class CalculateAlarmTimeUseCase @Inject constructor(
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    private val astronomyRepository: AstronomyRepository
 ) {
     
     /**
@@ -126,17 +129,39 @@ class CalculateAlarmTimeUseCase @Inject constructor(
     }
     
     private fun getRelativeTime(relative: String): Long {
-        val timeInMillis = when (relative) {
-            "Astronomical Dawn" -> sharedPreferences.getLong("astroDawn", 0)
-            "Nautical Dawn" -> sharedPreferences.getLong("nauticalDawn", 0)
-            "Civil Dawn" -> sharedPreferences.getLong("civilDawn", 0)
-            "Sunrise" -> sharedPreferences.getLong("sunrise", 0)
-            "Sunset" -> sharedPreferences.getLong("sunset", 0)
-            "Civil Dusk" -> sharedPreferences.getLong("civilDusk", 0)
-            "Nautical Dusk" -> sharedPreferences.getLong("nauticalDusk", 0)
-            "Astronomical Dusk" -> sharedPreferences.getLong("astroDusk", 0)
-            "Solar Noon" -> sharedPreferences.getLong("solarNoon", 0)
-            else -> 0
+        // Try to get astronomy data from Room database first
+        val astronomyData = runBlocking {
+            astronomyRepository.getAstronomyData(forceRefresh = false)
+        }
+        
+        val timeInMillis = if (astronomyData != null) {
+            // Use data from Room database
+            when (relative) {
+                "Astronomical Dawn" -> astronomyData.astroDawn
+                "Nautical Dawn" -> astronomyData.nauticalDawn
+                "Civil Dawn" -> astronomyData.civilDawn
+                "Sunrise" -> astronomyData.sunrise
+                "Sunset" -> astronomyData.sunset
+                "Civil Dusk" -> astronomyData.civilDusk
+                "Nautical Dusk" -> astronomyData.nauticalDusk
+                "Astronomical Dusk" -> astronomyData.astroDusk
+                "Solar Noon" -> astronomyData.solarNoon
+                else -> 0
+            }
+        } else {
+            // Fallback to SharedPreferences if not in database (for migration period)
+            when (relative) {
+                "Astronomical Dawn" -> sharedPreferences.getLong("astroDawn", 0)
+                "Nautical Dawn" -> sharedPreferences.getLong("nauticalDawn", 0)
+                "Civil Dawn" -> sharedPreferences.getLong("civilDawn", 0)
+                "Sunrise" -> sharedPreferences.getLong("sunrise", 0)
+                "Sunset" -> sharedPreferences.getLong("sunset", 0)
+                "Civil Dusk" -> sharedPreferences.getLong("civilDusk", 0)
+                "Nautical Dusk" -> sharedPreferences.getLong("nauticalDusk", 0)
+                "Astronomical Dusk" -> sharedPreferences.getLong("astroDusk", 0)
+                "Solar Noon" -> sharedPreferences.getLong("solarNoon", 0)
+                else -> 0
+            }
         }
         
         val calendar = Calendar.getInstance()

@@ -24,16 +24,28 @@ import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.android.material.switchmaterial.SwitchMaterial
+import com.rooster.rooster.data.repository.LocationRepository
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.AstronomyUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class SettingsActivity : AppCompatActivity() {
 
+    @Inject
+    lateinit var locationRepository: LocationRepository
+    
     private var locationManager: LocationManager? = null
+    private val activityJob = SupervisorJob()
+    private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -249,12 +261,46 @@ class SettingsActivity : AppCompatActivity() {
         val dlMinutes = (dayLength / 60) % 60
         tv?.text = String.format("%02d:%02d", dlHours, dlMinutes)
 
-        val coordinates = arrayOf("altitude", "latitude", "longitude")
-        for (coord in coordinates) {
-            val coordinate = sharedPrefs.getFloat(coord, 0F)
-            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
-            val coordTv = findViewById<TextView>(tvId)
-            coordTv?.text = String.format("%.4f", coordinate)
+        // Read location from Room database
+        activityScope.launch(Dispatchers.IO) {
+            try {
+                val location = locationRepository.getLocation()
+                launch(Dispatchers.Main) {
+                    if (location != null) {
+                        val coordinates = mapOf(
+                            "altitude" to location.altitude,
+                            "latitude" to location.latitude,
+                            "longitude" to location.longitude
+                        )
+                        for ((coord, value) in coordinates) {
+                            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
+                            val coordTv = findViewById<TextView>(tvId)
+                            coordTv?.text = String.format("%.4f", value)
+                        }
+                    } else {
+                        // Fallback to SharedPreferences if no location in database
+                        val coordinates = arrayOf("altitude", "latitude", "longitude")
+                        for (coord in coordinates) {
+                            val coordinate = sharedPrefs.getFloat(coord, 0F)
+                            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
+                            val coordTv = findViewById<TextView>(tvId)
+                            coordTv?.text = String.format("%.4f", coordinate)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SettingsActivity", "Error reading location from database", e)
+                // Fallback to SharedPreferences on error
+                launch(Dispatchers.Main) {
+                    val coordinates = arrayOf("altitude", "latitude", "longitude")
+                    for (coord in coordinates) {
+                        val coordinate = sharedPrefs.getFloat(coord, 0F)
+                        val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
+                        val coordTv = findViewById<TextView>(tvId)
+                        coordTv?.text = String.format("%.4f", coordinate)
+                    }
+                }
+            }
         }
     }
 
@@ -262,20 +308,32 @@ class SettingsActivity : AppCompatActivity() {
         override fun onLocationChanged(location: Location) {
             Log.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
 
-            // Store the location in shared preferences
-            getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
-                putFloat("altitude", location.altitude.toFloat())
-                putFloat("longitude", location.longitude.toFloat())
-                putFloat("latitude", location.latitude.toFloat())
-                apply()
+            // Store the location in Room database
+            activityScope.launch(Dispatchers.IO) {
+                try {
+                    locationRepository.saveLocation(location)
+                    // Trigger astronomy data update using WorkManager
+                    launch(Dispatchers.Main) {
+                        val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
+                        WorkManager.getInstance(applicationContext).enqueue(workRequest)
+                        
+                        // Update UI
+                        updateValues()
+                    }
+                } catch (e: Exception) {
+                    Log.e("SettingsActivity", "Error saving location", e)
+                    // Fallback to SharedPreferences if database save fails
+                    launch(Dispatchers.Main) {
+                        getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
+                            putFloat("altitude", location.altitude.toFloat())
+                            putFloat("longitude", location.longitude.toFloat())
+                            putFloat("latitude", location.latitude.toFloat())
+                            apply()
+                        }
+                        updateValues()
+                    }
+                }
             }
-
-            // Trigger astronomy data update using WorkManager
-            val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
-            WorkManager.getInstance(applicationContext).enqueue(workRequest)
-            
-            // Update UI
-            updateValues()
             
             // Remove location updates after successful update
             locationManager?.removeUpdates(this)
@@ -307,6 +365,7 @@ class SettingsActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         locationManager?.removeUpdates(networkLocationListener)
+        activityJob.cancel()
     }
 
     fun redirectToGitHub(v: View?) {

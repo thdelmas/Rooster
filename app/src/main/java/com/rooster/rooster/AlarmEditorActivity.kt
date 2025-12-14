@@ -17,18 +17,30 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
+import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.HapticFeedbackHelper
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class AlarmEditorActivity : AppCompatActivity() {
 
+    @Inject
+    lateinit var astronomyRepository: AstronomyRepository
+    
     private val viewModel: AlarmListViewModel by viewModels()
+    private val activityJob = SupervisorJob()
+    private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
     private var alarmId: Long = -1
     private var currentAlarm: Alarm? = null
@@ -100,6 +112,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
+        activityJob.cancel()
         soundPreviewHelper.cleanup()
     }
     
@@ -593,49 +606,112 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun updateSunCourseVisualization() {
-        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-        
-        // Get all solar times
-        val astroDawn = sharedPreferences.getLong("astroDawn", 0)
-        val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
-        val civilDawn = sharedPreferences.getLong("civilDawn", 0)
-        val sunrise = sharedPreferences.getLong("sunrise", 0)
-        val solarNoon = sharedPreferences.getLong("solarNoon", 0)
-        val sunset = sharedPreferences.getLong("sunset", 0)
-        val civilDusk = sharedPreferences.getLong("civilDusk", 0)
-        val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
-        val astroDusk = sharedPreferences.getLong("astroDusk", 0)
-        
-        // Set all sun times for full visualization
-        sunCourseView.setAllSunTimes(
-            astroDawn, nauticalDawn, civilDawn,
-            sunrise, solarNoon, sunset,
-            civilDusk, nauticalDusk, astroDusk
-        )
-        
-        // Set marker based on current alarm configuration
-        if (currentMode == "sun") {
-            val markerTime = when (sunTimingMode) {
-                "At" -> getSolarEventTime(solarEvent1, sharedPreferences)
-                "Before" -> getSolarEventTime(solarEvent1, sharedPreferences) - (offsetMinutes * 60 * 1000)
-                "After" -> getSolarEventTime(solarEvent1, sharedPreferences) + (offsetMinutes * 60 * 1000)
-                "Between" -> {
-                    val time1 = getSolarEventTime(solarEvent1, sharedPreferences)
-                    val time2 = getSolarEventTime(solarEvent2, sharedPreferences)
-                    (time1 + time2) / 2
+        activityScope.launch(Dispatchers.IO) {
+            try {
+                // Get astronomy data from Room database
+                val astronomyData = astronomyRepository.getAstronomyData(forceRefresh = false)
+                
+                if (astronomyData != null) {
+                    launch(Dispatchers.Main) {
+                        // Set all sun times for full visualization
+                        sunCourseView.setAllSunTimes(
+                            astronomyData.astroDawn, astronomyData.nauticalDawn, astronomyData.civilDawn,
+                            astronomyData.sunrise, astronomyData.solarNoon, astronomyData.sunset,
+                            astronomyData.civilDusk, astronomyData.nauticalDusk, astronomyData.astroDusk
+                        )
+                        
+                        // Set marker based on current alarm configuration
+                        if (currentMode == "sun") {
+                            val markerTime = when (sunTimingMode) {
+                                "At" -> getSolarEventTime(solarEvent1, astronomyData)
+                                "Before" -> getSolarEventTime(solarEvent1, astronomyData) - (offsetMinutes * 60 * 1000)
+                                "After" -> getSolarEventTime(solarEvent1, astronomyData) + (offsetMinutes * 60 * 1000)
+                                "Between" -> {
+                                    val time1 = getSolarEventTime(solarEvent1, astronomyData)
+                                    val time2 = getSolarEventTime(solarEvent2, astronomyData)
+                                    (time1 + time2) / 2
+                                }
+                                else -> 0L
+                            }
+                            
+                            val markerLabel = when (sunTimingMode) {
+                                "At" -> "Alarm"
+                                "Before" -> "${offsetMinutes}m before"
+                                "After" -> "${offsetMinutes}m after"
+                                "Between" -> "Between"
+                                else -> "Alarm"
+                            }
+                            
+                            sunCourseView.setMarker(markerTime, markerLabel)
+                        }
+                    }
+                } else {
+                    // Fallback to SharedPreferences if not in database
+                    launch(Dispatchers.Main) {
+                        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                        val astroDawn = sharedPreferences.getLong("astroDawn", 0)
+                        val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
+                        val civilDawn = sharedPreferences.getLong("civilDawn", 0)
+                        val sunrise = sharedPreferences.getLong("sunrise", 0)
+                        val solarNoon = sharedPreferences.getLong("solarNoon", 0)
+                        val sunset = sharedPreferences.getLong("sunset", 0)
+                        val civilDusk = sharedPreferences.getLong("civilDusk", 0)
+                        val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
+                        val astroDusk = sharedPreferences.getLong("astroDusk", 0)
+                        
+                        sunCourseView.setAllSunTimes(
+                            astroDawn, nauticalDawn, civilDawn,
+                            sunrise, solarNoon, sunset,
+                            civilDusk, nauticalDusk, astroDusk
+                        )
+                        
+                        if (currentMode == "sun") {
+                            val markerTime = when (sunTimingMode) {
+                                "At" -> getSolarEventTime(solarEvent1, sharedPreferences)
+                                "Before" -> getSolarEventTime(solarEvent1, sharedPreferences) - (offsetMinutes * 60 * 1000)
+                                "After" -> getSolarEventTime(solarEvent1, sharedPreferences) + (offsetMinutes * 60 * 1000)
+                                "Between" -> {
+                                    val time1 = getSolarEventTime(solarEvent1, sharedPreferences)
+                                    val time2 = getSolarEventTime(solarEvent2, sharedPreferences)
+                                    (time1 + time2) / 2
+                                }
+                                else -> 0L
+                            }
+                            
+                            val markerLabel = when (sunTimingMode) {
+                                "At" -> "Alarm"
+                                "Before" -> "${offsetMinutes}m before"
+                                "After" -> "${offsetMinutes}m after"
+                                "Between" -> "Between"
+                                else -> "Alarm"
+                            }
+                            
+                            sunCourseView.setMarker(markerTime, markerLabel)
+                        }
+                    }
                 }
-                else -> 0L
+            } catch (e: Exception) {
+                Log.e("AlarmEditorActivity", "Error loading astronomy data", e)
+                // Fallback to SharedPreferences on error
+                launch(Dispatchers.Main) {
+                    val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                    val astroDawn = sharedPreferences.getLong("astroDawn", 0)
+                    val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
+                    val civilDawn = sharedPreferences.getLong("civilDawn", 0)
+                    val sunrise = sharedPreferences.getLong("sunrise", 0)
+                    val solarNoon = sharedPreferences.getLong("solarNoon", 0)
+                    val sunset = sharedPreferences.getLong("sunset", 0)
+                    val civilDusk = sharedPreferences.getLong("civilDusk", 0)
+                    val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
+                    val astroDusk = sharedPreferences.getLong("astroDusk", 0)
+                    
+                    sunCourseView.setAllSunTimes(
+                        astroDawn, nauticalDawn, civilDawn,
+                        sunrise, solarNoon, sunset,
+                        civilDusk, nauticalDusk, astroDusk
+                    )
+                }
             }
-            
-            val markerLabel = when (sunTimingMode) {
-                "At" -> "Alarm"
-                "Before" -> "${offsetMinutes}m before"
-                "After" -> "${offsetMinutes}m after"
-                "Between" -> "Between"
-                else -> "Alarm"
-            }
-            
-            sunCourseView.setMarker(markerTime, markerLabel)
         }
     }
     
@@ -665,6 +741,21 @@ class AlarmEditorActivity : AppCompatActivity() {
         calendar.timeInMillis = calculatedTime
         val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
         calculatedTimeText.text = sdf.format(calendar.time)
+    }
+    
+    private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
+        return when (event) {
+            "Astronomical Dawn" -> astronomyData.astroDawn
+            "Nautical Dawn" -> astronomyData.nauticalDawn
+            "Civil Dawn" -> astronomyData.civilDawn
+            "Sunrise" -> astronomyData.sunrise
+            "Solar Noon" -> astronomyData.solarNoon
+            "Sunset" -> astronomyData.sunset
+            "Civil Dusk" -> astronomyData.civilDusk
+            "Nautical Dusk" -> astronomyData.nauticalDusk
+            "Astronomical Dusk" -> astronomyData.astroDusk
+            else -> System.currentTimeMillis()
+        }
     }
     
     private fun getSolarEventTime(event: String, prefs: android.content.SharedPreferences): Long {

@@ -7,6 +7,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.rooster.rooster.data.repository.AstronomyRepository
+import com.rooster.rooster.data.repository.LocationRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -19,7 +20,8 @@ class AstronomyUpdateWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
     private val sharedPreferences: SharedPreferences,
-    private val astronomyRepository: AstronomyRepository
+    private val astronomyRepository: AstronomyRepository,
+    private val locationRepository: LocationRepository
 ) : CoroutineWorker(context, workerParams) {
     
     companion object {
@@ -30,10 +32,26 @@ class AstronomyUpdateWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         Log.i(TAG, "Starting astronomy data update (attempt ${runAttemptCount + 1})")
         
-        val latitude = sharedPreferences.getFloat("latitude", 0f)
-        val longitude = sharedPreferences.getFloat("longitude", 0f)
+        // Try to get location from Room database first
+        var location = locationRepository.getLocation()
+        var latitude = location?.latitude ?: 0f
+        var longitude = location?.longitude ?: 0f
         
-        Log.d(TAG, "Location from SharedPreferences: lat=$latitude, lng=$longitude")
+        // Fallback to SharedPreferences if not in database (for migration period)
+        if (latitude == 0f && longitude == 0f) {
+            Log.d(TAG, "No location in database, checking SharedPreferences")
+            latitude = sharedPreferences.getFloat("latitude", 0f)
+            longitude = sharedPreferences.getFloat("longitude", 0f)
+            
+            // If found in SharedPreferences, migrate to database
+            if (latitude != 0f || longitude != 0f) {
+                Log.d(TAG, "Migrating location from SharedPreferences to database")
+                val altitude = sharedPreferences.getFloat("altitude", 0f)
+                locationRepository.saveLocation(latitude, longitude, altitude)
+            }
+        }
+        
+        Log.d(TAG, "Location: lat=$latitude, lng=$longitude")
         
         if (latitude == 0f && longitude == 0f) {
             Log.w(TAG, "No location available, skipping astronomy update")
