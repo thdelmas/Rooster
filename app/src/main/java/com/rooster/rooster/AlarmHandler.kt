@@ -102,9 +102,8 @@ class AlarmHandler {
     /**
      * @deprecated Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.
      * This method is kept for backward compatibility but should not be used in new code.
-     * It still uses AlarmDbHelper which is being phased out.
      */
-    @Deprecated("Use ScheduleAlarmUseCase.scheduleNextAlarm() instead. This method uses legacy AlarmDbHelper.")
+    @Deprecated("Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
     fun setNextAlarm(context: Context) {
         Log.w(TAG, "setNextAlarm() is deprecated. Use ScheduleAlarmUseCase.scheduleNextAlarm() instead.")
         
@@ -138,54 +137,17 @@ class AlarmHandler {
     }
     
     /**
-     * Legacy implementation using AlarmDbHelper
+     * Legacy implementation - should not be called in properly configured app
      * @deprecated This will be removed once all code is migrated to Room
      */
     @Deprecated("Use ScheduleAlarmUseCase instead")
     private fun setNextAlarmLegacy(context: Context) {
-        Log.i(TAG, "Setting Next Alarm (legacy mode)")
-        val alarmDbHelper = AlarmDbHelper(context)
-        val alarms = alarmDbHelper.getAllAlarms()
-
-        val currentTime = Calendar.getInstance()
-        val currentMillis = currentTime.timeInMillis
-
-        var closestAlarm: Alarm? = null
-        var timeDifference: Long = Long.MAX_VALUE
-
-        Log.i(TAG, "Current Time: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(currentTime.time)}")
-
-        for (alarm in alarms) {
-            if (!alarm.enabled) {
-                Log.d(TAG, "Skipping disabled alarm: ${alarm.label}")
-                continue
-            }
-
-            // Update the calculatedTime for each alarm
-            alarmDbHelper.calculateTime(alarm)
-
-            val alarmMillis = alarm.calculatedTime
-            val diff = alarmMillis - currentMillis
-
-            if (diff <= 0) {
-                Log.d(TAG, "Alarm '${alarm.label}' is in the past, skipping")
-                continue
-            }
-
-            Log.d(TAG, "Alarm '${alarm.label}' scheduled in ${diff / 1000 / 60} minutes")
-
-            // Update closestAlarm if this alarm is closer than the previously found closest alarm
-            if (diff < timeDifference) {
-                closestAlarm = alarm
-                timeDifference = diff
-            }
-        }
-
-        closestAlarm?.let {
-            val minutesUntil = timeDifference / 1000 / 60
-            Log.i(TAG, "Closest Alarm Set: '${it.label}' in $minutesUntil minutes")
-            setAlarm(context, it)
-        } ?: Log.w(TAG, "No enabled alarms found")
+        Log.e(TAG, "setNextAlarmLegacy() called - this should not happen in a properly configured app")
+        Log.e(TAG, "ScheduleAlarmUseCase should be available through Hilt. Falling back is not supported.")
+        // This method should never be called if Hilt is properly configured
+        // If it is called, it means ScheduleAlarmUseCase was not available, which is a configuration error
+        // We cannot use AlarmDbHelper here as it's being removed
+        // The best we can do is log an error
     }
 
 
