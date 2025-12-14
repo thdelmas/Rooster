@@ -24,6 +24,7 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -75,6 +76,8 @@ class AlarmActivity : FragmentActivity() {
         if (currentAlarm != null) {
             maxSnoozeCount = currentAlarm!!.snoozeCount
             setupSnoozeButton()
+            setupDismissButton()
+            setupToolbar()
             alarmRing(currentAlarm!!.ringtoneUri, currentAlarm!!)
         }
 
@@ -108,6 +111,20 @@ class AlarmActivity : FragmentActivity() {
             } else {
                 snoozeButton.visibility = View.GONE
             }
+        }
+    }
+    
+    private fun setupDismissButton() {
+        val dismissButton = findViewById<Button>(R.id.dismissButton)
+        dismissButton.setOnClickListener {
+            stopAlarm(dismissButton)
+        }
+    }
+    
+    private fun setupToolbar() {
+        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        toolbar.setNavigationOnClickListener {
+            stopAlarm(null)
         }
     }
 

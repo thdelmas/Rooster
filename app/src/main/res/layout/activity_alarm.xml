@@ -124,6 +124,18 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"/>
 
+            <!-- Dismiss Button -->
+            <Button
+                android:id="@+id/dismissButton"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Dismiss"
+                android:textSize="18sp"
+                android:textColor="@color/md_theme_dark_onPrimary"
+                android:background="@color/md_theme_dark_primary"
+                android:layout_marginBottom="16dp"
+                style="@style/Widget.Material3.Button"/>
+
             <!-- Snooze Button -->
             <Button
                 android:id="@+id/snoozeButton"
