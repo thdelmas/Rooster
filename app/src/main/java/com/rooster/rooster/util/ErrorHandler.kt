@@ -8,7 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * Centralized error handling utility
+ * Centralized error handling utility with user-friendly error messages
  */
 object ErrorHandler {
     
@@ -16,11 +16,38 @@ object ErrorHandler {
     
     /**
      * Handle general exceptions with user feedback
+     * @param context Android context for showing error messages
+     * @param error The exception that occurred
+     * @param userMessage Optional custom user message (if null, will use ErrorMessageMapper)
+     * @param operationContext Optional context about the operation (e.g., "backup", "save", "import")
+     * @param showRecoverySuggestion Whether to show recovery suggestions (default: true)
      */
-    fun handleError(context: Context, error: Throwable, userMessage: String? = null) {
+    fun handleError(
+        context: Context, 
+        error: Throwable, 
+        userMessage: String? = null,
+        operationContext: String? = null,
+        showRecoverySuggestion: Boolean = true
+    ) {
+        // Always log the technical error for debugging
         Logger.e(TAG, "Error occurred: ${error.message}", error)
         
-        val message = userMessage ?: getDefaultErrorMessage(error)
+        val message = if (userMessage != null) {
+            userMessage
+        } else {
+            val friendlyError = if (operationContext != null) {
+                ErrorMessageMapper.getContextualError(operationContext, error)
+            } else {
+                ErrorMessageMapper.mapError(error)
+            }
+            
+            if (showRecoverySuggestion) {
+                friendlyError.getFullMessage()
+            } else {
+                friendlyError.message
+            }
+        }
+        
         showErrorToast(context, message)
     }
     
@@ -43,26 +70,14 @@ object ErrorHandler {
      */
     private fun showErrorToast(context: Context, message: String) {
         CoroutineScope(Dispatchers.Main).launch {
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        }
-    }
-    
-    /**
-     * Get default error message based on exception type
-     */
-    private fun getDefaultErrorMessage(error: Throwable): String {
-        return when (error) {
-            is java.net.UnknownHostException,
-            is java.net.SocketTimeoutException -> "Network error. Please check your internet connection."
-            
-            is SecurityException -> "Permission denied. Please grant required permissions."
-            
-            is IllegalArgumentException,
-            is IllegalStateException -> "Invalid operation: ${error.message}"
-            
-            is java.io.IOException -> "File operation failed: ${error.message}"
-            
-            else -> "An error occurred: ${error.message ?: "Unknown error"}"
+            // Split long messages into multiple toasts if needed
+            // Toast has a limit, so we'll show the first part
+            val displayMessage = if (message.length > 200) {
+                message.take(200) + "..."
+            } else {
+                message
+            }
+            Toast.makeText(context, displayMessage, Toast.LENGTH_LONG).show()
         }
     }
     
@@ -72,13 +87,14 @@ object ErrorHandler {
     fun createCoroutineExceptionHandler(
         context: Context? = null,
         tag: String = TAG,
+        operationContext: String? = null,
         onError: ((Throwable) -> Unit)? = null
     ): CoroutineExceptionHandler {
         return CoroutineExceptionHandler { _, exception ->
             Logger.e(tag, "Coroutine exception", exception)
             
             context?.let {
-                handleError(it, exception)
+                handleError(it, exception, operationContext = operationContext)
             }
             
             onError?.invoke(exception)
@@ -132,8 +148,12 @@ fun <T> Result<T>.onFailureLog(tag: String, message: String) {
 /**
  * Extension function to handle Result type errors with user feedback
  */
-fun <T> Result<T>.onFailureShow(context: Context, userMessage: String? = null) {
+fun <T> Result<T>.onFailureShow(
+    context: Context, 
+    userMessage: String? = null,
+    operationContext: String? = null
+) {
     onFailure { error ->
-        ErrorHandler.handleError(context, error, userMessage)
+        ErrorHandler.handleError(context, error, userMessage, operationContext)
     }
 }

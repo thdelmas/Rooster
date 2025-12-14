@@ -48,7 +48,8 @@ class BackupManager @Inject constructor(
             Result.success("Successfully exported ${alarms.size} alarm(s)")
         } catch (e: Exception) {
             Log.e(TAG, "Error exporting alarms", e)
-            Result.failure(Exception("Failed to export alarms: ${e.message}"))
+            // Let ErrorMessageMapper handle the user-friendly message
+            Result.failure(e)
         }
     }
     
@@ -59,7 +60,7 @@ class BackupManager @Inject constructor(
         try {
             val jsonString = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
-            } ?: return@withContext Result.failure(Exception("Failed to read file"))
+            } ?: return@withContext Result.failure(java.io.FileNotFoundException("Backup file not found or cannot be read"))
             
             val importedCount = parseAndImportBackup(jsonString)
             
@@ -67,7 +68,8 @@ class BackupManager @Inject constructor(
             Result.success("Successfully imported $importedCount alarm(s)")
         } catch (e: Exception) {
             Log.e(TAG, "Error importing alarms", e)
-            Result.failure(Exception("Failed to import alarms: ${e.message}"))
+            // Let ErrorMessageMapper handle the user-friendly message
+            Result.failure(e)
         }
     }
     
@@ -121,7 +123,7 @@ class BackupManager @Inject constructor(
         val version = jsonObject.getInt("version")
         
         if (version > BACKUP_VERSION) {
-            throw Exception("Backup file version ($version) is not supported")
+            throw org.json.JSONException("Backup file version ($version) is not supported. This backup was created with a newer version of the app.")
         }
         
         val alarmsArray = jsonObject.getJSONArray("alarms")
@@ -192,7 +194,7 @@ class BackupManager @Inject constructor(
         try {
             val jsonString = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
-            } ?: return@withContext Result.failure(Exception("Failed to read file"))
+            } ?: return@withContext Result.failure(java.io.FileNotFoundException("Backup file not found or cannot be read"))
             
             val jsonObject = JSONObject(jsonString)
             val version = jsonObject.getInt("version")
@@ -201,7 +203,7 @@ class BackupManager @Inject constructor(
             val appVersion = jsonObject.optString("app_version", "unknown")
             
             if (version > BACKUP_VERSION) {
-                return@withContext Result.failure(Exception("Backup file version ($version) is not supported"))
+                return@withContext Result.failure(org.json.JSONException("Backup file version ($version) is not supported. This backup was created with a newer version of the app."))
             }
             
             val info = BackupInfo(
@@ -214,7 +216,8 @@ class BackupManager @Inject constructor(
             Result.success(info)
         } catch (e: Exception) {
             Log.e(TAG, "Error validating backup file", e)
-            Result.failure(Exception("Invalid backup file: ${e.message}"))
+            // Let ErrorMessageMapper handle the user-friendly message
+            Result.failure(e)
         }
     }
     
