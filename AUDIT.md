@@ -483,7 +483,7 @@ val alarmDbHelper = AlarmDbHelper(this)
 
 ---
 
-### 18. Missing Unit Tests
+### 18. Missing Unit Tests ✅ RESOLVED
 **Problem:**
 - Limited test coverage
 - Critical logic (alarm calculation, scheduling) not tested
@@ -494,6 +494,56 @@ val alarmDbHelper = AlarmDbHelper(this)
 - Test alarm calculation edge cases
 - Add UI tests for critical flows
 - Aim for 70%+ code coverage
+
+**Resolution:**
+✅ **COMPLETED** - Comprehensive test suite has been added:
+- ✅ Enhanced `CalculateAlarmTimeUseCaseTest` with edge cases:
+  - Past time handling (moves to next day)
+  - Between mode with past times
+  - Reversed times in Between mode
+  - No enabled days handling
+  - Zero offset in Before/After modes
+  - Invalid mode handling
+  - Astronomy repository integration
+  - All solar events coverage
+- ✅ Created `ScheduleAlarmUseCaseTest` with comprehensive coverage:
+  - Enabled/disabled alarm scheduling
+  - Past time validation
+  - Alarm cancellation
+  - Next alarm selection (closest alarm)
+  - Skipping past alarms
+  - AlarmManager null handling
+  - Android version-specific API usage
+- ✅ Created `ValidationHelperTest` with full validation coverage:
+  - Alarm validation (valid/invalid cases)
+  - Offset minutes validation
+  - Selected time validation
+  - Solar event combination validation
+  - Day selection validation
+  - Snooze settings validation
+  - Volume validation
+  - Coordinate validation
+  - Alarm editor inputs validation
+  - Label sanitization
+- ✅ Created `AlarmSchedulingIntegrationTest` for integration testing:
+  - Complete alarm scheduling flow
+  - Multiple alarms selection
+  - Past time handling
+  - Weekday selection respect
+  - Solar events integration
+  - Between/After/Before mode integration
+- ✅ Created UI tests for critical flows:
+  - `AlarmCreationFlowTest` - Alarm creation flow
+  - `AlarmDismissalFlowTest` - Alarm dismissal flow
+  - `AlarmSnoozeFlowTest` - Alarm snooze flow
+- ✅ Test coverage now includes:
+  - Business logic unit tests
+  - Edge case testing
+  - Integration tests
+  - UI test structure for critical flows
+  - Comprehensive validation testing
+- ✅ All tests use proper mocking and test frameworks (Mockito, Robolectric, Espresso)
+- ✅ Tests follow best practices with clear Given-When-Then structure
 
 ---
 
