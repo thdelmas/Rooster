@@ -6,6 +6,8 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AlarmRepository
+import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
+import com.rooster.rooster.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +20,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class AlarmViewModel @Inject constructor(
-    private val alarmRepository: AlarmRepository
+    private val alarmRepository: AlarmRepository,
+    private val scheduleAlarmUseCase: ScheduleAlarmUseCase
 ) : ViewModel() {
     
     private val _currentAlarm = MutableStateFlow<Alarm?>(null)
@@ -63,15 +66,41 @@ class AlarmViewModel @Inject constructor(
     
     /**
      * Dismiss the alarm (disable if not repeating)
+     * Cancels the AlarmManager pending intent to prevent the alarm from restarting
      */
     fun dismissAlarm(alarm: Alarm) {
         viewModelScope.launch(Dispatchers.IO) {
+            // Cancel the AlarmManager pending intent to prevent the alarm from restarting
+            // This is important because AlarmclockReceiver schedules the next alarm immediately
+            // when an alarm fires, and we need to cancel it when the user dismisses
+            val cancelResult = scheduleAlarmUseCase.cancelAlarm(alarm)
+            cancelResult.fold(
+                onSuccess = {
+                    Logger.i("AlarmViewModel", "Alarm ${alarm.id} cancelled successfully")
+                },
+                onFailure = { e ->
+                    Logger.e("AlarmViewModel", "Error cancelling alarm ${alarm.id}", e)
+                }
+            )
+            
             val hasRepeatDays = alarm.monday || alarm.tuesday || alarm.wednesday ||
                     alarm.thursday || alarm.friday || alarm.saturday || alarm.sunday
             
             if (!hasRepeatDays) {
                 // Disable one-time alarms after they trigger
                 alarmRepository.updateAlarmEnabled(alarm.id, false)
+            } else {
+                // For repeating alarms, reschedule the next occurrence properly
+                // This ensures the alarm will fire at the correct next time
+                val scheduleResult = scheduleAlarmUseCase.scheduleAlarm(alarm)
+                scheduleResult.fold(
+                    onSuccess = {
+                        Logger.i("AlarmViewModel", "Repeating alarm ${alarm.id} rescheduled for next occurrence")
+                    },
+                    onFailure = { e ->
+                        Logger.e("AlarmViewModel", "Error rescheduling repeating alarm ${alarm.id}", e)
+                    }
+                )
             }
         }
     }
