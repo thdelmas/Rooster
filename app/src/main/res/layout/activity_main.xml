@@ -19,15 +19,67 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/transparent"
-            app:navigationIcon="@drawable/alarm"
-            app:navigationIconTint="@color/md_theme_dark_primary"
             app:title="Rooster"
             app:titleTextColor="@color/md_theme_dark_onBackground"
             app:titleTextAppearance="@style/TextAppearance.Rooster.TitleLarge"
-            app:menu="@menu/main_menu"
             style="@style/Widget.Material3.Toolbar"/>
 
     </com.google.android.material.appbar.AppBarLayout>
+    
+    <!-- Top Corner Buttons -->
+    <!-- Alarms Button - Top Left -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/alarmButton"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="top|start"
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="@color/glass_border"
+        android:background="@drawable/glass_card_background"
+        app:rippleColor="@color/md_theme_dark_primary">
+        
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/alarm"
+            android:padding="14dp"
+            android:tint="@color/text_on_glass_primary"
+            android:contentDescription="Alarms"/>
+            
+    </com.google.android.material.card.MaterialCardView>
+    
+    <!-- Settings Button - Top Right -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/settingsButton"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="1.5dp"
+        app:strokeColor="@color/glass_border"
+        android:background="@drawable/glass_card_background"
+        app:rippleColor="@color/md_theme_dark_primary">
+        
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_settings"
+            android:padding="14dp"
+            android:tint="@color/text_on_glass_primary"
+            android:contentDescription="Settings"/>
+            
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Main Content -->
     <androidx.core.widget.NestedScrollView
@@ -111,118 +163,6 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Quick Actions Grid -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Quick Actions"
-                android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                android:textColor="@color/md_theme_dark_onBackground"
-                android:textStyle="bold"
-                android:layout_marginBottom="20dp"/>
-
-            <GridLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:rowCount="2"
-                android:alignmentMode="alignMargins"
-                android:columnOrderPreserved="false"
-                android:layout_marginBottom="32dp">
-
-                <!-- Alarms Card -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/alarmButton"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/card_height_large"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="@dimen/card_margin_medium"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="28dp"
-                    app:cardElevation="8dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/glass_border"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:rippleColor="@color/md_theme_dark_primary"
-                    android:background="@drawable/gradient_sunrise">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="@dimen/card_padding_large"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⏰"
-                            android:textSize="@dimen/emoji_size_xlarge"
-                            android:layout_marginBottom="@dimen/spacing_medium"
-                            android:maxLines="1"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Alarms"
-                            android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                            android:textColor="@color/text_on_glass_primary"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="none"/>
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Settings Card -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/settingsButton"
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/card_height_large"
-                    android:layout_columnWeight="1"
-                    android:layout_margin="@dimen/card_margin_medium"
-                    app:cardBackgroundColor="@android:color/transparent"
-                    app:cardCornerRadius="28dp"
-                    app:cardElevation="8dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="@color/glass_border"
-                    android:clickable="true"
-                    android:focusable="true"
-                    app:rippleColor="@color/md_theme_dark_primary"
-                    android:background="@drawable/glass_card_background">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="@dimen/card_padding_large"
-                        android:gravity="center">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="⚙️"
-                            android:textSize="@dimen/emoji_size_xlarge"
-                            android:layout_marginBottom="@dimen/spacing_medium"
-                            android:maxLines="1"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Settings"
-                            android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                            android:textColor="@color/text_on_glass_primary"
-                            android:textStyle="bold"
-                            android:maxLines="1"
-                            android:ellipsize="none"/>
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </GridLayout>
 
             <!-- Info Section -->
             <com.google.android.material.card.MaterialCardView
