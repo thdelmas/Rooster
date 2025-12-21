@@ -612,32 +612,18 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun showOffsetTimePicker() {
-        val hours = offsetMinutes / 60
-        val minutes = offsetMinutes % 60
-        
-        val timePickerDialog = TimePickerDialog(
-            this,
-            { _, selectedHour, selectedMinute ->
-                offsetMinutes = (selectedHour * 60) + selectedMinute
-                // Clamp to max 12 hours (720 minutes)
-                if (offsetMinutes > 720) {
-                    offsetMinutes = 720
-                }
-                // Ensure minimum of 5 minutes
-                if (offsetMinutes < 5) {
-                    offsetMinutes = 5
-                }
+        val dialog = DurationPickerDialog(
+            initialMinutes = offsetMinutes,
+            minMinutes = 5,
+            maxMinutes = 720,
+            onDurationSelected = { minutes ->
+                offsetMinutes = minutes
                 updateOffsetDisplay()
                 updateCalculatedTime()
                 updateSunCourseVisualization()
-            },
-            hours,
-            minutes,
-            false // 24-hour format
+            }
         )
-        
-        timePickerDialog.setTitle("Select Time Offset")
-        timePickerDialog.show()
+        dialog.show(supportFragmentManager, "DurationPickerDialog")
     }
     
     private fun updateSnoozeDisplay() {
