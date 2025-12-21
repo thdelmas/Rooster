@@ -13,6 +13,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.TimeUtils
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -115,11 +116,11 @@ class ImprovedAlarmAdapter(
             "At" -> "At ${alarm.relative1}"
             "Before" -> {
                 val minutes = (alarm.time1 / 1000 / 60).toInt()
-                "$minutes min before ${alarm.relative2}"
+                "${TimeUtils.formatMinutesAsHours(minutes)} before ${alarm.relative2}"
             }
             "After" -> {
                 val minutes = (alarm.time1 / 1000 / 60).toInt()
-                "$minutes min after ${alarm.relative2}"
+                "${TimeUtils.formatMinutesAsHours(minutes)} after ${alarm.relative2}"
             }
             "Between" -> "Between ${alarm.relative1} and ${alarm.relative2}"
             else -> "Sun course alarm"

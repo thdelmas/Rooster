@@ -269,4 +269,17 @@ object TimeUtils {
             formatTimeDifference(targetMillis, now()) + " ago"
         }
     }
+    
+    /**
+     * Format minutes as hours (e.g., 180 -> "3h", 480 -> "8h")
+     * If less than 60 minutes, shows minutes (e.g., 30 -> "30m")
+     */
+    fun formatMinutesAsHours(minutes: Int): String {
+        return if (minutes >= 60) {
+            val hours = minutes / 60
+            "${hours}h"
+        } else {
+            "${minutes}m"
+        }
+    }
 }
