@@ -23,6 +23,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.rooster.rooster.presentation.viewmodel.SettingsViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
@@ -48,8 +49,15 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setTheme(androidx.appcompat.R.style.Theme_AppCompat);
+        setTheme(androidx.appcompat.R.style.Theme_AppCompat_NoActionBar)
         setContentView(R.layout.activity_settings)
+        
+        // Setup toolbar navigation
+        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
+        toolbar.setNavigationOnClickListener {
+            onBackPressed()
+        }
+        
         linkButtons()
         setupThemeSettings()
         updateValues()
