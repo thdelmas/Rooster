@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/md_theme_dark_background">
+    android:background="@drawable/gradient_astral_solar">
 
     <!-- App Bar -->
     <com.google.android.material.appbar.AppBarLayout
@@ -43,11 +43,13 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                android:layout_marginBottom="28dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -86,11 +88,13 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                android:layout_marginBottom="28dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -150,12 +154,14 @@
                 android:id="@+id/sunModeCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="28dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -470,12 +476,14 @@
                 android:id="@+id/classicModeCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="28dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -510,12 +518,14 @@
                 android:id="@+id/calculatedTimeCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="28dp"
                 android:visibility="gone"
-                app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="6dp"
-                app:strokeWidth="0dp">
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="12dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/gradient_sunrise">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -549,11 +559,13 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                android:layout_marginBottom="28dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -766,11 +778,13 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                android:layout_marginBottom="28dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -1048,13 +1062,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
+        android:layout_margin="28dp"
         android:text="Save"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:icon="@android:drawable/ic_menu_save"
-        app:iconTint="@color/md_theme_dark_onPrimary"
+        app:iconTint="@color/white"
         app:backgroundTint="@color/md_theme_dark_primary"
-        app:cornerRadius="28dp"
-        app:elevation="8dp"/>
+        app:cornerRadius="32dp"
+        app:elevation="16dp"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

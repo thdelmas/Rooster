@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/night"
+    android:background="@drawable/gradient_astral_solar"
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
@@ -45,13 +45,15 @@
 
             <!-- Sun Icon Card -->
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
-                app:cardCornerRadius="60dp"
-                app:cardElevation="8dp"
-                app:strokeWidth="0dp"
-                android:layout_marginBottom="24dp">
+                android:layout_width="140dp"
+                android:layout_height="140dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="70dp"
+                app:cardElevation="12dp"
+                app:strokeWidth="2dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/gradient_sunrise"
+                android:layout_marginBottom="32dp">
 
                 <TextView
                     android:id="@+id/sunEmojiTextView"
@@ -70,19 +72,21 @@
                 android:layout_height="wrap_content"
                 android:text="The Day Starts!"
                 android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
-                android:textColor="@color/md_theme_dark_primary"
-                android:layout_marginBottom="48dp"
+                android:textColor="@color/gradient_golden"
+                android:layout_marginBottom="56dp"
                 android:gravity="center"/>
 
             <!-- Progress Circle Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainerHigh"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="32dp"
-                app:cardElevation="6dp"
-                app:strokeWidth="0dp"
-                android:layout_marginBottom="48dp">
+                app:cardElevation="12dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background"
+                android:layout_marginBottom="56dp">
 
                 <RelativeLayout
                     android:id="@+id/progress_layout"
@@ -109,8 +113,8 @@
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
                         android:text="--:--"
-                        android:textColor="@color/md_theme_dark_primary"
-                        android:textSize="64sp"
+                        android:textColor="@color/gradient_golden"
+                        android:textSize="72sp"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-light"/>
 
@@ -125,38 +129,46 @@
                 android:layout_weight="1"/>
 
             <!-- Dismiss Button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/dismissButton"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="64dp"
                 android:text="Dismiss"
                 android:textSize="18sp"
-                android:textColor="@color/md_theme_dark_onPrimary"
-                android:background="@color/md_theme_dark_primary"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.Material3.Button"/>
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/md_theme_dark_primary"
+                app:cornerRadius="32dp"
+                app:elevation="8dp"
+                android:layout_marginBottom="20dp"
+                style="@style/Widget.Rooster.Button.Filled"/>
 
             <!-- Snooze Button -->
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/snoozeButton"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="64dp"
                 android:text="Snooze"
                 android:textSize="18sp"
+                android:textStyle="bold"
                 android:textColor="@color/md_theme_dark_onPrimaryContainer"
-                android:background="@color/md_theme_dark_primaryContainer"
-                android:layout_marginBottom="16dp"
+                app:backgroundTint="@color/md_theme_dark_primaryContainer"
+                app:cornerRadius="32dp"
+                app:elevation="8dp"
+                android:layout_marginBottom="20dp"
                 android:visibility="gone"
-                style="@style/Widget.Material3.Button.TonalButton"/>
+                style="@style/Widget.Rooster.Button.Filled"/>
 
             <!-- Slider Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/md_theme_dark_surfaceContainer"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
-                app:strokeWidth="0dp">
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
 
                 <LinearLayout
                     android:layout_width="match_parent"
