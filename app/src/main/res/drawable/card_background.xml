@@ -1,35 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Enhanced shadow layer -->
-    <item android:drawable="@drawable/card_shadow_medium"/>
-    
-    <!-- Main card with astral solar gradient -->
+    <!-- Very subtle soft shadow -->
     <item
-        android:bottom="8dp"
-        android:right="8dp"
-        android:top="0dp"
-        android:left="0dp">
+        android:top="3dp"
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="3dp">
         <shape android:shape="rectangle">
             <gradient
                 android:angle="135"
-                android:startColor="@color/card_gradient_start"
-                android:centerColor="@color/card_gradient_mid"
-                android:endColor="@color/card_gradient_end"
+                android:startColor="@color/glass_shadow_soft"
+                android:endColor="@android:color/transparent"
                 android:type="linear" />
             <corners android:radius="20dp"/>
         </shape>
     </item>
     
-    <!-- Subtle border for definition -->
-    <item
-        android:bottom="8dp"
-        android:right="8dp"
-        android:top="0dp"
-        android:left="0dp">
+    <!-- Base glass background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="@color/glass_background_light"
+                android:centerColor="@color/glass_background"
+                android:endColor="@color/glass_background_medium"
+                android:type="linear" />
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+    
+    <!-- Subtle highlight -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="45"
+                android:startColor="@color/glass_highlight"
+                android:endColor="@android:color/transparent"
+                android:type="linear" />
+            <corners android:radius="20dp"/>
+        </shape>
+    </item>
+    
+    <!-- Glass border -->
+    <item>
         <shape android:shape="rectangle">
             <stroke
                 android:width="0.5dp"
-                android:color="@color/md_theme_dark_outlineVariant" />
+                android:color="@color/glass_border_light" />
             <corners android:radius="20dp"/>
         </shape>
     </item>

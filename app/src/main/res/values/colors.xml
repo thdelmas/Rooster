@@ -114,10 +114,16 @@
     <color name="warning">#FBBF24</color>
     <color name="info">#60A5FA</color>
     
-    <!-- Glassmorphism Colors - Improved contrast -->
-    <color name="glass_background">#40FFFFFF</color>
-    <color name="glass_border">#60FFFFFF</color>
-    <color name="glass_overlay">#20000000</color>
+    <!-- Glassmorphism Colors - True glass effect -->
+    <color name="glass_background">#30FFFFFF</color>
+    <color name="glass_background_light">#25FFFFFF</color>
+    <color name="glass_background_medium">#35FFFFFF</color>
+    <color name="glass_background_heavy">#45FFFFFF</color>
+    <color name="glass_border">#80FFFFFF</color>
+    <color name="glass_border_light">#60FFFFFF</color>
+    <color name="glass_highlight">#15FFFFFF</color>
+    <color name="glass_shadow">#10000000</color>
+    <color name="glass_shadow_soft">#08000000</color>
     
     <!-- High contrast text colors for glass backgrounds -->
     <color name="text_on_glass_primary">#FFFFFF</color>
