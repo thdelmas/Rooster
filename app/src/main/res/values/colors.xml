@@ -1,101 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material Design 3 Color Palette -->
-    <!-- Primary Colors - Sunrise Orange Theme -->
-    <color name="md_theme_light_primary">#A05000</color>
+    <!-- Modern Astral Solar Color Palette -->
+    <!-- Inspired by cosmic journey: deep space → golden hour → vibrant sunrise -->
+    
+    <!-- Light Theme Colors - Soft cosmic to warm solar -->
+    <color name="md_theme_light_primary">#FF6B35</color>
     <color name="md_theme_light_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_primaryContainer">#FFDCC2</color>
-    <color name="md_theme_light_onPrimaryContainer">#341100</color>
+    <color name="md_theme_light_primaryContainer">#FFE5D9</color>
+    <color name="md_theme_light_onPrimaryContainer">#8B1F00</color>
     
-    <color name="md_theme_light_secondary">#735A48</color>
+    <color name="md_theme_light_secondary">#FF8E53</color>
     <color name="md_theme_light_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_secondaryContainer">#FFDCC2</color>
-    <color name="md_theme_light_onSecondaryContainer">#2A1609</color>
+    <color name="md_theme_light_secondaryContainer">#FFF0E8</color>
+    <color name="md_theme_light_onSecondaryContainer">#5D1F00</color>
     
-    <color name="md_theme_light_tertiary">#5B6348</color>
+    <color name="md_theme_light_tertiary">#FFB86C</color>
     <color name="md_theme_light_onTertiary">#FFFFFF</color>
-    <color name="md_theme_light_tertiaryContainer">#DFE9C6</color>
-    <color name="md_theme_light_onTertiaryContainer">#191E0A</color>
+    <color name="md_theme_light_tertiaryContainer">#FFF5E6</color>
+    <color name="md_theme_light_onTertiaryContainer">#3D1F00</color>
     
     <color name="md_theme_light_error">#BA1A1A</color>
     <color name="md_theme_light_onError">#FFFFFF</color>
     <color name="md_theme_light_errorContainer">#FFDAD6</color>
     <color name="md_theme_light_onErrorContainer">#410002</color>
     
-    <color name="md_theme_light_background">#FFFBFF</color>
-    <color name="md_theme_light_onBackground">#201B16</color>
-    <color name="md_theme_light_surface">#FFFBFF</color>
-    <color name="md_theme_light_onSurface">#201B16</color>
-    <color name="md_theme_light_surfaceVariant">#F2DFD1</color>
-    <color name="md_theme_light_onSurfaceVariant">#51443A</color>
-    <color name="md_theme_light_outline">#847569</color>
-    <color name="md_theme_light_outlineVariant">#D5C3B5</color>
+    <color name="md_theme_light_background">#FFFBF8</color>
+    <color name="md_theme_light_onBackground">#1C0F0A</color>
+    <color name="md_theme_light_surface">#FFFBF8</color>
+    <color name="md_theme_light_onSurface">#1C0F0A</color>
+    <color name="md_theme_light_surfaceVariant">#F5E6DC</color>
+    <color name="md_theme_light_onSurfaceVariant">#4A3428</color>
+    <color name="md_theme_light_outline">#7C5F4F</color>
+    <color name="md_theme_light_outlineVariant">#D4C2B5</color>
     
-    <!-- Dark Theme Colors - Enhanced for Astronomy Theme -->
-    <color name="md_theme_dark_primary">#FFB86C</color>
-    <color name="md_theme_dark_onPrimary">#562000</color>
-    <color name="md_theme_dark_primaryContainer">#7B3800</color>
-    <color name="md_theme_dark_onPrimaryContainer">#FFDCC2</color>
+    <!-- Dark Theme Colors - Modern Astral Solar Journey -->
+    <!-- Deep cosmic purple → vibrant orange → golden yellow -->
+    <color name="md_theme_dark_primary">#FF8E53</color>
+    <color name="md_theme_dark_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_primaryContainer">#FF6B35</color>
+    <color name="md_theme_dark_onPrimaryContainer">#FFFFFF</color>
     
-    <color name="md_theme_dark_secondary">#E2C1A9</color>
-    <color name="md_theme_dark_onSecondary">#43291B</color>
-    <color name="md_theme_dark_secondaryContainer">#5C4231</color>
-    <color name="md_theme_dark_onSecondaryContainer">#FFDCC2</color>
+    <color name="md_theme_dark_secondary">#FFB86C</color>
+    <color name="md_theme_dark_onSecondary">#1C0F0A</color>
+    <color name="md_theme_dark_secondaryContainer">#FF8E53</color>
+    <color name="md_theme_dark_onSecondaryContainer">#FFFFFF</color>
     
-    <color name="md_theme_dark_tertiary">#C3CCAC</color>
-    <color name="md_theme_dark_onTertiary">#2D331D</color>
-    <color name="md_theme_dark_tertiaryContainer">#434932</color>
-    <color name="md_theme_dark_onTertiaryContainer">#DFE9C6</color>
+    <color name="md_theme_dark_tertiary">#FFD89C</color>
+    <color name="md_theme_dark_onTertiary">#1C0F0A</color>
+    <color name="md_theme_dark_tertiaryContainer">#FFB86C</color>
+    <color name="md_theme_dark_onTertiaryContainer">#1C0F0A</color>
     
     <color name="md_theme_dark_error">#FFB4AB</color>
     <color name="md_theme_dark_onError">#690005</color>
     <color name="md_theme_dark_errorContainer">#93000A</color>
     <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
     
-    <color name="md_theme_dark_background">#0D0D0D</color>
-    <color name="md_theme_dark_onBackground">#EBE0DA</color>
-    <color name="md_theme_dark_surface">#1A1614</color>
-    <color name="md_theme_dark_onSurface">#EBE0DA</color>
-    <color name="md_theme_dark_surfaceVariant">#51443A</color>
-    <color name="md_theme_dark_onSurfaceVariant">#D5C3B5</color>
-    <color name="md_theme_dark_outline">#9D8E82</color>
-    <color name="md_theme_dark_outlineVariant">#51443A</color>
+    <!-- Deep cosmic background with subtle purple tint -->
+    <color name="md_theme_dark_background">#0A0A14</color>
+    <color name="md_theme_dark_onBackground">#F5E6DC</color>
+    <color name="md_theme_dark_surface">#141420</color>
+    <color name="md_theme_dark_onSurface">#F5E6DC</color>
+    <color name="md_theme_dark_surfaceVariant">#2A1F2E</color>
+    <color name="md_theme_dark_onSurfaceVariant">#E5D4C8</color>
+    <color name="md_theme_dark_outline">#8B6F5F</color>
+    <color name="md_theme_dark_outlineVariant">#3D2F2A</color>
     
-    <color name="md_theme_dark_surfaceContainerLowest">#0F0D0B</color>
-    <color name="md_theme_dark_surfaceContainerLow">#201B16</color>
-    <color name="md_theme_dark_surfaceContainer">#252016</color>
-    <color name="md_theme_dark_surfaceContainerHigh">#2F2A24</color>
-    <color name="md_theme_dark_surfaceContainerHighest">#3A352E</color>
+    <!-- Modern surface containers with glassmorphism support -->
+    <color name="md_theme_dark_surfaceContainerLowest">#0A0A14</color>
+    <color name="md_theme_dark_surfaceContainerLow">#1A1A28</color>
+    <color name="md_theme_dark_surfaceContainer">#242432</color>
+    <color name="md_theme_dark_surfaceContainerHigh">#2E2E3C</color>
+    <color name="md_theme_dark_surfaceContainerHighest">#383846</color>
     
     <!-- Legacy colors for compatibility -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primary">#FFB86C</color>
-    <color name="secondary">#E2C1A9</color>
-    <color name="grey">#51443A</color>
-    <color name="background">#0D0D0D</color>
+    <color name="primary">#FF8E53</color>
+    <color name="secondary">#FFB86C</color>
+    <color name="grey">#6B5F5A</color>
+    <color name="background">#0A0A14</color>
     
-    <!-- Astronomy Theme Colors -->
-    <color name="night">#0D0D0D</color>
-    <color name="astronomical">#1A2332</color>
-    <color name="nautical">#2A3F5F</color>
-    <color name="civil">#5B728E</color>
-    <color name="sunrise">#FFB86C</color>
-    <color name="golden_hour">#FFA726</color>
-    <color name="day_sky">#64B5F6</color>
+    <!-- Astral Solar Journey Colors -->
+    <!-- Deep space → Twilight → Golden hour → Sunrise -->
+    <color name="night">#0A0A14</color>
+    <color name="astronomical">#1A1A2E</color>
+    <color name="nautical">#2A2A4E</color>
+    <color name="civil">#4A4A7E</color>
+    <color name="sunrise">#FF8E53</color>
+    <color name="golden_hour">#FFB86C</color>
+    <color name="day_sky">#FFD89C</color>
     
-    <!-- Accent Colors -->
+    <!-- Gradient Colors for Modern UI -->
+    <color name="gradient_start_cosmic">#1A0A2E</color>
+    <color name="gradient_mid_twilight">#4A2A5E</color>
+    <color name="gradient_end_sunrise">#FF8E53</color>
+    <color name="gradient_golden">#FFB86C</color>
+    <color name="gradient_warm">#FFD89C</color>
+    
+    <!-- Accent Colors - Vibrant Solar Palette -->
     <color name="accent_amber">#FFB86C</color>
-    <color name="accent_coral">#FF8A65</color>
-    <color name="accent_rose">#F48FB1</color>
+    <color name="accent_coral">#FF8E53</color>
+    <color name="accent_rose">#FF6B9D</color>
+    <color name="accent_purple">#8B5CF6</color>
+    <color name="accent_blue">#6366F1</color>
     
     <!-- Semantic Colors -->
-    <color name="success">#81C784</color>
-    <color name="warning">#FFB74D</color>
-    <color name="info">#64B5F6</color>
+    <color name="success">#4ADE80</color>
+    <color name="warning">#FBBF24</color>
+    <color name="info">#60A5FA</color>
     
-    <!-- Surface Tints -->
-    <color name="surface_tint_low">#1F1F1F</color>
-    <color name="surface_tint_medium">#2A2A2A</color>
-    <color name="surface_tint_high">#353535</color>
+    <!-- Glassmorphism Colors -->
+    <color name="glass_background">#20FFFFFF</color>
+    <color name="glass_border">#40FFFFFF</color>
+    <color name="glass_overlay">#10000000</color>
+    
+    <!-- Surface Tints with cosmic feel -->
+    <color name="surface_tint_low">#1A1A28</color>
+    <color name="surface_tint_medium">#242432</color>
+    <color name="surface_tint_high">#2E2E3C</color>
+    
+    <!-- Shadow and Elevation -->
+    <color name="shadow_light">#20000000</color>
+    <color name="shadow_medium">#40000000</color>
+    <color name="shadow_dark">#60000000</color>
 </resources>

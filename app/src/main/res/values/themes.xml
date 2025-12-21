@@ -71,46 +71,64 @@
         <item name="android:windowBackground">@color/astronomical</item>
     </style>
     
-    <!-- Shape Appearance Styles -->
+    <!-- Shape Appearance Styles - Modern rounded corners -->
     <style name="ShapeAppearance.Rooster.SmallComponent" parent="ShapeAppearance.Material3.SmallComponent">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">12dp</item>
-    </style>
-    
-    <style name="ShapeAppearance.Rooster.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
     
-    <style name="ShapeAppearance.Rooster.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+    <style name="ShapeAppearance.Rooster.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">24dp</item>
     </style>
     
-    <!-- Card Style -->
-    <style name="Widget.Rooster.Card" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardElevation">4dp</item>
-        <item name="cardCornerRadius">16dp</item>
-        <item name="cardBackgroundColor">@color/md_theme_dark_surfaceContainer</item>
-        <item name="contentPadding">16dp</item>
+    <style name="ShapeAppearance.Rooster.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">32dp</item>
     </style>
     
-    <!-- Button Styles -->
+    <!-- Card Style - Modern elevated cards -->
+    <style name="Widget.Rooster.Card" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">8dp</item>
+        <item name="cardCornerRadius">28dp</item>
+        <item name="cardBackgroundColor">@color/md_theme_dark_surfaceContainerHigh</item>
+        <item name="contentPadding">24dp</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+    
+    <!-- Glass Card Style -->
+    <style name="Widget.Rooster.Card.Glass" parent="Widget.Material3.CardView.Elevated">
+        <item name="cardElevation">12dp</item>
+        <item name="cardCornerRadius">32dp</item>
+        <item name="cardBackgroundColor">@color/glass_background</item>
+        <item name="contentPadding">28dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/glass_border</item>
+    </style>
+    
+    <!-- Button Styles - Modern rounded buttons -->
     <style name="Widget.Rooster.Button.Filled" parent="Widget.Material3.Button">
-        <item name="cornerRadius">16dp</item>
+        <item name="cornerRadius">28dp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="elevation">6dp</item>
     </style>
     
     <style name="Widget.Rooster.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
-        <item name="cornerRadius">16dp</item>
+        <item name="cornerRadius">24dp</item>
         <item name="android:textAllCaps">false</item>
         <item name="strokeWidth">2dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0.01</item>
     </style>
     
     <style name="Widget.Rooster.Button.Text" parent="Widget.Material3.Button.TextButton">
-        <item name="cornerRadius">12dp</item>
+        <item name="cornerRadius">20dp</item>
         <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:letterSpacing">0.01</item>
     </style>
     
     <style name="Widget.Rooster.Button.Icon" parent="Widget.Material3.Button.IconButton">
@@ -120,31 +138,36 @@
         <item name="android:insetBottom">0dp</item>
     </style>
     
-    <!-- FAB Style -->
+    <!-- FAB Style - Modern elevated FAB -->
     <style name="Widget.Rooster.FloatingActionButton" parent="Widget.Material3.FloatingActionButton.Primary">
         <item name="shapeAppearance">@style/ShapeAppearance.Rooster.MediumComponent</item>
-        <item name="elevation">6dp</item>
+        <item name="elevation">12dp</item>
+        <item name="pressedTranslationZ">8dp</item>
     </style>
     
-    <!-- Text Styles -->
+    <!-- Text Styles - Modern typography -->
     <style name="TextAppearance.Rooster.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="fontFamily">sans-serif-light</item>
+        <item name="android:letterSpacing">-0.02</item>
     </style>
     
     <style name="TextAppearance.Rooster.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
-        <item name="android:fontFamily">sans-serif</item>
-        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">-0.01</item>
     </style>
     
     <style name="TextAppearance.Rooster.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0</item>
     </style>
     
     <style name="TextAppearance.Rooster.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:fontFamily">sans-serif</item>
         <item name="fontFamily">sans-serif</item>
+        <item name="android:letterSpacing">0.01</item>
     </style>
     
     <!-- Spinner Style -->

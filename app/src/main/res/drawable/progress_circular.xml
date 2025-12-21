@@ -4,7 +4,7 @@
         <shape
             android:shape="ring"
             android:innerRadiusRatio="2.5"
-            android:thickness="12dp"
+            android:thickness="16dp"
             android:useLevel="false">
             <solid android:color="@color/md_theme_dark_surfaceVariant"/>
         </shape>
@@ -16,12 +16,13 @@
             <shape
                 android:shape="ring"
                 android:innerRadiusRatio="2.5"
-                android:thickness="12dp"
+                android:thickness="16dp"
                 android:useLevel="true">
                 <gradient
                     android:angle="0"
-                    android:endColor="@color/md_theme_dark_primary"
-                    android:startColor="@color/sunrise"
+                    android:startColor="@color/gradient_start_cosmic"
+                    android:centerColor="@color/gradient_end_sunrise"
+                    android:endColor="@color/gradient_golden"
                     android:type="sweep"/>
             </shape>
         </rotate>
