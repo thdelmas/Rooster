@@ -98,6 +98,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     // Flag to prevent observer from updating UI during save operations
     private var isSavingAlarm = false
     
+    // Job to track pending toast calculation - cancel it if a new save happens
+    private var pendingToastJob: Job? = null
+    
     private val solarEvents = arrayOf(
         "🌄 Astronomical Dawn",
         "🌅 Nautical Dawn",
@@ -124,6 +127,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     
     override fun onDestroy() {
         super.onDestroy()
+        pendingToastJob?.cancel()
         activityJob.cancel()
         soundPreviewHelper.cleanup()
     }
@@ -1289,9 +1293,15 @@ class AlarmEditorActivity : AppCompatActivity() {
             // Set flag to prevent observer updates during save
             isSavingAlarm = true
             
-            // Calculate next alarm time and show toast
-            activityScope.launch(Dispatchers.IO) {
+            // Cancel any pending toast calculation to prevent delayed toasts
+            pendingToastJob?.cancel()
+            
+            // Calculate next alarm time and show toast (debounced to prevent confusion)
+            pendingToastJob = activityScope.launch(Dispatchers.IO) {
                 try {
+                    // Debounce: wait a bit before calculating to avoid showing toast for intermediate saves
+                    kotlinx.coroutines.delay(300)
+                    
                     val nextAlarmTime = calculateAlarmTimeUseCase.execute(updatedAlarm)
                     launch(Dispatchers.Main) {
                         // Format the time for display
@@ -1329,6 +1339,9 @@ class AlarmEditorActivity : AppCompatActivity() {
                         
                         toast("Alarm will ring $timeString")
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Expected when cancelled - just return
+                    throw e
                 } catch (e: Exception) {
                     Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
                     // Still save the alarm even if toast fails
@@ -1393,9 +1406,15 @@ class AlarmEditorActivity : AppCompatActivity() {
                     gradualVolume = gradualVolumeEnabled
                 )
                 
-                // Calculate next alarm time and show toast
-                activityScope.launch(Dispatchers.IO) {
+                // Cancel any pending toast calculation to prevent delayed toasts
+                pendingToastJob?.cancel()
+                
+                // Calculate next alarm time and show toast (debounced to prevent confusion)
+                pendingToastJob = activityScope.launch(Dispatchers.IO) {
                     try {
+                        // Debounce: wait a bit before calculating to avoid showing toast for intermediate saves
+                        kotlinx.coroutines.delay(300)
+                        
                         val nextAlarmTime = calculateAlarmTimeUseCase.execute(fullAlarm)
                         launch(Dispatchers.Main) {
                             // Format the time for display
@@ -1433,6 +1452,9 @@ class AlarmEditorActivity : AppCompatActivity() {
                             
                             toast("Alarm will ring $timeString")
                         }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        // Expected when cancelled - just return
+                        throw e
                     } catch (e: Exception) {
                         Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
                         // Still save the alarm even if toast fails
