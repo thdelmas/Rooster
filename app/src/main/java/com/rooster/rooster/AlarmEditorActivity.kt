@@ -752,24 +752,110 @@ class AlarmEditorActivity : AppCompatActivity() {
             AnimationHelper.fadeIn(calculatedTimeCard)
         }
         
-        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-        val event1Time = getSolarEventTime(solarEvent1, sharedPreferences)
-        
-        val calculatedTime = when (sunTimingMode) {
-            AppConstants.ALARM_MODE_AT -> event1Time
-            AppConstants.ALARM_MODE_BEFORE -> event1Time - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-            AppConstants.ALARM_MODE_AFTER -> event1Time + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-            AppConstants.ALARM_MODE_BETWEEN -> {
-                val event2Time = getSolarEventTime(solarEvent2, sharedPreferences)
-                (event1Time + event2Time) / 2
+        // Try to get astronomy data from Room database first (via ViewModel)
+        activityScope.launch(Dispatchers.IO) {
+            try {
+                editorViewModel.getAstronomyData(forceRefresh = false)
+                kotlinx.coroutines.delay(200) // Wait for data to load
+                var astronomyData = editorViewModel.astronomyData.value
+                
+                // If no data, try to fetch fresh data
+                if (astronomyData == null) {
+                    Log.d("AlarmEditorActivity", "No cached astronomy data, attempting to fetch fresh data")
+                    editorViewModel.getAstronomyData(forceRefresh = true)
+                    kotlinx.coroutines.delay(500) // Wait longer for fetch
+                    astronomyData = editorViewModel.astronomyData.value
+                }
+                
+                val event1Time = if (astronomyData != null) {
+                    getSolarEventTime(solarEvent1, astronomyData)
+                } else {
+                    // Fallback to SharedPreferences
+                    val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                    getSolarEventTime(solarEvent1, sharedPreferences)
+                }
+                
+                if (event1Time == 0L) {
+                    launch(Dispatchers.Main) {
+                        calculatedTimeText.text = "No data"
+                        Log.w("AlarmEditorActivity", "No astronomy data available for $solarEvent1")
+                    }
+                    return@launch
+                }
+                
+                val calculatedTime = when (sunTimingMode) {
+                    AppConstants.ALARM_MODE_AT -> event1Time
+                    AppConstants.ALARM_MODE_BEFORE -> event1Time - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                    AppConstants.ALARM_MODE_AFTER -> event1Time + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                    AppConstants.ALARM_MODE_BETWEEN -> {
+                        val event2Time = if (astronomyData != null) {
+                            getSolarEventTime(solarEvent2, astronomyData)
+                        } else {
+                            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                            getSolarEventTime(solarEvent2, sharedPreferences)
+                        }
+                        if (event2Time == 0L) {
+                            event1Time
+                        } else {
+                            (event1Time + event2Time) / 2
+                        }
+                    }
+                    else -> event1Time
+                }
+                
+                launch(Dispatchers.Main) {
+                    val calendar = Calendar.getInstance()
+                    var finalTime = calculatedTime
+                    
+                    // If the calculated time is in the past, move it to tomorrow
+                    if (finalTime <= System.currentTimeMillis()) {
+                        calendar.timeInMillis = finalTime
+                        calendar.add(Calendar.DAY_OF_MONTH, 1)
+                        finalTime = calendar.timeInMillis
+                    }
+                    
+                    calendar.timeInMillis = finalTime
+                    val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                    calculatedTimeText.text = sdf.format(calendar.time)
+                }
+            } catch (e: Exception) {
+                Log.e("AlarmEditorActivity", "Error updating calculated time", e)
+                // Fallback to SharedPreferences on error
+                launch(Dispatchers.Main) {
+                    val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                    val event1Time = getSolarEventTime(solarEvent1, sharedPreferences)
+                    
+                    val calculatedTime = when (sunTimingMode) {
+                        AppConstants.ALARM_MODE_AT -> event1Time
+                        AppConstants.ALARM_MODE_BEFORE -> event1Time - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                        AppConstants.ALARM_MODE_AFTER -> event1Time + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+                        AppConstants.ALARM_MODE_BETWEEN -> {
+                            val event2Time = getSolarEventTime(solarEvent2, sharedPreferences)
+                            (event1Time + event2Time) / 2
+                        }
+                        else -> event1Time
+                    }
+                    
+                    val calendar = Calendar.getInstance()
+                    var finalTime = calculatedTime
+                    
+                    // If the calculated time is in the past, move it to tomorrow
+                    if (finalTime <= System.currentTimeMillis() && finalTime > 0) {
+                        calendar.timeInMillis = finalTime
+                        calendar.add(Calendar.DAY_OF_MONTH, 1)
+                        finalTime = calendar.timeInMillis
+                    }
+                    
+                    if (finalTime == 0L) {
+                        calculatedTimeText.text = "No data"
+                    } else {
+                        calendar.timeInMillis = finalTime
+                        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        calculatedTimeText.text = sdf.format(calendar.time)
+                    }
+                }
             }
-            else -> event1Time
         }
-        
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = calculatedTime
-        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        calculatedTimeText.text = sdf.format(calendar.time)
     }
     
     private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
@@ -783,11 +869,12 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Civil Dusk" -> astronomyData.civilDusk
             "Nautical Dusk" -> astronomyData.nauticalDusk
             "Astronomical Dusk" -> astronomyData.astroDusk
-            else -> System.currentTimeMillis()
+            else -> 0L
         }
         
         if (timeInMillis == 0L) {
-            return System.currentTimeMillis()
+            Log.w("AlarmEditorActivity", "No astronomy data available for event: $event")
+            return 0L
         }
         
         // Apply timezone conversion: UTC timestamp from API needs to be converted to local time for today
@@ -820,11 +907,12 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Civil Dusk" -> prefs.getLong("civilDusk", 0)
             "Nautical Dusk" -> prefs.getLong("nauticalDusk", 0)
             "Astronomical Dusk" -> prefs.getLong("astroDusk", 0)
-            else -> System.currentTimeMillis()
+            else -> 0L
         }
         
         if (timeInMillis == 0L) {
-            return System.currentTimeMillis()
+            Log.w("AlarmEditorActivity", "No SharedPreferences data available for event: $event")
+            return 0L
         }
         
         // Apply the same timezone conversion logic as CalculateAlarmTimeUseCase
