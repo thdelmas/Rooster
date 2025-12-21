@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Spacing -->
+    <!-- Spacing - Responsive -->
     <dimen name="spacing_tiny">4dp</dimen>
     <dimen name="spacing_small">8dp</dimen>
     <dimen name="spacing_medium">16dp</dimen>
-    <dimen name="spacing_large">24dp</dimen>
-    <dimen name="spacing_xlarge">32dp</dimen>
-    <dimen name="spacing_xxlarge">48dp</dimen>
+    <dimen name="spacing_large">20dp</dimen>
+    <dimen name="spacing_xlarge">24dp</dimen>
+    <dimen name="spacing_xxlarge">32dp</dimen>
+    
+    <!-- Screen Padding - Responsive -->
+    <dimen name="screen_padding_small">16dp</dimen>
+    <dimen name="screen_padding_medium">20dp</dimen>
+    <dimen name="screen_padding_large">24dp</dimen>
+    
+    <!-- Card Padding - Responsive -->
+    <dimen name="card_padding_small">16dp</dimen>
+    <dimen name="card_padding_medium">20dp</dimen>
+    <dimen name="card_padding_large">24dp</dimen>
+    <dimen name="card_padding_xlarge">32dp</dimen>
+    
+    <!-- Card Margins - Responsive -->
+    <dimen name="card_margin_small">8dp</dimen>
+    <dimen name="card_margin_medium">12dp</dimen>
+    <dimen name="card_margin_large">16dp</dimen>
     
     <!-- Corner Radius -->
     <dimen name="corner_radius_small">12dp</dimen>
@@ -22,20 +38,28 @@
     <dimen name="elevation_high">6dp</dimen>
     <dimen name="elevation_very_high">8dp</dimen>
     
-    <!-- Card Dimensions -->
-    <dimen name="card_padding">16dp</dimen>
-    <dimen name="card_padding_large">20dp</dimen>
-    <dimen name="card_margin">8dp</dimen>
-    
-    <!-- Icon Sizes -->
+    <!-- Icon Sizes - Responsive -->
     <dimen name="icon_size_small">24dp</dimen>
     <dimen name="icon_size_medium">32dp</dimen>
-    <dimen name="icon_size_large">48dp</dimen>
-    <dimen name="icon_size_xlarge">64dp</dimen>
+    <dimen name="icon_size_large">40dp</dimen>
+    <dimen name="icon_size_xlarge">48dp</dimen>
+    
+    <!-- Emoji Sizes - Responsive -->
+    <dimen name="emoji_size_small">32sp</dimen>
+    <dimen name="emoji_size_medium">40sp</dimen>
+    <dimen name="emoji_size_large">48sp</dimen>
+    <dimen name="emoji_size_xlarge">56sp</dimen>
+    
+    <!-- Text Sizes - Responsive -->
+    <dimen name="text_time_display_small">64sp</dimen>
+    <dimen name="text_time_display_medium">80sp</dimen>
+    <dimen name="text_time_display_large">96sp</dimen>
+    <dimen name="text_time_display_xlarge">112sp</dimen>
     
     <!-- Button -->
     <dimen name="button_height">56dp</dimen>
-    <dimen name="button_corner_radius">16dp</dimen>
+    <dimen name="button_height_large">64dp</dimen>
+    <dimen name="button_corner_radius">28dp</dimen>
     
     <!-- FAB -->
     <dimen name="fab_size">56dp</dimen>
@@ -44,4 +68,9 @@
     <!-- List Item -->
     <dimen name="list_item_padding">16dp</dimen>
     <dimen name="list_item_height">72dp</dimen>
+    
+    <!-- Card Heights - Responsive -->
+    <dimen name="card_height_small">120dp</dimen>
+    <dimen name="card_height_medium">140dp</dimen>
+    <dimen name="card_height_large">160dp</dimen>
 </resources>
