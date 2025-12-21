@@ -861,7 +861,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
-        val timeInMillis = when (event) {
+        // Trim the event name to handle any leading/trailing spaces
+        val trimmedEvent = event.trim()
+        val timeInMillis = when (trimmedEvent) {
             "Astronomical Dawn" -> astronomyData.astroDawn
             "Nautical Dawn" -> astronomyData.nauticalDawn
             "Civil Dawn" -> astronomyData.civilDawn
@@ -871,7 +873,10 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Civil Dusk" -> astronomyData.civilDusk
             "Nautical Dusk" -> astronomyData.nauticalDusk
             "Astronomical Dusk" -> astronomyData.astroDusk
-            else -> 0L
+            else -> {
+                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
+                0L
+            }
         }
         
         if (timeInMillis == 0L) {
@@ -899,7 +904,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun getSolarEventTime(event: String, prefs: android.content.SharedPreferences): Long {
-        val timeInMillis = when (event) {
+        // Trim the event name to handle any leading/trailing spaces
+        val trimmedEvent = event.trim()
+        val timeInMillis = when (trimmedEvent) {
             "Astronomical Dawn" -> prefs.getLong("astroDawn", 0)
             "Nautical Dawn" -> prefs.getLong("nauticalDawn", 0)
             "Civil Dawn" -> prefs.getLong("civilDawn", 0)
@@ -909,11 +916,14 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Civil Dusk" -> prefs.getLong("civilDusk", 0)
             "Nautical Dusk" -> prefs.getLong("nauticalDusk", 0)
             "Astronomical Dusk" -> prefs.getLong("astroDusk", 0)
-            else -> 0L
+            else -> {
+                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
+                0L
+            }
         }
         
         if (timeInMillis == 0L) {
-            Log.w("AlarmEditorActivity", "No SharedPreferences data available for event: $event")
+            Log.w("AlarmEditorActivity", "No SharedPreferences data available for event: '$trimmedEvent' (original: '$event')")
             return 0L
         }
         
@@ -954,7 +964,15 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun showSolarEventPicker(eventNumber: Int) {
-        val cleanedEvents = solarEvents.map { it.substring(2) }.toTypedArray()
+        // Remove emoji and trim spaces - emojis are typically 2 characters, but we'll find the first space
+        val cleanedEvents = solarEvents.map { event ->
+            val spaceIndex = event.indexOf(' ')
+            if (spaceIndex >= 0) {
+                event.substring(spaceIndex + 1).trim()
+            } else {
+                event.substring(2).trim() // Fallback to substring(2) if no space found
+            }
+        }.toTypedArray()
         
         // Create a custom dialog with better visual design
         val dialogView = layoutInflater.inflate(R.layout.dialog_solar_event_picker, null)
