@@ -61,7 +61,7 @@
     <color name="md_theme_dark_surface">#141420</color>
     <color name="md_theme_dark_onSurface">#F5E6DC</color>
     <color name="md_theme_dark_surfaceVariant">#2A1F2E</color>
-    <color name="md_theme_dark_onSurfaceVariant">#E5D4C8</color>
+    <color name="md_theme_dark_onSurfaceVariant">#F5E6DC</color>
     <color name="md_theme_dark_outline">#8B6F5F</color>
     <color name="md_theme_dark_outlineVariant">#3D2F2A</color>
     
@@ -109,10 +109,15 @@
     <color name="warning">#FBBF24</color>
     <color name="info">#60A5FA</color>
     
-    <!-- Glassmorphism Colors -->
-    <color name="glass_background">#20FFFFFF</color>
-    <color name="glass_border">#40FFFFFF</color>
-    <color name="glass_overlay">#10000000</color>
+    <!-- Glassmorphism Colors - Improved contrast -->
+    <color name="glass_background">#40FFFFFF</color>
+    <color name="glass_border">#60FFFFFF</color>
+    <color name="glass_overlay">#20000000</color>
+    
+    <!-- High contrast text colors for glass backgrounds -->
+    <color name="text_on_glass_primary">#FFFFFF</color>
+    <color name="text_on_glass_secondary">#E5D4C8</color>
+    <color name="text_on_glass_tertiary">#C4B3A7</color>
     
     <!-- Surface Tints with cosmic feel -->
     <color name="surface_tint_low">#1A1A28</color>

@@ -65,28 +65,33 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="🌅"
-                        android:textSize="140sp"
-                        android:layout_marginBottom="40dp"/>
+                        android:textSize="@dimen/emoji_size_xlarge"
+                        android:layout_marginBottom="@dimen/spacing_xlarge"
+                        android:maxLines="1"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No Alarms Yet"
                         android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
-                        android:textColor="@color/md_theme_dark_onSurface"
+                        android:textColor="@color/text_on_glass_primary"
                         android:textStyle="bold"
-                        android:layout_marginBottom="20dp"/>
+                        android:layout_marginBottom="@dimen/spacing_large"
+                        android:maxLines="1"
+                        android:ellipsize="none"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Create your first alarm to wake up naturally with the sun"
                         android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
-                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:textColor="@color/text_on_glass_secondary"
                         android:gravity="center"
-                        android:alpha="0.8"
+                        android:alpha="0.9"
                         android:lineSpacingExtra="6dp"
-                        android:layout_marginBottom="32dp"/>
+                        android:layout_marginBottom="@dimen/spacing_xlarge"
+                        android:maxLines="3"
+                        android:ellipsize="end"/>
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/emptyStateButton"

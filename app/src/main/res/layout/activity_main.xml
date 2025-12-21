@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="@dimen/screen_padding_large">
 
             <!-- Hero Time Card -->
             <com.google.android.material.card.MaterialCardView
@@ -59,7 +59,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="56dp"
+                    android:padding="@dimen/card_padding_xlarge"
                     android:gravity="center"
                     android:background="@drawable/glass_card_background">
 
@@ -68,9 +68,9 @@
                         android:layout_height="wrap_content"
                         android:text="Current Time"
                         android:textAppearance="@style/TextAppearance.Material3.LabelLarge"
-                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:layout_marginBottom="16dp"
-                        android:alpha="0.7"/>
+                        android:textColor="@color/text_on_glass_secondary"
+                        android:layout_marginBottom="@dimen/spacing_medium"
+                        android:alpha="0.9"/>
 
                     <!-- Time Display -->
                     <TextView
@@ -78,12 +78,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="--:--"
-                        android:textColor="@color/gradient_golden"
-                        android:textSize="112sp"
+                        android:textColor="@color/text_on_glass_primary"
+                        android:textSize="@dimen/text_time_display_large"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-light"
                         android:letterSpacing="-0.05"
-                        android:layout_marginBottom="40dp"/>
+                        android:layout_marginBottom="@dimen/spacing_xlarge"
+                        android:maxLines="1"
+                        android:ellipsize="none"/>
 
                     <!-- Progress Bar -->
                     <ProgressBar
@@ -102,8 +104,8 @@
                         android:layout_height="wrap_content"
                         android:text="Day progress"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:alpha="0.6"/>
+                        android:textColor="@color/text_on_glass_secondary"
+                        android:alpha="0.85"/>
 
                 </LinearLayout>
 
@@ -132,9 +134,9 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/alarmButton"
                     android:layout_width="0dp"
-                    android:layout_height="160dp"
+                    android:layout_height="@dimen/card_height_large"
                     android:layout_columnWeight="1"
-                    android:layout_margin="10dp"
+                    android:layout_margin="@dimen/card_margin_medium"
                     app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="28dp"
                     app:cardElevation="8dp"
@@ -149,23 +151,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:padding="24dp"
+                        android:padding="@dimen/card_padding_large"
                         android:gravity="center">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="⏰"
-                            android:textSize="56sp"
-                            android:layout_marginBottom="16dp"/>
+                            android:textSize="@dimen/emoji_size_xlarge"
+                            android:layout_marginBottom="@dimen/spacing_medium"
+                            android:maxLines="1"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Alarms"
                             android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                            android:textColor="@color/white"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_on_glass_primary"
+                            android:textStyle="bold"
+                            android:maxLines="1"
+                            android:ellipsize="none"/>
 
                     </LinearLayout>
 
@@ -175,9 +180,9 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/settingsButton"
                     android:layout_width="0dp"
-                    android:layout_height="160dp"
+                    android:layout_height="@dimen/card_height_large"
                     android:layout_columnWeight="1"
-                    android:layout_margin="10dp"
+                    android:layout_margin="@dimen/card_margin_medium"
                     app:cardBackgroundColor="@android:color/transparent"
                     app:cardCornerRadius="28dp"
                     app:cardElevation="8dp"
@@ -192,23 +197,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="vertical"
-                        android:padding="24dp"
+                        android:padding="@dimen/card_padding_large"
                         android:gravity="center">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="⚙️"
-                            android:textSize="56sp"
-                            android:layout_marginBottom="16dp"/>
+                            android:textSize="@dimen/emoji_size_xlarge"
+                            android:layout_marginBottom="@dimen/spacing_medium"
+                            android:maxLines="1"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Settings"
                             android:textAppearance="@style/TextAppearance.Rooster.TitleLarge"
-                            android:textColor="@color/md_theme_dark_onSurface"
-                            android:textStyle="bold"/>
+                            android:textColor="@color/text_on_glass_primary"
+                            android:textStyle="bold"
+                            android:maxLines="1"
+                            android:ellipsize="none"/>
 
                     </LinearLayout>
 
@@ -233,7 +241,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="28dp">
+                    android:padding="@dimen/card_padding_xlarge">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -246,8 +254,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="🌅"
-                            android:textSize="48sp"
-                            android:layout_marginEnd="20dp"/>
+                            android:textSize="@dimen/emoji_size_large"
+                            android:layout_marginEnd="@dimen/spacing_large"
+                            android:maxLines="1"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -265,9 +274,9 @@
                         android:layout_height="wrap_content"
                         android:text="Set astronomy-based alarms that wake you up naturally with sunrise. Choose from multiple solar events like dawn, sunrise, and sunset."
                         android:textAppearance="@style/TextAppearance.Rooster.BodyLarge"
-                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:lineSpacingExtra="10dp"
-                        android:alpha="0.9"/>
+                        android:textColor="@color/text_on_glass_secondary"
+                        android:lineSpacingExtra="8dp"
+                        android:alpha="0.95"/>
 
                 </LinearLayout>
 
