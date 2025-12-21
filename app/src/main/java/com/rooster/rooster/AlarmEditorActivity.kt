@@ -767,12 +767,14 @@ class AlarmEditorActivity : AppCompatActivity() {
                     astronomyData = editorViewModel.astronomyData.value
                 }
                 
-                val event1Time = if (astronomyData != null) {
-                    getSolarEventTime(solarEvent1, astronomyData)
-                } else {
-                    // Fallback to SharedPreferences
-                    val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-                    getSolarEventTime(solarEvent1, sharedPreferences)
+                // Always try SharedPreferences first since we know it has data (Settings can see it)
+                val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                var event1Time = getSolarEventTime(solarEvent1, sharedPreferences)
+                
+                // If SharedPreferences doesn't have it, try Room database
+                if (event1Time == 0L && astronomyData != null) {
+                    Log.d("AlarmEditorActivity", "SharedPreferences had no data, trying Room database")
+                    event1Time = getSolarEventTime(solarEvent1, astronomyData)
                 }
                 
                 if (event1Time == 0L) {
@@ -783,16 +785,16 @@ class AlarmEditorActivity : AppCompatActivity() {
                     return@launch
                 }
                 
+                Log.d("AlarmEditorActivity", "Got event1Time for $solarEvent1: $event1Time")
+                
                 val calculatedTime = when (sunTimingMode) {
                     AppConstants.ALARM_MODE_AT -> event1Time
                     AppConstants.ALARM_MODE_BEFORE -> event1Time - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
                     AppConstants.ALARM_MODE_AFTER -> event1Time + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
                     AppConstants.ALARM_MODE_BETWEEN -> {
-                        val event2Time = if (astronomyData != null) {
-                            getSolarEventTime(solarEvent2, astronomyData)
-                        } else {
-                            val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-                            getSolarEventTime(solarEvent2, sharedPreferences)
+                        var event2Time = getSolarEventTime(solarEvent2, sharedPreferences)
+                        if (event2Time == 0L && astronomyData != null) {
+                            event2Time = getSolarEventTime(solarEvent2, astronomyData)
                         }
                         if (event2Time == 0L) {
                             event1Time
@@ -915,14 +917,11 @@ class AlarmEditorActivity : AppCompatActivity() {
             return 0L
         }
         
-        // Apply the same timezone conversion logic as CalculateAlarmTimeUseCase
-        // If timestamp is in the future, it's likely already correct (test mock or processed data)
-        val now = System.currentTimeMillis()
-        if (timeInMillis > now) {
-            return timeInMillis
-        }
+        Log.d("AlarmEditorActivity", "SharedPreferences data for $event: $timeInMillis")
         
-        // Convert UTC timestamp to local time for today (backward compatibility)
+        // The timestamp from SharedPreferences is a UTC timestamp from the API
+        // We need to extract the local time and apply it to today's date
+        // Convert UTC timestamp to local time to get the actual time of day
         val localCalendar = Calendar.getInstance().apply {
             this.timeInMillis = timeInMillis
         }
@@ -931,6 +930,9 @@ class AlarmEditorActivity : AppCompatActivity() {
         val minute = localCalendar.get(Calendar.MINUTE)
         val second = localCalendar.get(Calendar.SECOND)
         
+        Log.d("AlarmEditorActivity", "Extracted time from $event: $hour:$minute:$second")
+        
+        // Create a new calendar for today in local timezone with the extracted time
         val todayCalendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)
@@ -938,7 +940,10 @@ class AlarmEditorActivity : AppCompatActivity() {
             set(Calendar.MILLISECOND, 0)
         }
         
-        return todayCalendar.timeInMillis
+        val result = todayCalendar.timeInMillis
+        Log.d("AlarmEditorActivity", "Final time for $event: $result (${SimpleDateFormat("HH:mm", Locale.getDefault()).format(todayCalendar.time)})")
+        
+        return result
     }
     
     private fun updateClassicTimeDisplay() {
