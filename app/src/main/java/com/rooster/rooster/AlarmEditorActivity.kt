@@ -91,6 +91,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     // Flag to prevent saves during data loading (prevents infinite loop)
     private var isLoadingData = false
     
+    // Flag to prevent observer from updating UI during save operations
+    private var isSavingAlarm = false
+    
     private val solarEvents = arrayOf(
         "🌄 Astronomical Dawn",
         "🌅 Nautical Dawn",
@@ -176,12 +179,21 @@ class AlarmEditorActivity : AppCompatActivity() {
         if (alarmId != -1L) {
             // Load alarm using ViewModel (which uses Repository)
             viewModel.allAlarms.observe(this) { alarms ->
+                // Skip updates if we're currently saving to prevent conflicts
+                if (isSavingAlarm) {
+                    return@observe
+                }
+                
                 currentAlarm = alarms.find { it.id == alarmId }
                 currentAlarm?.let { alarm ->
                 // Set flag to prevent saves during loading
                 isLoadingData = true
                 
-                alarmLabelInput.setText(alarm.label)
+                // Only set text if it's different to prevent triggering TextWatcher unnecessarily
+                val currentText = alarmLabelInput.text?.toString() ?: ""
+                if (currentText != alarm.label) {
+                    alarmLabelInput.setText(alarm.label)
+                }
                 
                 // Determine mode based on alarm data
                 if (alarm.relative1 != AppConstants.RELATIVE_TIME_PICK_TIME || alarm.mode != AppConstants.ALARM_MODE_AT) {
@@ -219,9 +231,16 @@ class AlarmEditorActivity : AppCompatActivity() {
                 alarmVolume = alarm.volume
                 gradualVolumeEnabled = alarm.gradualVolume
                 
-                vibrateSwitch.isChecked = vibrateEnabled
-                snoozeSwitch.isChecked = snoozeEnabled
-                gradualVolumeSwitch.isChecked = gradualVolumeEnabled
+                // Only update switches if values have changed (prevents triggering listeners)
+                if (vibrateSwitch.isChecked != vibrateEnabled) {
+                    vibrateSwitch.isChecked = vibrateEnabled
+                }
+                if (snoozeSwitch.isChecked != snoozeEnabled) {
+                    snoozeSwitch.isChecked = snoozeEnabled
+                }
+                if (gradualVolumeSwitch.isChecked != gradualVolumeEnabled) {
+                    gradualVolumeSwitch.isChecked = gradualVolumeEnabled
+                }
                 updateSnoozeDisplay()
                 
                 updateUI()
@@ -1158,6 +1177,10 @@ class AlarmEditorActivity : AppCompatActivity() {
         if (isLoadingData) {
             return
         }
+        // Don't save if we're already saving to prevent conflicts
+        if (isSavingAlarm) {
+            return
+        }
         saveAlarm(shouldFinish = false)
     }
     
@@ -1259,8 +1282,17 @@ class AlarmEditorActivity : AppCompatActivity() {
                 gradualVolume = gradualVolumeEnabled
             )
             
+            // Set flag to prevent observer updates during save
+            isSavingAlarm = true
+            
             // Use ViewModel to update alarm (which uses Repository and recalculates time)
             viewModel.updateAlarm(updatedAlarm)
+            
+            // Clear flag after a brief delay to allow observer updates again
+            // The delay gives time for the save to complete and observer to process
+            alarmLabelInput.postDelayed({
+                isSavingAlarm = false
+            }, 500)
         } else {
             // Create new alarm
             // First, create a basic AlarmCreation to insert
@@ -1275,6 +1307,9 @@ class AlarmEditorActivity : AppCompatActivity() {
                 time2 = time2,
                 calculatedTime = 0L // Will be calculated by ViewModel
             )
+            
+            // Set flag to prevent observer updates during save
+            isSavingAlarm = true
             
             // Insert the alarm and get its ID, then update it with all fields
             viewModel.insertAlarm(alarmCreation) { newAlarmId ->
@@ -1310,6 +1345,11 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 // Update with all fields (this will also recalculate the time)
                 viewModel.updateAlarm(fullAlarm)
+                
+                // Clear flag after a brief delay
+                alarmLabelInput.postDelayed({
+                    isSavingAlarm = false
+                }, 500)
             }
         }
         
