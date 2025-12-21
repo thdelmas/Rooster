@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Subtle shadow layer for depth -->
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/shadow_medium"/>
-            <corners android:radius="20dp"/>
-        </shape>
-    </item>
+    <!-- Enhanced shadow layer -->
+    <item android:drawable="@drawable/card_shadow_medium"/>
     
     <!-- Main card with astral solar gradient -->
     <item
-        android:bottom="2dp"
-        android:right="2dp">
+        android:bottom="8dp"
+        android:right="8dp"
+        android:top="0dp"
+        android:left="0dp">
         <shape android:shape="rectangle">
             <gradient
                 android:angle="135"
@@ -24,7 +21,11 @@
     </item>
     
     <!-- Subtle border for definition -->
-    <item>
+    <item
+        android:bottom="8dp"
+        android:right="8dp"
+        android:top="0dp"
+        android:left="0dp">
         <shape android:shape="rectangle">
             <stroke
                 android:width="0.5dp"

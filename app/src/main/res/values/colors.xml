@@ -129,8 +129,15 @@
     <color name="surface_tint_medium">#242432</color>
     <color name="surface_tint_high">#2E2E3C</color>
     
-    <!-- Shadow and Elevation -->
-    <color name="shadow_light">#20000000</color>
-    <color name="shadow_medium">#40000000</color>
-    <color name="shadow_dark">#60000000</color>
+    <!-- Shadow and Elevation - Enhanced for realistic depth -->
+    <color name="shadow_light">#15000000</color>
+    <color name="shadow_medium">#30000000</color>
+    <color name="shadow_dark">#50000000</color>
+    <color name="shadow_very_dark">#70000000</color>
+    <color name="shadow_extreme">#80000000</color>
+    
+    <!-- Nested card/badge background colors -->
+    <color name="badge_gradient_start">#2A1F2E</color>
+    <color name="badge_gradient_mid">#3A2F3E</color>
+    <color name="badge_gradient_end">#4A3F4E</color>
 </resources>
