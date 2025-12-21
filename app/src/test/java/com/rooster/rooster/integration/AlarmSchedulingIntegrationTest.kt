@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.data.repository.AstronomyRepository
+import com.rooster.rooster.data.repository.LocationRepository
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +28,7 @@ class AlarmSchedulingIntegrationTest {
     
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var astronomyRepository: AstronomyRepository
+    private lateinit var locationRepository: LocationRepository
     private lateinit var alarmRepository: AlarmRepository
     private lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     private lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
@@ -44,11 +46,15 @@ class AlarmSchedulingIntegrationTest {
             onBlocking { getAstronomyData(any()) } doReturn null
         }
         
+        locationRepository = mock {
+            onBlocking { getLocation() } doReturn null
+        }
+        
         alarmRepository = mock {
             onBlocking { getEnabledAlarms() } doReturn emptyList()
         }
         
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
         
         // Note: ScheduleAlarmUseCase requires Context and AlarmManager, so we'll test the flow differently
         // For integration tests, we focus on the business logic flow

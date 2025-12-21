@@ -40,7 +40,7 @@ class ScheduleAlarmUseCase @Inject constructor(
                 return@withContext Result.failure(IllegalArgumentException("Alarm is disabled"))
             }
             
-            // Calculate the alarm time
+            // Calculate the alarm time (will fetch fresh astronomy data if needed)
             val calculatedTime = calculateAlarmTimeUseCase.execute(alarm)
             
             // Validate the calculated time

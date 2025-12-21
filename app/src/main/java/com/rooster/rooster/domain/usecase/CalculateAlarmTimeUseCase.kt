@@ -7,7 +7,10 @@ import android.icu.util.TimeZone
 import android.util.Log
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AstronomyRepository
+import com.rooster.rooster.data.repository.AstronomyDataResult
+import com.rooster.rooster.data.repository.LocationRepository
 import com.rooster.rooster.util.AppConstants
+import com.rooster.rooster.util.Logger
 import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
@@ -17,14 +20,26 @@ import javax.inject.Inject
  */
 class CalculateAlarmTimeUseCase @Inject constructor(
     private val sharedPreferences: SharedPreferences,
-    private val astronomyRepository: AstronomyRepository
+    private val astronomyRepository: AstronomyRepository,
+    private val locationRepository: LocationRepository
 ) {
+    
+    companion object {
+        private const val TAG = "CalculateAlarmTimeUseCase"
+    }
     
     /**
      * Calculate the next trigger time for an alarm
+     * For alarms based on astral events, this will fetch fresh astronomy data
      */
-    fun execute(alarm: Alarm): Long {
+    suspend fun execute(alarm: Alarm): Long {
         Log.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
+        
+        // If alarm uses astral events, ensure we have fresh astronomy data
+        if (usesAstralEvents(alarm)) {
+            ensureFreshAstronomyData()
+        }
+        
         val calculatedTime = calculateTimeInner(alarm)
         val finalTime = addDays(alarm, calculatedTime)
         
@@ -37,7 +52,86 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         return finalTime
     }
     
-    private fun calculateTimeInner(alarm: Alarm): Long {
+    /**
+     * Synchronous version for backward compatibility
+     * @deprecated Use suspend execute() instead
+     */
+    @Deprecated("Use suspend execute() instead for better async support")
+    fun executeSync(alarm: Alarm): Long {
+        return runBlocking {
+            execute(alarm)
+        }
+    }
+    
+    /**
+     * Check if an alarm uses astral events (sunrise, sunset, etc.)
+     */
+    private fun usesAstralEvents(alarm: Alarm): Boolean {
+        val solarEvents = listOf(
+            AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN,
+            AppConstants.SOLAR_EVENT_NAUTICAL_DAWN,
+            AppConstants.SOLAR_EVENT_CIVIL_DAWN,
+            AppConstants.SOLAR_EVENT_SUNRISE,
+            AppConstants.SOLAR_EVENT_SOLAR_NOON,
+            AppConstants.SOLAR_EVENT_SUNSET,
+            AppConstants.SOLAR_EVENT_CIVIL_DUSK,
+            AppConstants.SOLAR_EVENT_NAUTICAL_DUSK,
+            AppConstants.SOLAR_EVENT_ASTRONOMICAL_DUSK
+        )
+        
+        return alarm.relative1 in solarEvents || alarm.relative2 in solarEvents
+    }
+    
+    /**
+     * Ensure fresh astronomy data is available before calculating alarm times
+     */
+    private suspend fun ensureFreshAstronomyData() {
+        try {
+            // Get location from repository
+            val location = locationRepository.getLocation()
+            
+            // Fallback to SharedPreferences if not in database (for migration period)
+            val latitude = location?.latitude ?: sharedPreferences.getFloat("latitude", 0f)
+            val longitude = location?.longitude ?: sharedPreferences.getFloat("longitude", 0f)
+            
+            if (latitude == 0f && longitude == 0f) {
+                Logger.w(TAG, "No location available, cannot fetch fresh astronomy data")
+                return
+            }
+            
+            // Check if current data is stale
+            val currentData = astronomyRepository.getAstronomyData(forceRefresh = false)
+            val needsRefresh = currentData == null || astronomyRepository.isDataStale(currentData)
+            
+            if (needsRefresh) {
+                Logger.i(TAG, "Astronomy data is stale or missing, fetching fresh data")
+                val result = astronomyRepository.fetchAndCacheAstronomyData(latitude, longitude)
+                
+                when (result) {
+                    is AstronomyDataResult.Fresh -> {
+                        Logger.i(TAG, "Successfully fetched fresh astronomy data")
+                    }
+                    is AstronomyDataResult.Cached -> {
+                        if (result.isStale) {
+                            Logger.w(TAG, "Using stale cached data (age: ${result.ageMs}ms) - network may be unavailable")
+                        } else {
+                            Logger.d(TAG, "Using valid cached data (age: ${result.ageMs}ms)")
+                        }
+                    }
+                    is AstronomyDataResult.Failure -> {
+                        Logger.e(TAG, "Failed to fetch astronomy data: ${result.exception.message}")
+                    }
+                }
+            } else {
+                Logger.d(TAG, "Astronomy data is still valid, no refresh needed")
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Error ensuring fresh astronomy data", e)
+            // Continue with calculation even if fetch fails - will use cached data
+        }
+    }
+    
+    private suspend fun calculateTimeInner(alarm: Alarm): Long {
         return when (alarm.mode) {
             AppConstants.ALARM_MODE_AT -> {
                 if (alarm.relative1 == AppConstants.RELATIVE_TIME_PICK_TIME) {
@@ -129,11 +223,10 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         return alarmDate.timeInMillis
     }
     
-    private fun getRelativeTime(relative: String): Long {
+    private suspend fun getRelativeTime(relative: String): Long {
         // Try to get astronomy data from Room database first
-        val astronomyData = runBlocking {
-            astronomyRepository.getAstronomyData(forceRefresh = false)
-        }
+        // Fresh data should already be fetched by ensureFreshAstronomyData() if needed
+        val astronomyData = astronomyRepository.getAstronomyData(forceRefresh = false)
         
         val timeInMillis = if (astronomyData != null) {
             // Use data from Room database

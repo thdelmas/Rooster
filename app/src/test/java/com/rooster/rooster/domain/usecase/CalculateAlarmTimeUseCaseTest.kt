@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.icu.util.Calendar
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AstronomyRepository
+import com.rooster.rooster.data.repository.LocationRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +24,7 @@ class CalculateAlarmTimeUseCaseTest {
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var editor: SharedPreferences.Editor
     private lateinit var astronomyRepository: AstronomyRepository
+    private lateinit var locationRepository: LocationRepository
     private lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     
     @Before
@@ -42,7 +44,12 @@ class CalculateAlarmTimeUseCaseTest {
             onBlocking { getAstronomyData(any()) } doReturn null
         }
         
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository)
+        // Mock LocationRepository
+        locationRepository = mock {
+            onBlocking { getLocation() } doReturn null
+        }
+        
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
     }
     
     @Test
@@ -56,7 +63,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be in the future", result > System.currentTimeMillis())
@@ -75,7 +82,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be calculated", result > 0)
@@ -97,7 +104,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be between time1 and time2", result > time1 && result < time2)
@@ -118,7 +125,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be after sunrise", result >= sunriseTime + offsetMinutes)
@@ -139,7 +146,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be before sunset", result <= sunsetTime - offsetMinutes)
@@ -162,7 +169,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be scheduled", result > 0)
@@ -186,7 +193,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then - the addDays function should move it to the next valid day
         // Result should be valid (greater than 0) and ideally in the future
@@ -218,7 +225,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be in the future", result > System.currentTimeMillis())
@@ -247,7 +254,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be between the two times", result >= time2 && result <= time1)
@@ -271,7 +278,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then - should still return a time (implementation may handle this)
         assertTrue("Result should be calculated", result > 0)
@@ -290,7 +297,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be at or after sunrise", result >= sunriseTime)
@@ -309,7 +316,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should be at or before sunset", result <= sunsetTime)
@@ -325,7 +332,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then - should handle gracefully, may return 0 or next valid day
         assertTrue("Result should be handled", result >= 0)
@@ -338,7 +345,7 @@ class CalculateAlarmTimeUseCaseTest {
         astronomyRepository = mock {
             onBlocking { getAstronomyData(any()) } doReturn astronomyData
         }
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
         
         val alarm = createTestAlarm(
             mode = "At",
@@ -347,7 +354,7 @@ class CalculateAlarmTimeUseCaseTest {
         )
         
         // When
-        val result = calculateAlarmTimeUseCase.execute(alarm)
+        val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
         
         // Then
         assertTrue("Result should use astronomy data", result > 0)
@@ -360,7 +367,7 @@ class CalculateAlarmTimeUseCaseTest {
         astronomyRepository = mock {
             onBlocking { getAstronomyData(any()) } doReturn astronomyData
         }
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
         
         val solarEvents = listOf(
             "Astronomical Dawn", "Nautical Dawn", "Civil Dawn", "Sunrise",
@@ -375,7 +382,7 @@ class CalculateAlarmTimeUseCaseTest {
             )
             
             // When
-            val result = calculateAlarmTimeUseCase.execute(alarm)
+            val result = runBlocking { calculateAlarmTimeUseCase.execute(alarm) }
             
             // Then
             assertTrue("Result for $event should be valid", result > 0)

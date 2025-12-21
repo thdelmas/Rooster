@@ -58,7 +58,7 @@ class AlarmListViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _isLoading.value = true
-                // Recalculate alarm time
+                // Recalculate alarm time (will fetch fresh astronomy data if needed)
                 val updatedAlarm = alarm.copy(
                     calculatedTime = calculateAlarmTimeUseCase.execute(alarm)
                 )

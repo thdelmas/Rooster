@@ -22,6 +22,7 @@ import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.TimeUtils
 import com.rooster.rooster.util.ValidationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -592,7 +593,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     
     private fun updateOffsetDisplay() {
         val offsetText = findViewById<TextView>(R.id.offsetTimeText)
-        offsetText?.text = "$offsetMinutes minutes"
+        offsetText?.text = TimeUtils.formatMinutesAsHours(offsetMinutes)
         
         // Update slider value if it exists
         val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
@@ -638,8 +639,8 @@ class AlarmEditorActivity : AppCompatActivity() {
                             
                             val markerLabel = when (sunTimingMode) {
                                 AppConstants.ALARM_MODE_AT -> "Alarm"
-                                AppConstants.ALARM_MODE_BEFORE -> "${offsetMinutes}m before"
-                                AppConstants.ALARM_MODE_AFTER -> "${offsetMinutes}m after"
+                                AppConstants.ALARM_MODE_BEFORE -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} before"
+                                AppConstants.ALARM_MODE_AFTER -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} after"
                                 AppConstants.ALARM_MODE_BETWEEN -> "Between"
                                 else -> "Alarm"
                             }
@@ -682,8 +683,8 @@ class AlarmEditorActivity : AppCompatActivity() {
                             
                             val markerLabel = when (sunTimingMode) {
                                 AppConstants.ALARM_MODE_AT -> "Alarm"
-                                AppConstants.ALARM_MODE_BEFORE -> "${offsetMinutes}m before"
-                                AppConstants.ALARM_MODE_AFTER -> "${offsetMinutes}m after"
+                                AppConstants.ALARM_MODE_BEFORE -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} before"
+                                AppConstants.ALARM_MODE_AFTER -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} after"
                                 AppConstants.ALARM_MODE_BETWEEN -> "Between"
                                 else -> "Alarm"
                             }
