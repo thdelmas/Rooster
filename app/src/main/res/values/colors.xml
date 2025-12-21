@@ -72,6 +72,11 @@
     <color name="md_theme_dark_surfaceContainerHigh">#2E2E3C</color>
     <color name="md_theme_dark_surfaceContainerHighest">#383846</color>
     
+    <!-- Enhanced card background colors with subtle astral solar tints -->
+    <color name="card_gradient_start">#1E1E2E</color>
+    <color name="card_gradient_mid">#242432</color>
+    <color name="card_gradient_end">#2A2A3A</color>
+    
     <!-- Legacy colors for compatibility -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>

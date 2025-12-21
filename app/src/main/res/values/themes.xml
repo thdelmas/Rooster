@@ -87,11 +87,12 @@
         <item name="cornerSize">32dp</item>
     </style>
     
-    <!-- Card Style - Modern elevated cards -->
+    <!-- Card Style - Modern elevated cards with improved gradient backgrounds -->
     <style name="Widget.Rooster.Card" parent="Widget.Material3.CardView.Elevated">
         <item name="cardElevation">8dp</item>
         <item name="cardCornerRadius">28dp</item>
-        <item name="cardBackgroundColor">@color/md_theme_dark_surfaceContainerHigh</item>
+        <item name="cardBackgroundColor">@android:color/transparent</item>
+        <item name="android:background">@drawable/card_background_elevated</item>
         <item name="contentPadding">24dp</item>
         <item name="strokeWidth">0dp</item>
     </style>
