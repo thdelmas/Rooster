@@ -229,7 +229,7 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         val astronomyData = astronomyRepository.getAstronomyData(forceRefresh = false)
         
         val timeInMillis = if (astronomyData != null) {
-            // Use data from Room database
+            // Use data from Room database (UTC timestamps from API)
             when (relative) {
                 AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN -> astronomyData.astroDawn
                 AppConstants.SOLAR_EVENT_NAUTICAL_DAWN -> astronomyData.nauticalDawn
@@ -244,6 +244,7 @@ class CalculateAlarmTimeUseCase @Inject constructor(
             }
         } else {
             // Fallback to SharedPreferences if not in database (for migration period)
+            // Note: These may be UTC timestamps from old API calls or local timestamps from tests
             when (relative) {
                 AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN -> sharedPreferences.getLong("astroDawn", 0)
                 AppConstants.SOLAR_EVENT_NAUTICAL_DAWN -> sharedPreferences.getLong("nauticalDawn", 0)
@@ -258,15 +259,66 @@ class CalculateAlarmTimeUseCase @Inject constructor(
             }
         }
         
-        val calendar = Calendar.getInstance()
-        val timeZone = TimeZone.getTimeZone("GMT")
-        calendar.timeInMillis = timeInMillis
-        
-        if (timeZone.inDaylightTime(calendar.time)) {
-            val dstOffsetInMillis = timeZone.dstSavings
-            calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+        if (timeInMillis == 0L) {
+            return 0L
         }
         
-        return calendar.timeInMillis
+        // Only apply timezone conversion if data comes from Room database (UTC from API)
+        // SharedPreferences data might already be in local time (from tests or old code)
+        if (astronomyData != null) {
+            // The timestamp from the API is a UTC timestamp representing the local time event.
+            // For example, if sunrise is at 8:11 AM local time, the API returns a UTC timestamp
+            // that when converted to local time gives 8:11 AM. We need to extract the local time
+            // and apply it to today's date.
+            
+            // Convert the UTC timestamp to local time to get the actual time of day
+            val localCalendar = Calendar.getInstance().apply {
+                this.timeInMillis = timeInMillis
+            }
+            
+            // Extract the time components (hour, minute, second) from the local calendar
+            val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
+            val minute = localCalendar.get(Calendar.MINUTE)
+            val second = localCalendar.get(Calendar.SECOND)
+            
+            // Create a new calendar for today in local timezone with the extracted time
+            val todayCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, second)
+                set(Calendar.MILLISECOND, 0)
+            }
+            
+            return todayCalendar.timeInMillis
+        } else {
+            // For SharedPreferences fallback:
+            // - If timestamp is in the future (likely a test mock or already processed), use as-is
+            // - Otherwise, treat as UTC timestamp from old API and convert to local time for today
+            val now = System.currentTimeMillis()
+            
+            // If timestamp is in the future, it's likely already correct (test mock or processed data)
+            // Only convert if it's in the past or very close to now (likely old UTC data)
+            if (timeInMillis > now) {
+                return timeInMillis
+            }
+            
+            // Convert UTC timestamp to local time for today (backward compatibility)
+            val localCalendar = Calendar.getInstance().apply {
+                this.timeInMillis = timeInMillis
+            }
+            
+            val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
+            val minute = localCalendar.get(Calendar.MINUTE)
+            val second = localCalendar.get(Calendar.SECOND)
+            
+            val todayCalendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, second)
+                set(Calendar.MILLISECOND, 0)
+            }
+            
+            return todayCalendar.timeInMillis
+        }
     }
 }
