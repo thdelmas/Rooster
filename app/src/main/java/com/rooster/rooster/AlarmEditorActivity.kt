@@ -71,7 +71,6 @@ class AlarmEditorActivity : AppCompatActivity() {
     private lateinit var solarEvent1Button: MaterialButton
     private lateinit var solarEvent2Button: MaterialButton
     private lateinit var offsetTimeLayout: View
-    private lateinit var offsetTimeText: TextView
     private lateinit var solarEvent2Layout: View
     private lateinit var selectTimeButton: MaterialButton
     private lateinit var saveFab: ExtendedFloatingActionButton
@@ -141,7 +140,6 @@ class AlarmEditorActivity : AppCompatActivity() {
         solarEvent1Button = findViewById(R.id.solarEvent1Button)
         solarEvent2Button = findViewById(R.id.solarEvent2Button)
         offsetTimeLayout = findViewById(R.id.offsetTimeLayout)
-        offsetTimeText = findViewById(R.id.offsetTimeText)
         solarEvent2Layout = findViewById(R.id.solarEvent2Layout)
         
         // Classic mode elements
@@ -277,15 +275,23 @@ class AlarmEditorActivity : AppCompatActivity() {
             showSolarEventPicker(2)
         }
         
-        // Offset adjustment with slider
-        val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
-        offsetSlider.addOnChangeListener { _, value, _ ->
-            HapticFeedbackHelper.performLightClick(offsetSlider)
-            offsetMinutes = value.toInt()
-            updateOffsetDisplay()
-            updateCalculatedTime()
-            updateSunCourseVisualization()
+        // Offset time button (opens time picker)
+        val offsetTimeButton = findViewById<MaterialButton>(R.id.offsetTimeButton)
+        offsetTimeButton?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            showOffsetTimePicker()
         }
+        
+        // Quick preset buttons
+        setupOffsetPresetButton(R.id.preset15mButton, 15)
+        setupOffsetPresetButton(R.id.preset30mButton, 30)
+        setupOffsetPresetButton(R.id.preset1hButton, 60)
+        setupOffsetPresetButton(R.id.preset2hButton, 120)
+        setupOffsetPresetButton(R.id.preset3hButton, 180)
+        setupOffsetPresetButton(R.id.preset6hButton, 360)
+        setupOffsetPresetButton(R.id.preset8hButton, 480)
+        setupOffsetPresetButton(R.id.preset12hButton, 720)
         
         // Quick preset buttons
         findViewById<MaterialButton>(R.id.presetSunriseButton)?.setOnClickListener {
@@ -539,8 +545,6 @@ class AlarmEditorActivity : AppCompatActivity() {
                     AnimationHelper.fadeOut(solarEvent2Layout) { solarEvent2Layout.visibility = View.GONE }
                 }
                 // Initialize slider value
-                val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
-                offsetSlider?.value = offsetMinutes.toFloat()
                 updateOffsetDisplay()
             }
             "Between" -> {
@@ -592,12 +596,48 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun updateOffsetDisplay() {
-        val offsetText = findViewById<TextView>(R.id.offsetTimeText)
-        offsetText?.text = TimeUtils.formatMinutesAsHours(offsetMinutes)
+        val offsetTimeButton = findViewById<MaterialButton>(R.id.offsetTimeButton)
+        offsetTimeButton?.text = TimeUtils.formatMinutesAsHours(offsetMinutes)
+    }
+    
+    private fun setupOffsetPresetButton(buttonId: Int, minutes: Int) {
+        findViewById<MaterialButton>(buttonId)?.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
+            offsetMinutes = minutes
+            updateOffsetDisplay()
+            updateCalculatedTime()
+            updateSunCourseVisualization()
+        }
+    }
+    
+    private fun showOffsetTimePicker() {
+        val hours = offsetMinutes / 60
+        val minutes = offsetMinutes % 60
         
-        // Update slider value if it exists
-        val offsetSlider = findViewById<com.google.android.material.slider.Slider>(R.id.offsetSlider)
-        offsetSlider?.value = offsetMinutes.toFloat()
+        val timePickerDialog = TimePickerDialog(
+            this,
+            { _, selectedHour, selectedMinute ->
+                offsetMinutes = (selectedHour * 60) + selectedMinute
+                // Clamp to max 12 hours (720 minutes)
+                if (offsetMinutes > 720) {
+                    offsetMinutes = 720
+                }
+                // Ensure minimum of 5 minutes
+                if (offsetMinutes < 5) {
+                    offsetMinutes = 5
+                }
+                updateOffsetDisplay()
+                updateCalculatedTime()
+                updateSunCourseVisualization()
+            },
+            hours,
+            minutes,
+            false // 24-hour format
+        )
+        
+        timePickerDialog.setTitle("Select Time Offset")
+        timePickerDialog.show()
     }
     
     private fun updateSnoozeDisplay() {
