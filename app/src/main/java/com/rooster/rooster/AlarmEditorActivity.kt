@@ -17,6 +17,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
+import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
@@ -24,7 +25,9 @@ import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.TimeUtils
 import com.rooster.rooster.util.ValidationHelper
+import com.rooster.rooster.util.toast
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +42,7 @@ class AlarmEditorActivity : AppCompatActivity() {
 
     private val viewModel: AlarmListViewModel by viewModels()
     private val editorViewModel: AlarmEditorViewModel by viewModels()
+    @Inject lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
@@ -1258,7 +1262,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         val ringtoneUri = existingAlarm?.ringtoneUri ?: AppConstants.DEFAULT_RINGTONE_URI
         
         if (alarmId != -1L && existingAlarm != null) {
-            // Update existing alarm
+            // Update existing alarm - enable it when changes are made
             val updatedAlarm = existingAlarm.copy(
                 label = sanitizedLabel,
                 mode = mode,
@@ -1273,7 +1277,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 friday = daysMap["friday"] ?: false,
                 saturday = daysMap["saturday"] ?: false,
                 sunday = daysMap["sunday"] ?: false,
-                enabled = true,
+                enabled = true, // Enable alarm when changes are made
                 vibrate = vibrateEnabled,
                 snoozeEnabled = snoozeEnabled,
                 snoozeDuration = snoozeDuration,
@@ -1284,6 +1288,37 @@ class AlarmEditorActivity : AppCompatActivity() {
             
             // Set flag to prevent observer updates during save
             isSavingAlarm = true
+            
+            // Calculate next alarm time and show toast
+            activityScope.launch(Dispatchers.IO) {
+                try {
+                    val nextAlarmTime = calculateAlarmTimeUseCase.execute(updatedAlarm)
+                    launch(Dispatchers.Main) {
+                        // Format the time for display
+                        val calendar = Calendar.getInstance()
+                        calendar.timeInMillis = nextAlarmTime
+                        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                        val formattedTime = sdf.format(calendar.time)
+                        
+                        // Determine if it's today or tomorrow
+                        val now = Calendar.getInstance()
+                        val daysDiff = ((nextAlarmTime - now.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
+                        val timeString = when {
+                            daysDiff == 0 -> "today at $formattedTime"
+                            daysDiff == 1 -> "tomorrow at $formattedTime"
+                            else -> {
+                                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                                "${dayFormat.format(calendar.time)} at $formattedTime"
+                            }
+                        }
+                        
+                        toast("Alarm will ring $timeString")
+                    }
+                } catch (e: Exception) {
+                    Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
+                    // Still save the alarm even if toast fails
+                }
+            }
             
             // Use ViewModel to update alarm (which uses Repository and recalculates time)
             viewModel.updateAlarm(updatedAlarm)
@@ -1342,6 +1377,37 @@ class AlarmEditorActivity : AppCompatActivity() {
                     volume = alarmVolume,
                     gradualVolume = gradualVolumeEnabled
                 )
+                
+                // Calculate next alarm time and show toast
+                activityScope.launch(Dispatchers.IO) {
+                    try {
+                        val nextAlarmTime = calculateAlarmTimeUseCase.execute(fullAlarm)
+                        launch(Dispatchers.Main) {
+                            // Format the time for display
+                            val calendar = Calendar.getInstance()
+                            calendar.timeInMillis = nextAlarmTime
+                            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            val formattedTime = sdf.format(calendar.time)
+                            
+                            // Determine if it's today or tomorrow
+                            val now = Calendar.getInstance()
+                            val daysDiff = ((nextAlarmTime - now.timeInMillis) / (24 * 60 * 60 * 1000)).toInt()
+                            val timeString = when {
+                                daysDiff == 0 -> "today at $formattedTime"
+                                daysDiff == 1 -> "tomorrow at $formattedTime"
+                                else -> {
+                                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                                    "${dayFormat.format(calendar.time)} at $formattedTime"
+                                }
+                            }
+                            
+                            toast("Alarm will ring $timeString")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
+                        // Still save the alarm even if toast fails
+                    }
+                }
                 
                 // Update with all fields (this will also recalculate the time)
                 viewModel.updateAlarm(fullAlarm)
