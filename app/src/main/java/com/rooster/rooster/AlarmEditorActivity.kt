@@ -773,7 +773,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
-        return when (event) {
+        val timeInMillis = when (event) {
             "Astronomical Dawn" -> astronomyData.astroDawn
             "Nautical Dawn" -> astronomyData.nauticalDawn
             "Civil Dawn" -> astronomyData.civilDawn
@@ -785,10 +785,32 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Astronomical Dusk" -> astronomyData.astroDusk
             else -> System.currentTimeMillis()
         }
+        
+        if (timeInMillis == 0L) {
+            return System.currentTimeMillis()
+        }
+        
+        // Apply timezone conversion: UTC timestamp from API needs to be converted to local time for today
+        val localCalendar = Calendar.getInstance().apply {
+            this.timeInMillis = timeInMillis
+        }
+        
+        val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
+        val minute = localCalendar.get(Calendar.MINUTE)
+        val second = localCalendar.get(Calendar.SECOND)
+        
+        val todayCalendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, second)
+            set(Calendar.MILLISECOND, 0)
+        }
+        
+        return todayCalendar.timeInMillis
     }
     
     private fun getSolarEventTime(event: String, prefs: android.content.SharedPreferences): Long {
-        return when (event) {
+        val timeInMillis = when (event) {
             "Astronomical Dawn" -> prefs.getLong("astroDawn", 0)
             "Nautical Dawn" -> prefs.getLong("nauticalDawn", 0)
             "Civil Dawn" -> prefs.getLong("civilDawn", 0)
@@ -800,6 +822,35 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Astronomical Dusk" -> prefs.getLong("astroDusk", 0)
             else -> System.currentTimeMillis()
         }
+        
+        if (timeInMillis == 0L) {
+            return System.currentTimeMillis()
+        }
+        
+        // Apply the same timezone conversion logic as CalculateAlarmTimeUseCase
+        // If timestamp is in the future, it's likely already correct (test mock or processed data)
+        val now = System.currentTimeMillis()
+        if (timeInMillis > now) {
+            return timeInMillis
+        }
+        
+        // Convert UTC timestamp to local time for today (backward compatibility)
+        val localCalendar = Calendar.getInstance().apply {
+            this.timeInMillis = timeInMillis
+        }
+        
+        val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
+        val minute = localCalendar.get(Calendar.MINUTE)
+        val second = localCalendar.get(Calendar.SECOND)
+        
+        val todayCalendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
+            set(Calendar.SECOND, second)
+            set(Calendar.MILLISECOND, 0)
+        }
+        
+        return todayCalendar.timeInMillis
     }
     
     private fun updateClassicTimeDisplay() {
