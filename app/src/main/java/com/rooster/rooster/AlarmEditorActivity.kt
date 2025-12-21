@@ -85,6 +85,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     // Day buttons
     private val dayButtons = mutableMapOf<String, MaterialButton>()
     
+    // Flag to prevent observer updates during user interaction (prevents blinking)
+    private var isUpdatingFromUserInteraction = false
+    
     private val solarEvents = arrayOf(
         "🌄 Astronomical Dawn",
         "🌅 Nautical Dawn",
@@ -189,13 +192,16 @@ class AlarmEditorActivity : AppCompatActivity() {
                     selectedTime = alarm.time1
                 }
                 
-                // Set day selections - only update if state has changed to avoid blinking
-                dayButtons.forEach { (day, button) ->
-                    val isSelected = alarm.getDayEnabled(day)
-                    // Only update if the state has actually changed
-                    if (button.isSelected != isSelected) {
-                        button.isSelected = isSelected
-                        updateDayButtonState(button, isSelected)
+                // Set day selections - only update if state has changed and not from user interaction
+                // Skip updates during user interaction to prevent blinking
+                if (!isUpdatingFromUserInteraction) {
+                    dayButtons.forEach { (day, button) ->
+                        val isSelected = alarm.getDayEnabled(day)
+                        // Only update if the state has actually changed
+                        if (button.isSelected != isSelected) {
+                            button.isSelected = isSelected
+                            updateDayButtonState(button, isSelected)
+                        }
                     }
                 }
                 
@@ -358,7 +364,15 @@ class AlarmEditorActivity : AppCompatActivity() {
                 val isSelected = !button.isSelected
                 button.isSelected = isSelected
                 updateDayButtonState(button, isSelected)
+                
+                // Set flag to prevent observer from updating buttons during save
+                isUpdatingFromUserInteraction = true
                 saveAlarmDirectly()
+                
+                // Clear flag after a brief delay to allow observer updates again
+                button.postDelayed({
+                    isUpdatingFromUserInteraction = false
+                }, 300)
             }
         }
         
@@ -1093,12 +1107,18 @@ class AlarmEditorActivity : AppCompatActivity() {
         }
         
         // Update button states
+        // Set flag to prevent observer from updating buttons during preset change
+        isUpdatingFromUserInteraction = true
         dayButtons.forEach { (_, button) ->
             updateDayButtonState(button, button.isSelected)
             AnimationHelper.scaleWithBounce(button)
         }
-        
         HapticFeedbackHelper.performSuccessFeedback(this)
+        
+        // Clear flag after a brief delay
+        dayButtons.values.firstOrNull()?.postDelayed({
+            isUpdatingFromUserInteraction = false
+        }, 300)
     }
     
     private fun showDeleteConfirmation() {
