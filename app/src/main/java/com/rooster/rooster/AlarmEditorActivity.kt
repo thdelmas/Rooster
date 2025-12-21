@@ -88,6 +88,9 @@ class AlarmEditorActivity : AppCompatActivity() {
     // Flag to prevent observer updates during user interaction (prevents blinking)
     private var isUpdatingFromUserInteraction = false
     
+    // Flag to prevent saves during data loading (prevents infinite loop)
+    private var isLoadingData = false
+    
     private val solarEvents = arrayOf(
         "🌄 Astronomical Dawn",
         "🌅 Nautical Dawn",
@@ -175,6 +178,9 @@ class AlarmEditorActivity : AppCompatActivity() {
             viewModel.allAlarms.observe(this) { alarms ->
                 currentAlarm = alarms.find { it.id == alarmId }
                 currentAlarm?.let { alarm ->
+                // Set flag to prevent saves during loading
+                isLoadingData = true
+                
                 alarmLabelInput.setText(alarm.label)
                 
                 // Determine mode based on alarm data
@@ -220,6 +226,9 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 updateUI()
                 updateSunCourseVisualization()
+                
+                // Clear flag after loading is complete
+                isLoadingData = false
                 }
             } ?: run {
                 // Alarm not found
@@ -424,7 +433,9 @@ class AlarmEditorActivity : AppCompatActivity() {
         vibrateSwitch.setOnCheckedChangeListener { _, isChecked ->
             HapticFeedbackHelper.performLightClick(vibrateSwitch)
             vibrateEnabled = isChecked
-            saveAlarmDirectly()
+            if (!isLoadingData) {
+                saveAlarmDirectly()
+            }
         }
         
         // Snooze switch
@@ -433,7 +444,9 @@ class AlarmEditorActivity : AppCompatActivity() {
             snoozeEnabled = isChecked
             findViewById<View>(R.id.snoozeSettingsLayout).visibility = 
                 if (isChecked) View.VISIBLE else View.GONE
-            saveAlarmDirectly()
+            if (!isLoadingData) {
+                saveAlarmDirectly()
+            }
         }
         
         // Initialize snooze settings visibility
@@ -474,7 +487,9 @@ class AlarmEditorActivity : AppCompatActivity() {
         gradualVolumeSwitch.setOnCheckedChangeListener { _, isChecked ->
             HapticFeedbackHelper.performLightClick(gradualVolumeSwitch)
             gradualVolumeEnabled = isChecked
-            saveAlarmDirectly()
+            if (!isLoadingData) {
+                saveAlarmDirectly()
+            }
         }
         
         // Delete button
@@ -498,7 +513,10 @@ class AlarmEditorActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
-                saveAlarmDirectly()
+                // Don't save during data loading to prevent infinite loop
+                if (!isLoadingData) {
+                    saveAlarmDirectly()
+                }
             }
         })
     }
@@ -1136,6 +1154,10 @@ class AlarmEditorActivity : AppCompatActivity() {
     }
     
     private fun saveAlarmDirectly() {
+        // Don't save during data loading to prevent infinite loop
+        if (isLoadingData) {
+            return
+        }
         saveAlarm(shouldFinish = false)
     }
     
