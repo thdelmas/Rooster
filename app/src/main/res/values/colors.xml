@@ -114,16 +114,19 @@
     <color name="warning">#FBBF24</color>
     <color name="info">#60A5FA</color>
     
-    <!-- Glassmorphism Colors - True glass effect -->
-    <color name="glass_background">#30FFFFFF</color>
-    <color name="glass_background_light">#25FFFFFF</color>
-    <color name="glass_background_medium">#35FFFFFF</color>
-    <color name="glass_background_heavy">#45FFFFFF</color>
-    <color name="glass_border">#80FFFFFF</color>
-    <color name="glass_border_light">#60FFFFFF</color>
-    <color name="glass_highlight">#15FFFFFF</color>
-    <color name="glass_shadow">#10000000</color>
-    <color name="glass_shadow_soft">#08000000</color>
+    <!-- Glassmorphism Colors - Polished smooth glass effect -->
+    <color name="glass_background">#50FFFFFF</color>
+    <color name="glass_background_base">#50FFFFFF</color>
+    <color name="glass_background_top">#40FFFFFF</color>
+    <color name="glass_background_bottom">#60FFFFFF</color>
+    <color name="glass_background_center">#55FFFFFF</color>
+    <color name="glass_border">#90FFFFFF</color>
+    <color name="glass_border_soft">#70FFFFFF</color>
+    <color name="glass_highlight_top">#30FFFFFF</color>
+    <color name="glass_highlight_bottom">#10FFFFFF</color>
+    <color name="glass_shadow_main">#20000000</color>
+    <color name="glass_shadow_soft">#15000000</color>
+    <color name="glass_shadow_fade">#08000000</color>
     
     <!-- High contrast text colors for glass backgrounds -->
     <color name="text_on_glass_primary">#FFFFFF</color>

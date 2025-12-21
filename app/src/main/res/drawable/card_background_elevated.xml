@@ -1,51 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Very subtle soft shadow for glass effect -->
+    <!-- Soft shadow layer - smooth gradient -->
     <item
-        android:top="4dp"
+        android:top="6dp"
         android:bottom="0dp"
         android:left="0dp"
-        android:right="4dp">
+        android:right="6dp">
         <shape android:shape="rectangle">
             <gradient
                 android:angle="135"
-                android:startColor="@color/glass_shadow"
+                android:startColor="@color/glass_shadow_main"
+                android:centerColor="@color/glass_shadow_soft"
+                android:endColor="@color/glass_shadow_fade"
+                android:type="linear" />
+            <corners android:radius="32dp"/>
+        </shape>
+    </item>
+    
+    <!-- Base glass layer - smooth gradient from top to bottom -->
+    <item
+        android:top="6dp"
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="6dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="@color/glass_background_top"
+                android:centerColor="@color/glass_background_center"
+                android:endColor="@color/glass_background_bottom"
+                android:type="linear" />
+            <corners android:radius="32dp"/>
+        </shape>
+    </item>
+    
+    <!-- Top highlight for glass shine -->
+    <item
+        android:top="6dp"
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="6dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="90"
+                android:startColor="@color/glass_highlight_top"
                 android:endColor="@android:color/transparent"
                 android:type="linear" />
             <corners android:radius="32dp"/>
         </shape>
     </item>
     
-    <!-- Base semi-transparent glass background -->
-    <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:angle="135"
-                android:startColor="@color/glass_background_light"
-                android:centerColor="@color/glass_background"
-                android:endColor="@color/glass_background_medium"
-                android:type="linear" />
-            <corners android:radius="32dp"/>
-        </shape>
-    </item>
-    
-    <!-- Subtle highlight for glass shine effect -->
-    <item>
-        <shape android:shape="rectangle">
-            <gradient
-                android:angle="45"
-                android:startColor="@color/glass_highlight"
-                android:endColor="@android:color/transparent"
-                android:type="linear" />
-            <corners android:radius="32dp"/>
-        </shape>
-    </item>
-    
-    <!-- Bright glass border -->
-    <item>
+    <!-- Refined glass border -->
+    <item
+        android:top="6dp"
+        android:bottom="0dp"
+        android:left="0dp"
+        android:right="6dp">
         <shape android:shape="rectangle">
             <stroke
-                android:width="1dp"
+                android:width="1.5dp"
                 android:color="@color/glass_border" />
             <corners android:radius="32dp"/>
         </shape>
