@@ -236,6 +236,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             currentMode = "sun"
             updateUI()
             updateSunCourseVisualization()
+            saveAlarmDirectly()
         }
         
         classicModeButton.setOnClickListener {
@@ -243,6 +244,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             AnimationHelper.scaleWithBounce(it)
             currentMode = "classic"
             updateUI()
+            saveAlarmDirectly()
         }
         
         // Sun timing mode
@@ -259,6 +261,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 updateSunModeUI()
                 updateCalculatedTime()
                 updateSunCourseVisualization()
+                saveAlarmDirectly()
             }
         }
         
@@ -302,6 +305,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.presetSunsetButton)?.setOnClickListener {
@@ -312,6 +316,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.presetDawnButton)?.setOnClickListener {
@@ -322,6 +327,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
+            saveAlarmDirectly()
         }
         
         // Interactive sun course view
@@ -332,6 +338,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             sunTimingToggle.check(R.id.atButton)
             updateSolarEventDisplay()
             updateSunModeUI()
+            saveAlarmDirectly()
         }
         
         // Classic time selection - Use Apple-style time picker
@@ -348,6 +355,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 val isSelected = !button.isSelected
                 button.isSelected = isSelected
                 updateDayButtonState(button, isSelected)
+                saveAlarmDirectly()
             }
         }
         
@@ -355,16 +363,19 @@ class AlarmEditorActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.weekdaysPreset)?.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
             setDayPreset("weekdays")
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.weekendsPreset)?.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
             setDayPreset("weekends")
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.everydayPreset)?.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
             setDayPreset("everyday")
+            saveAlarmDirectly()
         }
         
         // Ringtone button with preview
@@ -396,6 +407,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         vibrateSwitch.setOnCheckedChangeListener { _, isChecked ->
             HapticFeedbackHelper.performLightClick(vibrateSwitch)
             vibrateEnabled = isChecked
+            saveAlarmDirectly()
         }
         
         // Snooze switch
@@ -404,6 +416,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             snoozeEnabled = isChecked
             findViewById<View>(R.id.snoozeSettingsLayout).visibility = 
                 if (isChecked) View.VISIBLE else View.GONE
+            saveAlarmDirectly()
         }
         
         // Initialize snooze settings visibility
@@ -415,12 +428,14 @@ class AlarmEditorActivity : AppCompatActivity() {
             HapticFeedbackHelper.performLightClick(it)
             snoozeDuration = maxOf(5, snoozeDuration - 5)
             updateSnoozeDisplay()
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.increaseSnoozeDurationButton).setOnClickListener {
             HapticFeedbackHelper.performLightClick(it)
             snoozeDuration = minOf(30, snoozeDuration + 5)
             updateSnoozeDisplay()
+            saveAlarmDirectly()
         }
         
         // Snooze count buttons
@@ -428,18 +443,21 @@ class AlarmEditorActivity : AppCompatActivity() {
             HapticFeedbackHelper.performLightClick(it)
             snoozeCount = maxOf(1, snoozeCount - 1)
             updateSnoozeDisplay()
+            saveAlarmDirectly()
         }
         
         findViewById<MaterialButton>(R.id.increaseSnoozeCountButton).setOnClickListener {
             HapticFeedbackHelper.performLightClick(it)
             snoozeCount = minOf(10, snoozeCount + 1)
             updateSnoozeDisplay()
+            saveAlarmDirectly()
         }
         
         // Gradual volume switch
         gradualVolumeSwitch.setOnCheckedChangeListener { _, isChecked ->
             HapticFeedbackHelper.performLightClick(gradualVolumeSwitch)
             gradualVolumeEnabled = isChecked
+            saveAlarmDirectly()
         }
         
         // Delete button
@@ -455,12 +473,17 @@ class AlarmEditorActivity : AppCompatActivity() {
             }
         }
         
-        // Save button
-        saveFab.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            HapticFeedbackHelper.performSuccessFeedback(this)
-            saveAlarm()
-        }
+        // Save button - hidden, changes are saved automatically
+        saveFab.visibility = View.GONE
+        
+        // Set up automatic saving for label changes
+        alarmLabelInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                saveAlarmDirectly()
+            }
+        })
     }
     
     private fun updateUI() {
@@ -608,6 +631,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             updateOffsetDisplay()
             updateCalculatedTime()
             updateSunCourseVisualization()
+            saveAlarmDirectly()
         }
     }
     
@@ -621,6 +645,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 updateOffsetDisplay()
                 updateCalculatedTime()
                 updateSunCourseVisualization()
+                saveAlarmDirectly()
             }
         )
         dialog.show(supportFragmentManager, "DurationPickerDialog")
@@ -995,6 +1020,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             updateSolarEventDisplay()
             updateCalculatedTime()
             updateSunCourseVisualization()
+            saveAlarmDirectly()
             dialog.dismiss()
         }
         
@@ -1017,6 +1043,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             calendar.set(Calendar.MINUTE, minute)
             selectedTime = calendar.timeInMillis
             updateClassicTimeDisplay()
+            saveAlarmDirectly()
         }.show()
     }
     
@@ -1085,7 +1112,11 @@ class AlarmEditorActivity : AppCompatActivity() {
             .show()
     }
     
-    private fun saveAlarm() {
+    private fun saveAlarmDirectly() {
+        saveAlarm(shouldFinish = false)
+    }
+    
+    private fun saveAlarm(shouldFinish: Boolean = true) {
         val label = alarmLabelInput.text.toString().takeIf { it.isNotBlank() } ?: "Alarm"
         
         // Get day selections
@@ -1202,6 +1233,9 @@ class AlarmEditorActivity : AppCompatActivity() {
             
             // Insert the alarm and get its ID, then update it with all fields
             viewModel.insertAlarm(alarmCreation) { newAlarmId ->
+                // Update the local alarmId so future saves work correctly
+                alarmId = newAlarmId
+                
                 // After insertion, create a full Alarm with all settings and update it
                 val fullAlarm = Alarm(
                     id = newAlarmId,
@@ -1234,6 +1268,8 @@ class AlarmEditorActivity : AppCompatActivity() {
             }
         }
         
-        finish()
+        if (shouldFinish) {
+            finish()
+        }
     }
 }
