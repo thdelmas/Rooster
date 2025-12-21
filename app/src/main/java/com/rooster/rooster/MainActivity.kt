@@ -57,18 +57,6 @@ class MainActivity() : ComponentActivity() {
         setContentView(R.layout.activity_main)
         Logger.d("MainActivity", "Layout set")
         
-        // Setup toolbar
-        val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.topAppBar)
-        toolbar?.setNavigationOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            AnimationHelper.scaleWithBounce(it)
-            it.postDelayed({
-                val alarmsListActivity = Intent(this, AlarmListActivity::class.java)
-                startActivity(alarmsListActivity)
-                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-            }, 150)
-        }
-        
         getPermissions()
         linkButtons()
         refreshCycle()
