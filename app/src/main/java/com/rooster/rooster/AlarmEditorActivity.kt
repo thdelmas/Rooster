@@ -189,11 +189,14 @@ class AlarmEditorActivity : AppCompatActivity() {
                     selectedTime = alarm.time1
                 }
                 
-                // Set day selections
+                // Set day selections - only update if state has changed to avoid blinking
                 dayButtons.forEach { (day, button) ->
                     val isSelected = alarm.getDayEnabled(day)
-                    button.isSelected = isSelected
-                    updateDayButtonState(button, isSelected)
+                    // Only update if the state has actually changed
+                    if (button.isSelected != isSelected) {
+                        button.isSelected = isSelected
+                        updateDayButtonState(button, isSelected)
+                    }
                 }
                 
                 // Load alarm settings
