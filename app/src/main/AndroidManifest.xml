@@ -53,6 +53,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="com.rooster.rooster.ALARM_INTENT" />
                 <action android:name="android.intent.action.ALARM" />
+                <action android:name="com.rooster.alarmmanager" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
