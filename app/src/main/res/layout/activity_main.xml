@@ -38,9 +38,9 @@
         android:clickable="true"
         android:focusable="true"
         app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:strokeWidth="1.5dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0.5dp"
         app:strokeColor="@color/glass_border"
         android:background="@drawable/glass_card_background"
         app:rippleColor="@color/md_theme_dark_primary">
@@ -65,9 +65,9 @@
         android:clickable="true"
         android:focusable="true"
         app:cardBackgroundColor="@android:color/transparent"
-        app:cardCornerRadius="28dp"
-        app:cardElevation="8dp"
-        app:strokeWidth="1.5dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0.5dp"
         app:strokeColor="@color/glass_border"
         android:background="@drawable/glass_card_background"
         app:rippleColor="@color/md_theme_dark_primary">
@@ -102,9 +102,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="32dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="32dp"
-                app:cardElevation="16dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="@color/glass_border"
                 android:stateListAnimator="@null">
 
@@ -172,9 +172,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="32dp"
                 app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="28dp"
-                app:cardElevation="8dp"
-                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0.5dp"
                 app:strokeColor="@color/glass_border"
                 android:background="@drawable/glass_card_background">
 
