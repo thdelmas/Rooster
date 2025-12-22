@@ -55,27 +55,27 @@
     <color name="md_theme_dark_errorContainer">#93000A</color>
     <color name="md_theme_dark_onErrorContainer">#FFDAD6</color>
     
-    <!-- Deep cosmic background with subtle purple tint -->
-    <color name="md_theme_dark_background">#0A0A14</color>
-    <color name="md_theme_dark_onBackground">#F5E6DC</color>
-    <color name="md_theme_dark_surface">#141420</color>
-    <color name="md_theme_dark_onSurface">#F5E6DC</color>
-    <color name="md_theme_dark_surfaceVariant">#2A1F2E</color>
-    <color name="md_theme_dark_onSurfaceVariant">#F5E6DC</color>
-    <color name="md_theme_dark_outline">#8B6F5F</color>
-    <color name="md_theme_dark_outlineVariant">#3D2F2A</color>
+    <!-- Minimal black background with sun/astral accents -->
+    <color name="md_theme_dark_background">#000000</color>
+    <color name="md_theme_dark_onBackground">#FFB86C</color>
+    <color name="md_theme_dark_surface">#000000</color>
+    <color name="md_theme_dark_onSurface">#FFB86C</color>
+    <color name="md_theme_dark_surfaceVariant">#0A0A0A</color>
+    <color name="md_theme_dark_onSurfaceVariant">#FF8E53</color>
+    <color name="md_theme_dark_outline">#FF8E53</color>
+    <color name="md_theme_dark_outlineVariant">#FFB86C</color>
     
-    <!-- Modern surface containers with glassmorphism support -->
-    <color name="md_theme_dark_surfaceContainerLowest">#0A0A14</color>
-    <color name="md_theme_dark_surfaceContainerLow">#1A1A28</color>
-    <color name="md_theme_dark_surfaceContainer">#242432</color>
-    <color name="md_theme_dark_surfaceContainerHigh">#2E2E3C</color>
-    <color name="md_theme_dark_surfaceContainerHighest">#383846</color>
+    <!-- Minimal surface containers - solid black -->
+    <color name="md_theme_dark_surfaceContainerLowest">#000000</color>
+    <color name="md_theme_dark_surfaceContainerLow">#0A0A0A</color>
+    <color name="md_theme_dark_surfaceContainer">#141414</color>
+    <color name="md_theme_dark_surfaceContainerHigh">#1A1A1A</color>
+    <color name="md_theme_dark_surfaceContainerHighest">#242424</color>
     
-    <!-- Enhanced card background colors with subtle astral solar tints -->
-    <color name="card_gradient_start">#1E1E2E</color>
-    <color name="card_gradient_mid">#242432</color>
-    <color name="card_gradient_end">#2A2A3A</color>
+    <!-- Minimal card background colors - solid black -->
+    <color name="card_gradient_start">#000000</color>
+    <color name="card_gradient_mid">#000000</color>
+    <color name="card_gradient_end">#000000</color>
     
     <!-- Legacy colors for compatibility -->
     <color name="black">#FF000000</color>
@@ -95,10 +95,10 @@
     <color name="golden_hour">#FFB86C</color>
     <color name="day_sky">#FFD89C</color>
     
-    <!-- Gradient Colors for Modern UI -->
-    <color name="gradient_start_cosmic">#1A0A2E</color>
-    <color name="gradient_mid_twilight">#4A2A5E</color>
-    <color name="gradient_end_sunrise">#FF8E53</color>
+    <!-- Minimal gradient colors - black with subtle astral hints -->
+    <color name="gradient_start_cosmic">#000000</color>
+    <color name="gradient_mid_twilight">#000000</color>
+    <color name="gradient_end_sunrise">#000000</color>
     <color name="gradient_golden">#FFB86C</color>
     <color name="gradient_warm">#FFD89C</color>
     
@@ -114,24 +114,24 @@
     <color name="warning">#FBBF24</color>
     <color name="info">#60A5FA</color>
     
-    <!-- Minimalist Colors - Clean and simple -->
-    <color name="card_background_minimal">#20FFFFFF</color>
-    <color name="card_border_minimal">#40FFFFFF</color>
-    <color name="card_shadow_minimal">#10000000</color>
+    <!-- Minimalist Colors - Clean black with sun/astral accents -->
+    <color name="card_background_minimal">#000000</color>
+    <color name="card_border_minimal">#FF8E53</color>
+    <color name="card_shadow_minimal">#40000000</color>
     
     <!-- Legacy aliases for compatibility -->
-    <color name="glass_background">#20FFFFFF</color>
-    <color name="glass_border">#40FFFFFF</color>
+    <color name="glass_background">#000000</color>
+    <color name="glass_border">#FF8E53</color>
     
-    <!-- High contrast text colors for glass backgrounds -->
-    <color name="text_on_glass_primary">#FFFFFF</color>
-    <color name="text_on_glass_secondary">#E5D4C8</color>
-    <color name="text_on_glass_tertiary">#C4B3A7</color>
+    <!-- High contrast text colors for black backgrounds -->
+    <color name="text_on_glass_primary">#FFB86C</color>
+    <color name="text_on_glass_secondary">#FF8E53</color>
+    <color name="text_on_glass_tertiary">#FFD89C</color>
     
-    <!-- Surface Tints with cosmic feel -->
-    <color name="surface_tint_low">#1A1A28</color>
-    <color name="surface_tint_medium">#242432</color>
-    <color name="surface_tint_high">#2E2E3C</color>
+    <!-- Surface Tints - minimal black -->
+    <color name="surface_tint_low">#000000</color>
+    <color name="surface_tint_medium">#0A0A0A</color>
+    <color name="surface_tint_high">#141414</color>
     
     <!-- Shadow and Elevation - Enhanced for realistic depth -->
     <color name="shadow_light">#15000000</color>
@@ -140,8 +140,8 @@
     <color name="shadow_very_dark">#70000000</color>
     <color name="shadow_extreme">#80000000</color>
     
-    <!-- Nested card/badge background colors -->
-    <color name="badge_gradient_start">#2A1F2E</color>
-    <color name="badge_gradient_mid">#3A2F3E</color>
-    <color name="badge_gradient_end">#4A3F4E</color>
+    <!-- Nested card/badge background colors - minimal black -->
+    <color name="badge_gradient_start">#000000</color>
+    <color name="badge_gradient_mid">#0A0A0A</color>
+    <color name="badge_gradient_end">#141414</color>
 </resources>

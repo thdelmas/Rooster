@@ -97,9 +97,9 @@
         <item name="strokeWidth">0dp</item>
     </style>
     
-    <!-- Glass Card Style -->
+    <!-- Minimal Black Card Style with Sun/Astral Borders -->
     <style name="Widget.Rooster.Card.Glass" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardElevation">12dp</item>
+        <item name="cardElevation">8dp</item>
         <item name="cardCornerRadius">32dp</item>
         <item name="cardBackgroundColor">@color/card_background_minimal</item>
         <item name="contentPadding">28dp</item>
