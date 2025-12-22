@@ -81,10 +81,7 @@ object ValidationHelper {
             errors.add("Invalid alarm mode selected. Please choose a valid mode")
         }
         
-        // Validate at least one day is selected
-        if (!hasAtLeastOneDaySelected(alarm)) {
-            errors.add("Please select at least one day for your alarm")
-        }
+        // Note: Day selection is optional. If no days are selected, alarm will fire today or tomorrow.
         
         // Validate calculated time
         if (alarm.enabled && alarm.calculatedTime <= 0) {
@@ -103,14 +100,6 @@ object ValidationHelper {
      */
     private fun isValidMode(mode: String): Boolean {
         return mode in listOf(AppConstants.ALARM_MODE_AT, AppConstants.ALARM_MODE_BETWEEN, AppConstants.ALARM_MODE_AFTER, AppConstants.ALARM_MODE_BEFORE)
-    }
-    
-    /**
-     * Check if at least one day is selected
-     */
-    private fun hasAtLeastOneDaySelected(alarm: Alarm): Boolean {
-        return alarm.monday || alarm.tuesday || alarm.wednesday || 
-               alarm.thursday || alarm.friday || alarm.saturday || alarm.sunday
     }
     
     /**
@@ -270,7 +259,8 @@ object ValidationHelper {
     }
     
     /**
-     * Validate day selection - at least one day must be selected
+     * Validate day selection
+     * Note: Day selection is optional. If no days are selected, alarm will fire today or tomorrow.
      */
     fun validateDaySelection(
         monday: Boolean,
@@ -281,20 +271,8 @@ object ValidationHelper {
         saturday: Boolean,
         sunday: Boolean
     ): ValidationResult {
-        val errors = mutableListOf<String>()
-        
-        val hasAtLeastOneDay = monday || tuesday || wednesday || thursday || 
-                               friday || saturday || sunday
-        
-        if (!hasAtLeastOneDay) {
-            errors.add("Please select at least one day for your alarm")
-        }
-        
-        return if (errors.isEmpty()) {
-            ValidationResult.Success
-        } else {
-            ValidationResult.Error(errors)
-        }
+        // Day selection is optional - no validation needed
+        return ValidationResult.Success
     }
     
     /**
@@ -413,11 +391,8 @@ object ValidationHelper {
             }
         }
         
-        // Validate day selection
-        val dayResult = validateDaySelection(monday, tuesday, wednesday, thursday, friday, saturday, sunday)
-        if (dayResult.isError()) {
-            errors.addAll((dayResult as ValidationResult.Error).errors)
-        }
+        // Validate day selection (optional - if no days selected, alarm fires today or tomorrow)
+        // No validation needed - day selection is optional
         
         // Validate snooze settings
         val snoozeResult = validateSnoozeSettings(snoozeDuration, snoozeCount)

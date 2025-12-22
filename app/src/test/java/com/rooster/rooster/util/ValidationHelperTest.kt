@@ -133,8 +133,8 @@ class ValidationHelperTest {
     }
     
     @Test
-    fun `test validateExistingAlarm with no days selected returns error`() {
-        // Given
+    fun `test validateExistingAlarm with no days selected returns success`() {
+        // Given - no days selected is now valid (alarm will fire today or tomorrow)
         val alarm = createTestAlarm(
             monday = false,
             tuesday = false,
@@ -149,8 +149,7 @@ class ValidationHelperTest {
         val result = ValidationHelper.validateExistingAlarm(alarm)
         
         // Then
-        assertTrue("Result should be error", result.isError())
-        assertTrue("Error should mention days", result.getErrorMessage().contains("day"))
+        assertTrue("Result should be success when no days are selected", result.isSuccess())
     }
     
     @Test
@@ -249,8 +248,8 @@ class ValidationHelperTest {
     }
     
     @Test
-    fun `test validateDaySelection with no days returns error`() {
-        // When
+    fun `test validateDaySelection with no days returns success`() {
+        // When - no days selected is now valid (alarm will fire today or tomorrow)
         val result = ValidationHelper.validateDaySelection(
             monday = false,
             tuesday = false,
@@ -262,8 +261,7 @@ class ValidationHelperTest {
         )
         
         // Then
-        assertTrue("Result should be error", result.isError())
-        assertTrue("Error should mention day", result.getErrorMessage().contains("day"))
+        assertTrue("Result should be success when no days are selected", result.isSuccess())
     }
     
     @Test
