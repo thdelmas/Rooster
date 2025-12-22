@@ -15,8 +15,8 @@
         android:layout_marginHorizontal="4dp"
         app:cardBackgroundColor="@android:color/transparent"
         android:background="@drawable/alarm_card_background"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="3dp"
+        app:cardCornerRadius="6dp"
+        app:cardElevation="0dp"
         app:strokeWidth="0dp">
 
         <LinearLayout
