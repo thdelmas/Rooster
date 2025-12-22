@@ -12,7 +12,7 @@
         </shape>
     </item>
     
-    <!-- Simple background -->
+    <!-- Solid black background -->
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@color/card_background_minimal"/>
@@ -20,7 +20,7 @@
         </shape>
     </item>
     
-    <!-- Minimal border -->
+    <!-- Sun/astral color border -->
     <item>
         <shape android:shape="rectangle">
             <stroke
