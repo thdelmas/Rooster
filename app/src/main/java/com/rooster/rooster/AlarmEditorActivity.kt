@@ -1119,7 +1119,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             button.setTextColor(getColor(R.color.md_theme_dark_onPrimaryContainer))
         } else {
             button.setBackgroundColor(getColor(android.R.color.transparent))
-            button.setTextColor(getColor(R.color.md_theme_dark_primary))
+            button.setTextColor(getColor(R.color.md_theme_dark_onSurface))
         }
     }
     
