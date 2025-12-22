@@ -201,15 +201,39 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         val currentDate = Calendar.getInstance()
         val alarmDate = Calendar.getInstance().apply { timeInMillis = calculatedTime }
         
+        val weekdays = listOf(
+            alarm.sunday, alarm.monday, alarm.tuesday, alarm.wednesday,
+            alarm.thursday, alarm.friday, alarm.saturday
+        )
+        
+        // Check if any day is selected
+        val hasAnyDaySelected = weekdays.any { it }
+        
+        if (!hasAnyDaySelected) {
+            // No days selected: set for today or tomorrow based on whether time has passed
+            val todayCalendar = Calendar.getInstance()
+            val alarmTimeCalendar = Calendar.getInstance().apply { timeInMillis = calculatedTime }
+            
+            // Set today's date with the alarm's time
+            todayCalendar.set(Calendar.HOUR_OF_DAY, alarmTimeCalendar.get(Calendar.HOUR_OF_DAY))
+            todayCalendar.set(Calendar.MINUTE, alarmTimeCalendar.get(Calendar.MINUTE))
+            todayCalendar.set(Calendar.SECOND, alarmTimeCalendar.get(Calendar.SECOND))
+            todayCalendar.set(Calendar.MILLISECOND, 0)
+            
+            // If the time has already passed today, set for tomorrow
+            if (todayCalendar.timeInMillis <= currentDate.timeInMillis) {
+                todayCalendar.add(Calendar.DAY_OF_MONTH, 1)
+            }
+            
+            return todayCalendar.timeInMillis
+        }
+        
+        // Days are selected: use existing logic to find next matching day
         while (alarmDate.timeInMillis <= currentDate.timeInMillis) {
             alarmDate.add(Calendar.DAY_OF_MONTH, 1)
         }
         
         val alarmDayOfWeek = alarmDate.get(Calendar.DAY_OF_WEEK) - 1
-        val weekdays = listOf(
-            alarm.sunday, alarm.monday, alarm.tuesday, alarm.wednesday,
-            alarm.thursday, alarm.friday, alarm.saturday
-        )
         
         // Start searching from the current day and go up to 7 days
         for (i in 0 until 7) {
