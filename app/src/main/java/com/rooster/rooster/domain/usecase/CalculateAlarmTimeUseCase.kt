@@ -99,12 +99,18 @@ class CalculateAlarmTimeUseCase @Inject constructor(
                 return
             }
             
-            // Check if current data is stale
+            // Check if current data is stale or from a different day
             val currentData = astronomyRepository.getAstronomyData(forceRefresh = false)
-            val needsRefresh = currentData == null || astronomyRepository.isDataStale(currentData)
+            val needsRefresh = currentData == null || 
+                              astronomyRepository.isDataStale(currentData) ||
+                              !isDataFromToday(currentData)
             
             if (needsRefresh) {
-                Logger.i(TAG, "Astronomy data is stale or missing, fetching fresh data")
+                if (currentData != null && !isDataFromToday(currentData)) {
+                    Logger.i(TAG, "Astronomy data is from a different day, fetching fresh data for today")
+                } else {
+                    Logger.i(TAG, "Astronomy data is stale or missing, fetching fresh data")
+                }
                 val result = astronomyRepository.fetchAndCacheAstronomyData(latitude, longitude)
                 
                 when (result) {
@@ -129,6 +135,31 @@ class CalculateAlarmTimeUseCase @Inject constructor(
             Logger.e(TAG, "Error ensuring fresh astronomy data", e)
             // Continue with calculation even if fetch fails - will use cached data
         }
+    }
+    
+    /**
+     * Check if astronomy data timestamps are from today (in local time)
+     * This is important because sunrise/sunset times change daily
+     */
+    private fun isDataFromToday(astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Boolean {
+        val today = Calendar.getInstance()
+        val todayYear = today.get(Calendar.YEAR)
+        val todayDayOfYear = today.get(Calendar.DAY_OF_YEAR)
+        
+        // Convert sunrise timestamp to local time and check if it's from today
+        val sunriseCalendar = Calendar.getInstance().apply {
+            timeInMillis = astronomyData.sunrise
+        }
+        val sunriseYear = sunriseCalendar.get(Calendar.YEAR)
+        val sunriseDayOfYear = sunriseCalendar.get(Calendar.DAY_OF_YEAR)
+        
+        val isFromToday = (sunriseYear == todayYear && sunriseDayOfYear == todayDayOfYear)
+        
+        if (!isFromToday) {
+            Logger.w(TAG, "Astronomy data is from a different day (sunrise: $sunriseYear-$sunriseDayOfYear, today: $todayYear-$todayDayOfYear)")
+        }
+        
+        return isFromToday
     }
     
     private suspend fun calculateTimeInner(alarm: Alarm): Long {
@@ -295,25 +326,47 @@ class CalculateAlarmTimeUseCase @Inject constructor(
             // that when converted to local time gives 8:11 AM. We need to extract the local time
             // and apply it to today's date.
             
-            // Convert the UTC timestamp to local time to get the actual time of day
-            val localCalendar = Calendar.getInstance().apply {
-                this.timeInMillis = timeInMillis
+            // First, check if the timestamp is from today
+            val timestampValue = timeInMillis
+            val timestampCalendar = Calendar.getInstance().apply {
+                this.timeInMillis = timestampValue
             }
+            val today = Calendar.getInstance()
+            val timestampYear = timestampCalendar.get(Calendar.YEAR)
+            val timestampDayOfYear = timestampCalendar.get(Calendar.DAY_OF_YEAR)
+            val todayYear = today.get(Calendar.YEAR)
+            val todayDayOfYear = today.get(Calendar.DAY_OF_YEAR)
             
-            // Extract the time components (hour, minute, second) from the local calendar
-            val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
-            val minute = localCalendar.get(Calendar.MINUTE)
-            val second = localCalendar.get(Calendar.SECOND)
-            
-            // Create a new calendar for today in local timezone with the extracted time
-            val todayCalendar = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, hour)
-                set(Calendar.MINUTE, minute)
-                set(Calendar.SECOND, second)
-                set(Calendar.MILLISECOND, 0)
+            // If timestamp is from today, we can use it directly (after ensuring it's set to today)
+            if (timestampYear == todayYear && timestampDayOfYear == todayDayOfYear) {
+                // Timestamp is from today, but we need to ensure it's set to today's date
+                // (in case of timezone issues)
+                val todayCalendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, timestampCalendar.get(Calendar.HOUR_OF_DAY))
+                    set(Calendar.MINUTE, timestampCalendar.get(Calendar.MINUTE))
+                    set(Calendar.SECOND, timestampCalendar.get(Calendar.SECOND))
+                    set(Calendar.MILLISECOND, 0)
+                }
+                return todayCalendar.timeInMillis
+            } else {
+                // Timestamp is from a different day - extract time components and apply to today
+                // This should not happen if ensureFreshAstronomyData() worked correctly,
+                // but we handle it gracefully as a fallback
+                Logger.w(TAG, "Using astronomy data from a different day (${timestampYear}-${timestampDayOfYear} vs today ${todayYear}-${todayDayOfYear}), extracting time-of-day")
+                
+                val hour = timestampCalendar.get(Calendar.HOUR_OF_DAY)
+                val minute = timestampCalendar.get(Calendar.MINUTE)
+                val second = timestampCalendar.get(Calendar.SECOND)
+                
+                val todayCalendar = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, hour)
+                    set(Calendar.MINUTE, minute)
+                    set(Calendar.SECOND, second)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                
+                return todayCalendar.timeInMillis
             }
-            
-            return todayCalendar.timeInMillis
         } else {
             // For SharedPreferences fallback:
             // - If timestamp is in the future (likely a test mock or already processed), use as-is
