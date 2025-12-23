@@ -85,8 +85,12 @@ class ImprovedAlarmAdapter(
             alarm.enabled = isChecked
             viewModel.updateAlarm(alarm)
             // Show toast notification
-            val message = if (isChecked) "Alarm enabled" else "Alarm disabled"
-            context.toast(message)
+            if (isChecked) {
+                val message = getAlarmRingTimeMessage(alarm)
+                context.toast(message)
+            } else {
+                context.toast("Alarm disabled")
+            }
             // Alarm list will update automatically via LiveData
         }
 
@@ -160,6 +164,42 @@ class ImprovedAlarmAdapter(
             holder.modeDescription.alpha = 0.5f
             holder.repeatDays.alpha = 0.5f
         }
+    }
+
+    private fun getAlarmRingTimeMessage(alarm: Alarm): String {
+        val alarmCalendar = Calendar.getInstance()
+        alarmCalendar.timeInMillis = alarm.calculatedTime
+        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val formattedTime = sdf.format(alarmCalendar.time)
+        
+        // Determine if it's today, tomorrow, or a specific day by comparing dates
+        val today = Calendar.getInstance()
+        val tomorrow = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_MONTH, 1)
+        }
+        
+        val alarmYear = alarmCalendar.get(Calendar.YEAR)
+        val alarmMonth = alarmCalendar.get(Calendar.MONTH)
+        val alarmDay = alarmCalendar.get(Calendar.DAY_OF_MONTH)
+        
+        val todayYear = today.get(Calendar.YEAR)
+        val todayMonth = today.get(Calendar.MONTH)
+        val todayDay = today.get(Calendar.DAY_OF_MONTH)
+        
+        val tomorrowYear = tomorrow.get(Calendar.YEAR)
+        val tomorrowMonth = tomorrow.get(Calendar.MONTH)
+        val tomorrowDay = tomorrow.get(Calendar.DAY_OF_MONTH)
+        
+        val timeString = when {
+            alarmYear == todayYear && alarmMonth == todayMonth && alarmDay == todayDay -> "today at $formattedTime"
+            alarmYear == tomorrowYear && alarmMonth == tomorrowMonth && alarmDay == tomorrowDay -> "tomorrow at $formattedTime"
+            else -> {
+                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                "${dayFormat.format(alarmCalendar.time)} at $formattedTime"
+            }
+        }
+        
+        return "Alarm will ring $timeString"
     }
 }
 
