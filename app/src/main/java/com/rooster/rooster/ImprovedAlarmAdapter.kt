@@ -14,6 +14,7 @@ import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.TimeUtils
+import com.rooster.rooster.util.toast
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -83,6 +84,9 @@ class ImprovedAlarmAdapter(
             HapticFeedbackHelper.performToggleFeedback(view)
             alarm.enabled = isChecked
             viewModel.updateAlarm(alarm)
+            // Show toast notification
+            val message = if (isChecked) "Alarm enabled" else "Alarm disabled"
+            context.toast(message)
             // Alarm list will update automatically via LiveData
         }
 
