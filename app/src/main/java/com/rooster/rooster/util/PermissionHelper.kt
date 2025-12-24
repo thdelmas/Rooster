@@ -218,6 +218,28 @@ object PermissionHelper {
     }
     
     /**
+     * Check if absolutely critical permissions are granted (required for app to function)
+     * Without these, the app cannot work properly and should exit
+     */
+    fun areCriticalPermissionsGranted(context: Context): Boolean {
+        // Exact alarm permission is absolutely critical - without it, alarms won't fire
+        return isExactAlarmPermissionGranted(context)
+    }
+    
+    /**
+     * Get list of missing critical permissions (required for app to function)
+     */
+    fun getMissingCriticalPermissions(context: Context): List<String> {
+        val missing = mutableListOf<String>()
+        
+        if (!isExactAlarmPermissionGranted(context)) {
+            missing.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
+        }
+        
+        return missing
+    }
+    
+    /**
      * Get human-readable permission name
      */
     fun getPermissionName(permission: String): String {
