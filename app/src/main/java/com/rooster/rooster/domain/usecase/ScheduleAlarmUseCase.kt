@@ -57,6 +57,10 @@ class ScheduleAlarmUseCase @Inject constructor(
             scheduleWithAlarmManager(updatedAlarm)
             
             Result.success(Unit)
+        } catch (e: SecurityException) {
+            // Permission denied - this is critical, log it prominently
+            Logger.e(TAG, "SECURITY EXCEPTION: Cannot schedule alarm '${alarm.label}' (ID: ${alarm.id}) - exact alarm permission not granted", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Logger.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id})", e)
             Result.failure(e)
@@ -83,6 +87,10 @@ class ScheduleAlarmUseCase @Inject constructor(
             scheduleWithAlarmManager(updatedAlarm)
             
             Result.success(Unit)
+        } catch (e: SecurityException) {
+            // Permission denied - this is critical, log it prominently
+            Logger.e(TAG, "SECURITY EXCEPTION: Cannot schedule alarm '${alarm.label}' (ID: ${alarm.id}) with specific time - exact alarm permission not granted", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Logger.e(TAG, "Error scheduling alarm '${alarm.label}' (ID: ${alarm.id}) with specific time", e)
             Result.failure(e)
@@ -143,16 +151,23 @@ class ScheduleAlarmUseCase @Inject constructor(
                 alarmRepository.updateCalculatedTime(closestAlarm.id, closestAlarm.calculatedTime)
                 
                 // Schedule with AlarmManager
-                scheduleWithAlarmManager(closestAlarm)
-                
-                val minutesUntil = minTimeDifference / 1000 / 60
-                Logger.i(TAG, "Closest alarm set: '${closestAlarm.label}' (ID: ${closestAlarm.id}) in $minutesUntil minutes")
-                
-                Result.success(closestAlarm)
+                try {
+                    scheduleWithAlarmManager(closestAlarm)
+                    val minutesUntil = minTimeDifference / 1000 / 60
+                    Logger.i(TAG, "Closest alarm set: '${closestAlarm.label}' (ID: ${closestAlarm.id}) in $minutesUntil minutes")
+                    Result.success(closestAlarm)
+                } catch (e: SecurityException) {
+                    // Permission denied - this is critical
+                    Logger.e(TAG, "SECURITY EXCEPTION: Cannot schedule closest alarm '${closestAlarm.label}' (ID: ${closestAlarm.id}) - exact alarm permission not granted", e)
+                    Result.failure(e)
+                }
             } else {
                 Logger.w(TAG, "No valid alarms found to schedule")
                 Result.success(null)
             }
+        } catch (e: SecurityException) {
+            Logger.e(TAG, "SECURITY EXCEPTION: Error scheduling next alarm - exact alarm permission not granted", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Logger.e(TAG, "Error scheduling next alarm", e)
             Result.failure(e)
@@ -173,12 +188,58 @@ class ScheduleAlarmUseCase @Inject constructor(
         }
     }
     
+    /**
+     * Verify that an alarm is properly scheduled and enabled
+     */
+    suspend fun verifyScheduledAlarm(alarmId: Long): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val alarm = alarmRepository.getAlarmById(alarmId)
+            if (alarm == null) {
+                Logger.w(TAG, "Alarm $alarmId not found in database")
+                return@withContext Result.success(false)
+            }
+            
+            if (!alarm.enabled) {
+                Logger.w(TAG, "Alarm $alarmId is disabled")
+                return@withContext Result.success(false)
+            }
+            
+            val currentTime = System.currentTimeMillis()
+            if (alarm.calculatedTime <= currentTime) {
+                Logger.w(TAG, "Alarm $alarmId calculated time is in the past: ${alarm.calculatedTime} vs $currentTime")
+                return@withContext Result.success(false)
+            }
+            
+            val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val scheduledTime = fullDateFormat.format(Calendar.getInstance().apply { timeInMillis = alarm.calculatedTime }.time)
+            val minutesUntil = (alarm.calculatedTime - currentTime) / 1000 / 60
+            
+            Logger.i(TAG, "Alarm $alarmId verification: enabled=${alarm.enabled}, scheduled for $scheduledTime (in $minutesUntil minutes)")
+            Result.success(true)
+        } catch (e: Exception) {
+            Logger.e(TAG, "Error verifying alarm $alarmId", e)
+            Result.failure(e)
+        }
+    }
+    
     private fun scheduleWithAlarmManager(alarm: Alarm) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         
         if (alarmManager == null) {
             Logger.e(TAG, "AlarmManager is null")
             throw IllegalStateException("AlarmManager is not available")
+        }
+        
+        // CRITICAL: Check exact alarm permission before scheduling (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                val errorMsg = "CRITICAL: Exact alarm permission NOT granted! Alarm '${alarm.label}' (ID: ${alarm.id}) will NOT fire!"
+                Logger.e(TAG, errorMsg)
+                Logger.e(TAG, "User must grant SCHEDULE_EXACT_ALARM permission in settings")
+                throw SecurityException("Exact alarm permission not granted: $errorMsg")
+            } else {
+                Logger.i(TAG, "Exact alarm permission verified: GRANTED")
+            }
         }
         
         val intent = Intent(context, AlarmclockReceiver::class.java).apply {
@@ -197,10 +258,14 @@ class ScheduleAlarmUseCase @Inject constructor(
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = alarm.calculatedTime
         
-        val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val formattedDate = fullDateFormat.format(calendar.time)
+        val currentTime = System.currentTimeMillis()
+        val minutesUntil = (alarm.calculatedTime - currentTime) / 1000 / 60
         
-        Logger.d(TAG, "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
+        Logger.i(TAG, "Setting alarm '${alarm.label}' (ID: ${alarm.id}) at $formattedDate")
+        Logger.d(TAG, "Current time: ${fullDateFormat.format(Calendar.getInstance().time)}")
+        Logger.d(TAG, "Alarm will fire in $minutesUntil minutes (${alarm.calculatedTime - currentTime} ms)")
         
         val triggerTime = calendar.timeInMillis
         
@@ -208,17 +273,28 @@ class ScheduleAlarmUseCase @Inject constructor(
             when {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                    Logger.i(TAG, "Alarm scheduled successfully using setExactAndAllowWhileIdle")
                 }
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                    Logger.i(TAG, "Alarm scheduled successfully using setExact")
                 }
                 else -> {
                     alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                    Logger.i(TAG, "Alarm scheduled successfully using set")
                 }
             }
+            
+            // Log successful scheduling with details
+            Logger.i(TAG, "Alarm '${alarm.label}' (ID: ${alarm.id}) successfully scheduled for $formattedDate")
         } catch (e: SecurityException) {
-            Logger.e(TAG, "Permission denied for exact alarm", e)
-            throw e
+            val errorMsg = "SECURITY EXCEPTION: Permission denied for exact alarm. Alarm '${alarm.label}' (ID: ${alarm.id}) will NOT fire!"
+            Logger.e(TAG, errorMsg, e)
+            throw SecurityException(errorMsg, e)
+        } catch (e: Exception) {
+            val errorMsg = "UNEXPECTED ERROR scheduling alarm '${alarm.label}' (ID: ${alarm.id})"
+            Logger.e(TAG, errorMsg, e)
+            throw IllegalStateException(errorMsg, e)
         }
     }
     
