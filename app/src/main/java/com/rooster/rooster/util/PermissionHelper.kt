@@ -109,20 +109,58 @@ object PermissionHelper {
     }
     
     /**
-     * Request all required permissions
+     * Get list of requestable runtime permissions (excludes special permissions that require settings)
+     */
+    private fun getRequestableRuntimePermissions(context: Context): List<String> {
+        val allMissing = getMissingPermissions(context)
+        
+        // Filter out permissions that cannot be requested via requestPermissions():
+        // - SCHEDULE_EXACT_ALARM: Must be granted via Settings (Android 12+)
+        // - USE_FULL_SCREEN_INTENT, WAKE_LOCK, FOREGROUND_SERVICE: Typically granted via manifest
+        return allMissing.filter { permission ->
+            when (permission) {
+                Manifest.permission.SCHEDULE_EXACT_ALARM -> {
+                    // This must be handled separately via Settings
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Logger.d(TAG, "SCHEDULE_EXACT_ALARM cannot be requested via runtime permission, must use Settings")
+                    }
+                    false
+                }
+                Manifest.permission.USE_FULL_SCREEN_INTENT,
+                Manifest.permission.WAKE_LOCK,
+                Manifest.permission.FOREGROUND_SERVICE -> {
+                    // These are typically granted via manifest, not runtime permissions
+                    false
+                }
+                else -> true
+            }
+        }
+    }
+    
+    /**
+     * Request all required permissions that can be requested at runtime
+     * Note: SCHEDULE_EXACT_ALARM must be handled separately via openExactAlarmSettings()
      */
     fun requestAllPermissions(activity: Activity) {
-        val missingPermissions = getMissingPermissions(activity)
+        val requestablePermissions = getRequestableRuntimePermissions(activity)
         
-        if (missingPermissions.isNotEmpty()) {
-            Logger.i(TAG, "Requesting permissions: $missingPermissions")
+        if (requestablePermissions.isNotEmpty()) {
+            Logger.i(TAG, "Requesting runtime permissions: $requestablePermissions")
             ActivityCompat.requestPermissions(
                 activity,
-                missingPermissions.toTypedArray(),
+                requestablePermissions.toTypedArray(),
                 REQUEST_CODE_ALL_PERMISSIONS
             )
         } else {
-            Logger.i(TAG, "All permissions already granted")
+            Logger.i(TAG, "All requestable runtime permissions already granted")
+        }
+        
+        // Handle SCHEDULE_EXACT_ALARM separately if needed (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!isExactAlarmPermissionGranted(activity)) {
+                Logger.i(TAG, "SCHEDULE_EXACT_ALARM permission missing - user must grant via Settings")
+                // Don't automatically open settings here - let the calling code decide when to show the dialog
+            }
         }
     }
     
