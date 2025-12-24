@@ -53,6 +53,12 @@ class MainActivity() : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Logger.d("MainActivity", "onCreate started")
         
+        // Check critical permissions first - app cannot function without them
+        if (!checkCriticalPermissions()) {
+            // App will exit after showing dialog
+            return
+        }
+        
         // USE FIXED MAIN LAYOUT
         setContentView(R.layout.activity_main)
         Logger.d("MainActivity", "Layout set")
@@ -62,6 +68,69 @@ class MainActivity() : ComponentActivity() {
         refreshCycle()
         animateViews()
         Logger.d("MainActivity", "onCreate completed")
+    }
+    
+    /**
+     * Check if critical permissions are granted. If not, show dialog and exit app.
+     * @return true if critical permissions are granted, false otherwise (app will exit)
+     */
+    private fun checkCriticalPermissions(): Boolean {
+        if (!PermissionHelper.areCriticalPermissionsGranted(this)) {
+            val missingPermissions = PermissionHelper.getMissingCriticalPermissions(this)
+            val permissionNames = missingPermissions.joinToString(", ") { 
+                PermissionHelper.getPermissionName(it) 
+            }
+            
+            Logger.e("MainActivity", "CRITICAL: Missing required permissions: $permissionNames")
+            Logger.e("MainActivity", "App cannot function without these permissions. Exiting.")
+            
+            showCriticalPermissionDialog(permissionNames)
+            return false
+        }
+        
+        Logger.i("MainActivity", "All critical permissions granted")
+        return true
+    }
+    
+    /**
+     * Show dialog explaining that app cannot work without critical permissions
+     */
+    private fun showCriticalPermissionDialog(missingPermissions: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Required Permission Missing")
+        builder.setMessage(
+            "Rooster cannot function without the following permission:\n\n" +
+            "• $missingPermissions\n\n" +
+            "This permission is required for alarms to work properly. " +
+            "Without it, your alarms will not fire.\n\n" +
+            "Please grant this permission in settings, then restart the app."
+        )
+        builder.setPositiveButton("Open Settings") { dialog, _ ->
+            // Open exact alarm settings
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PermissionHelper.openExactAlarmSettings(this)
+            } else {
+                PermissionHelper.openAppSettings(this)
+            }
+            dialog.dismiss()
+            // Exit app after a short delay to allow user to see settings
+            handler.postDelayed({
+                finishAffinity()
+                System.exit(0)
+            }, 500)
+        }
+        builder.setNegativeButton("Exit App") { dialog, _ ->
+            dialog.dismiss()
+            finishAffinity()
+            System.exit(0)
+        }
+        builder.setCancelable(false)
+        builder.setOnDismissListener {
+            // Ensure app exits even if dialog is dismissed
+            finishAffinity()
+            System.exit(0)
+        }
+        builder.show()
     }
 
     private fun getPermissions() {
@@ -352,6 +421,18 @@ class MainActivity() : ComponentActivity() {
     
     override fun onResume() {
         super.onResume()
+        
+        // Check critical permissions again in case user granted them in settings
+        if (!PermissionHelper.areCriticalPermissionsGranted(this)) {
+            // If still missing, show dialog again
+            val missingPermissions = PermissionHelper.getMissingCriticalPermissions(this)
+            val permissionNames = missingPermissions.joinToString(", ") { 
+                PermissionHelper.getPermissionName(it) 
+            }
+            showCriticalPermissionDialog(permissionNames)
+            return
+        }
+        
         // Resume updates when app comes to foreground
         updateRunnable?.let { handler.post(it) }
     }
