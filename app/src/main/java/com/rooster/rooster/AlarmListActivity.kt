@@ -10,6 +10,7 @@ import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Calendar
 
 @AndroidEntryPoint
 class AlarmListActivity : AppCompatActivity() {
@@ -75,8 +76,15 @@ class AlarmListActivity : AppCompatActivity() {
 
     private fun updateAlarmList(alarms: List<Alarm>) {
         val recyclerView = findViewById<RecyclerView>(R.id.alarmListView)
+        // Sort alarms by time only (ignoring date)
+        val sortedAlarms = alarms.sortedBy { alarm ->
+            val calendar = Calendar.getInstance()
+            calendar.timeInMillis = alarm.calculatedTime
+            // Calculate minutes since midnight for comparison
+            calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+        }
         // Use ImprovedAlarmAdapter with ViewModel instead of AlarmDbHelper
-        recyclerView.adapter = ImprovedAlarmAdapter(alarms, viewModel)
+        recyclerView.adapter = ImprovedAlarmAdapter(sortedAlarms, viewModel)
     }
 
     private fun updateEmptyState(isEmpty: Boolean) {
