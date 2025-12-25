@@ -19,11 +19,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/transparent"
-            app:title="My Alarms"
+            app:title="Alarms"
             app:titleTextColor="@color/md_theme_dark_onBackground"
-            app:titleTextAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
-            app:navigationIcon="@drawable/alarm"
-            app:navigationIconTint="@color/md_theme_dark_primary"
             style="@style/Widget.Material3.Toolbar"/>
 
     </com.google.android.material.appbar.AppBarLayout>
