@@ -133,17 +133,17 @@ class ImprovedAlarmAdapter(
     }
 
     private fun getDayInformationText(alarm: Alarm): String {
-        val days = mutableListOf<String>()
-        if (alarm.monday) days.add("Mon")
-        if (alarm.tuesday) days.add("Tue")
-        if (alarm.wednesday) days.add("Wed")
-        if (alarm.thursday) days.add("Thu")
-        if (alarm.friday) days.add("Fri")
-        if (alarm.saturday) days.add("Sat")
-        if (alarm.sunday) days.add("Sun")
+        val dayList = mutableListOf<Int>()
+        if (alarm.monday) dayList.add(Calendar.MONDAY)
+        if (alarm.tuesday) dayList.add(Calendar.TUESDAY)
+        if (alarm.wednesday) dayList.add(Calendar.WEDNESDAY)
+        if (alarm.thursday) dayList.add(Calendar.THURSDAY)
+        if (alarm.friday) dayList.add(Calendar.FRIDAY)
+        if (alarm.saturday) dayList.add(Calendar.SATURDAY)
+        if (alarm.sunday) dayList.add(Calendar.SUNDAY)
 
         return when {
-            days.isEmpty() -> {
+            dayList.isEmpty() -> {
                 // If no repeat days, show Today or Tomorrow based on calculatedTime
                 val alarmCalendar = Calendar.getInstance()
                 alarmCalendar.timeInMillis = alarm.calculatedTime
@@ -164,10 +164,53 @@ class ImprovedAlarmAdapter(
                     }
                 }
             }
-            days.size == 7 -> "Every day"
-            days.size == 5 && !alarm.saturday && !alarm.sunday -> "Weekdays"
-            days.size == 2 && alarm.saturday && alarm.sunday -> "Weekends"
-            else -> days.joinToString(", ")
+            dayList.size == 7 -> "Every day"
+            dayList.size == 5 && !alarm.saturday && !alarm.sunday -> "Weekdays"
+            dayList.size == 2 && alarm.saturday && alarm.sunday -> "Weekends"
+            else -> {
+                // Check if days are consecutive
+                val sortedDays = dayList.sorted()
+                val formattedDays = sortedDays.map { getShortDayName(it) }
+                
+                // Check if all days are consecutive (more than 2)
+                if (sortedDays.size > 2 && areDaysConsecutive(sortedDays)) {
+                    "${formattedDays.first()} - ${formattedDays.last()}"
+                } else {
+                    formattedDays.joinToString(", ")
+                }
+            }
+        }
+    }
+    
+    private fun areDaysConsecutive(days: List<Int>): Boolean {
+        if (days.size < 2) return false
+        
+        // Check if days are consecutive in a week
+        // Handle wrap-around (e.g., Sat, Sun, Mon) - but for simplicity, we'll only handle
+        // consecutive days that don't wrap around the week boundary
+        for (i in 0 until days.size - 1) {
+            val current = days[i]
+            val next = days[i + 1]
+            
+            // Check if next day is exactly one day after current (no wrap-around)
+            val expectedNext = current + 1
+            if (next != expectedNext) {
+                return false
+            }
+        }
+        return true
+    }
+    
+    private fun getShortDayName(dayOfWeek: Int): String {
+        return when (dayOfWeek) {
+            Calendar.MONDAY -> "Mon"
+            Calendar.TUESDAY -> "Tue"
+            Calendar.WEDNESDAY -> "Wed"
+            Calendar.THURSDAY -> "Thu"
+            Calendar.FRIDAY -> "Fri"
+            Calendar.SATURDAY -> "Sat"
+            Calendar.SUNDAY -> "Sun"
+            else -> "?"
         }
     }
 
