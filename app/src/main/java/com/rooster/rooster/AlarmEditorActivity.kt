@@ -1,6 +1,5 @@
 package com.rooster.rooster
 
-import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -18,6 +17,8 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import com.rooster.rooster.data.repository.AlarmRepository
@@ -1124,17 +1125,22 @@ class AlarmEditorActivity : AppCompatActivity() {
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = selectedTime
         
-        com.rooster.rooster.ui.AppleTimePickerDialog(
-            this,
-            calendar.get(Calendar.HOUR_OF_DAY),
-            calendar.get(Calendar.MINUTE)
-        ) { hour, minute ->
-            calendar.set(Calendar.HOUR_OF_DAY, hour)
-            calendar.set(Calendar.MINUTE, minute)
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+            .setMinute(calendar.get(Calendar.MINUTE))
+            .setTitleText("Select Time")
+            .build()
+        
+        picker.addOnPositiveButtonClickListener {
+            calendar.set(Calendar.HOUR_OF_DAY, picker.hour)
+            calendar.set(Calendar.MINUTE, picker.minute)
             selectedTime = calendar.timeInMillis
             updateClassicTimeDisplay()
             saveAlarmDirectly()
-        }.show()
+        }
+        
+        picker.show(supportFragmentManager, "MaterialTimePicker")
     }
     
     private fun showTimePicker() {

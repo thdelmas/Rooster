@@ -17,7 +17,10 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import androidx.recyclerview.widget.RecyclerView
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.util.AnimationHelper
@@ -283,23 +286,9 @@ class AlarmAdapter(
                 } else if (index == 2) {
                     alarm.relative2 = alarmRelatives[which]
                 }
-                val pickerDialog = when (alarmRelatives[which]) {
+                when (alarmRelatives[which]) {
                     "Pick Time" -> {
-                        TimePickerDialog(context, { _, hour, minute ->
-                            val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
-                            val calendar = Calendar.getInstance()
-                            calendar.set(Calendar.HOUR_OF_DAY, hour)
-                            calendar.set(Calendar.MINUTE, minute)
-                            if (index == 1) {
-                                alarm.time1 = calendar.time.time
-                            } else if (index == 2) {
-                                alarm.time2 = calendar.time.time
-                            }
-                            alarm.enabled = true
-                            swicthEnabled.isChecked = alarm.enabled
-                            viewModel.updateAlarm(alarm)
-                            arrangeLayout(context, container, alarm, alarm.mode, holder)
-                        }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
+                        showMaterialTimePicker(context, container, alarm, index, holder)
                     }
                     else -> {
                         // Update the alarm in the database
@@ -315,10 +304,8 @@ class AlarmAdapter(
                         swicthEnabled.isChecked = alarm.enabled
                         viewModel.updateAlarm(alarm)
                         arrangeLayout(context, container, alarm, alarm.mode, holder)
-                        null
                     }
                 }
-                pickerDialog?.show()
             }
             .create()
         dialog.show()
@@ -356,16 +343,7 @@ class AlarmAdapter(
             tvTime5.visibility = View.VISIBLE
         }
         tvTime2.setOnClickListener {
-            var picker = TimePickerDialog(context, { _, hour, minute ->
-                val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
-                alarm.time1 = (hour.toLong() * 60 + minute) * 60
-                alarm.enabled = true
-                swicthEnabled.isChecked = alarm.enabled
-                Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
-                viewModel.updateAlarm(alarm)
-                arrangeLayout(context, container, alarm, alarm.mode, holder)
-            }, (alarm.time1 / 3600).toInt(), (alarm.time1 % 60 / 60).toInt(), true)
-            picker.show()
+            showMaterialTimePickerForTime1(context, container, alarm, holder)
         }
 
         tvTime3.setOnClickListener {
@@ -539,5 +517,108 @@ class AlarmAdapter(
             Log.e("AlarmAdapter", "Error getting ringtone title", e)
             "Unknown Ringtone"
         }
+    }
+    
+    private fun showMaterialTimePicker(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        index: Int,
+        holder: ViewHolder
+    ) {
+        if (context !is FragmentActivity) {
+            // Fallback to TimePickerDialog if context is not a FragmentActivity
+            val currentHour = (alarm.time1 / 3600).toInt()
+            val currentMinute = ((alarm.time1 % 3600) / 60).toInt()
+            TimePickerDialog(context, { _, hour, minute ->
+                val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
+                if (index == 1) {
+                    alarm.time1 = (hour.toLong() * 60 + minute) * 60
+                } else if (index == 2) {
+                    alarm.time2 = (hour.toLong() * 60 + minute) * 60
+                }
+                alarm.enabled = true
+                swicthEnabled.isChecked = alarm.enabled
+                viewModel.updateAlarm(alarm)
+                arrangeLayout(context, container, alarm, alarm.mode, holder)
+            }, currentHour, currentMinute, true).show()
+            return
+        }
+        
+        val calendar = Calendar.getInstance()
+        if (index == 1) {
+            calendar.timeInMillis = alarm.time1 * 1000
+        } else if (index == 2) {
+            calendar.timeInMillis = alarm.time2 * 1000
+        }
+        
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+            .setMinute(calendar.get(Calendar.MINUTE))
+            .setTitleText("Select Time")
+            .build()
+        
+        picker.addOnPositiveButtonClickListener {
+            val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
+            calendar.set(Calendar.HOUR_OF_DAY, picker.hour)
+            calendar.set(Calendar.MINUTE, picker.minute)
+            if (index == 1) {
+                alarm.time1 = calendar.time.time / 1000
+            } else if (index == 2) {
+                alarm.time2 = calendar.time.time / 1000
+            }
+            alarm.enabled = true
+            swicthEnabled.isChecked = alarm.enabled
+            viewModel.updateAlarm(alarm)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
+        }
+        
+        picker.show(context.supportFragmentManager, "MaterialTimePicker")
+    }
+    
+    private fun showMaterialTimePickerForTime1(
+        context: Context,
+        container: LinearLayout,
+        alarm: Alarm,
+        holder: ViewHolder
+    ) {
+        if (context !is FragmentActivity) {
+            // Fallback to TimePickerDialog if context is not a FragmentActivity
+            val currentHour = (alarm.time1 / 3600).toInt()
+            val currentMinute = ((alarm.time1 % 3600) / 60).toInt()
+            TimePickerDialog(context, { _, hour, minute ->
+                val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
+                alarm.time1 = (hour.toLong() * 60 + minute) * 60
+                alarm.enabled = true
+                swicthEnabled.isChecked = alarm.enabled
+                Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
+                viewModel.updateAlarm(alarm)
+                arrangeLayout(context, container, alarm, alarm.mode, holder)
+            }, currentHour, currentMinute, true).show()
+            return
+        }
+        
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = alarm.time1 * 1000
+        
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+            .setMinute(calendar.get(Calendar.MINUTE))
+            .setTitleText("Select Time")
+            .build()
+        
+        picker.addOnPositiveButtonClickListener {
+            val swicthEnabled = container.findViewById<MaterialSwitch>(R.id.switchAlarmEnabled)
+            alarm.time1 = (picker.hour.toLong() * 60 + picker.minute) * 60
+            alarm.enabled = true
+            swicthEnabled.isChecked = alarm.enabled
+            Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
+            viewModel.updateAlarm(alarm)
+            arrangeLayout(context, container, alarm, alarm.mode, holder)
+        }
+        
+        picker.show(context.supportFragmentManager, "MaterialTimePicker")
     }
 }
