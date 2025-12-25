@@ -72,8 +72,8 @@ class ImprovedAlarmAdapter(
             holder.modeDescription.text = "Classic alarm"
         }
 
-        // Set repeat days
-        holder.repeatDays.text = getRepeatDaysText(alarm)
+        // Set day information (Today/Tomorrow/Days interval/day list/every day)
+        holder.repeatDays.text = getDayInformationText(alarm)
 
         // Set enable switch
         holder.enableSwitch.isChecked = alarm.enabled
@@ -132,7 +132,7 @@ class ImprovedAlarmAdapter(
         }
     }
 
-    private fun getRepeatDaysText(alarm: Alarm): String {
+    private fun getDayInformationText(alarm: Alarm): String {
         val days = mutableListOf<String>()
         if (alarm.monday) days.add("Mon")
         if (alarm.tuesday) days.add("Tue")
@@ -143,7 +143,27 @@ class ImprovedAlarmAdapter(
         if (alarm.sunday) days.add("Sun")
 
         return when {
-            days.isEmpty() -> "Once"
+            days.isEmpty() -> {
+                // If no repeat days, show Today or Tomorrow based on calculatedTime
+                val alarmCalendar = Calendar.getInstance()
+                alarmCalendar.timeInMillis = alarm.calculatedTime
+                val today = Calendar.getInstance()
+                val tomorrow = Calendar.getInstance().apply {
+                    add(Calendar.DAY_OF_MONTH, 1)
+                }
+                
+                when {
+                    alarmCalendar.get(Calendar.YEAR) == today.get(Calendar.YEAR) &&
+                    alarmCalendar.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) -> "Today"
+                    alarmCalendar.get(Calendar.YEAR) == tomorrow.get(Calendar.YEAR) &&
+                    alarmCalendar.get(Calendar.DAY_OF_YEAR) == tomorrow.get(Calendar.DAY_OF_YEAR) -> "Tomorrow"
+                    else -> {
+                        // Show day name if it's further out
+                        val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
+                        dayFormat.format(alarmCalendar.time)
+                    }
+                }
+            }
             days.size == 7 -> "Every day"
             days.size == 5 && !alarm.saturday && !alarm.sunday -> "Weekdays"
             days.size == 2 && alarm.saturday && alarm.sunday -> "Weekends"

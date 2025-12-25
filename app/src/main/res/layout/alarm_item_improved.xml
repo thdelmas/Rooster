@@ -22,7 +22,7 @@
         android:orientation="vertical"
         android:padding="@dimen/card_padding_small">
 
-        <!-- Top Row: Badge + Time + Switch -->
+        <!-- 1st Line: Icon + (Alarm name above Solar event) + Toggle -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,7 +30,7 @@
             android:gravity="center_vertical"
             android:layout_marginBottom="8dp">
 
-            <!-- Mode Badge -->
+            <!-- Mode Badge Icon -->
             <TextView
                 android:id="@+id/modeBadgeText"
                 android:layout_width="wrap_content"
@@ -39,18 +39,36 @@
                 android:text="☀️"
                 android:textSize="20sp"/>
 
-            <!-- Time Display -->
-            <TextView
-                android:id="@+id/tvAlarmTime"
+            <!-- Alarm Label and Mode Description (stacked vertically) -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="06:30 AM"
-                android:textColor="@color/md_theme_dark_primary"
-                android:textSize="32sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-light"
-                android:letterSpacing="-0.02"/>
+                android:orientation="vertical">
+
+                <!-- Alarm Label -->
+                <TextView
+                    android:id="@+id/textViewAlarmLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Morning Alarm"
+                    android:textColor="@color/md_theme_dark_onSurface"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <!-- Mode Description (Solar event) -->
+                <TextView
+                    android:id="@+id/tvModeDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="At Sunrise"
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                    android:alpha="0.85"/>
+
+            </LinearLayout>
 
             <!-- Enable Switch -->
             <com.google.android.material.materialswitch.MaterialSwitch
@@ -63,73 +81,28 @@
 
         </LinearLayout>
 
-        <!-- Bottom Row: Label + Mode Description + Repeat Days -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- 2nd Line: Alarm Scheduled Time -->
+        <TextView
+            android:id="@+id/tvAlarmTime"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="06:30 AM"
+            android:textColor="@color/md_theme_dark_primary"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-light"
+            android:letterSpacing="-0.02"
+            android:layout_marginBottom="8dp"/>
 
-            <!-- Alarm Label -->
-            <TextView
-                android:id="@+id/textViewAlarmLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Morning Alarm"
-                android:textColor="@color/md_theme_dark_onSurface"
-                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:layout_marginBottom="4dp"/>
-
-            <!-- Mode Description and Repeat Days in same row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <!-- Mode Description -->
-                <TextView
-                    android:id="@+id/tvModeDescription"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="At Sunrise"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                    android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                    android:alpha="0.85"/>
-
-                <!-- Repeat Days -->
-                <LinearLayout
-                    android:id="@+id/repeatDaysRow"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📅"
-                        android:textSize="14sp"
-                        android:layout_marginEnd="4dp"
-                        android:alpha="0.7"/>
-
-                    <TextView
-                        android:id="@+id/tvRepeatDays"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Mon, Tue, Wed, Thu, Fri"
-                        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
-                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                        android:alpha="0.8"/>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
-        </LinearLayout>
+        <!-- 3rd Line: Day Information (Today/Tomorrow/Days interval/day list/every day) -->
+        <TextView
+            android:id="@+id/tvRepeatDays"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mon, Tue, Wed, Thu, Fri"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="@color/md_theme_dark_onSurfaceVariant"
+            android:alpha="0.85"/>
 
     </LinearLayout>
 
