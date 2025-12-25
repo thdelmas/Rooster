@@ -19,6 +19,7 @@ import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
+import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
@@ -45,6 +46,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     private val editorViewModel: AlarmEditorViewModel by viewModels()
     @Inject lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     @Inject lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
+    @Inject lateinit var alarmRepository: AlarmRepository
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
@@ -1354,19 +1356,35 @@ class AlarmEditorActivity : AppCompatActivity() {
             viewModel.updateAlarm(updatedAlarm)
             
             // Schedule the alarm with AlarmManager after saving
+            // Wait for the database update to complete, then fetch and schedule the alarm
             activityScope.launch(Dispatchers.IO) {
                 try {
-                    val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                    Log.d("AlarmEditorActivity", "Waiting for alarm update to complete...")
+                    // Wait a bit for the database update to complete
+                    kotlinx.coroutines.delay(500)
+                    
+                    // Fetch the updated alarm from the repository
+                    val savedAlarm = alarmRepository.getAlarmById(updatedAlarm.id)
+                    if (savedAlarm == null) {
+                        Log.e("AlarmEditorActivity", "Could not find alarm ${updatedAlarm.id} after save")
+                        return@launch
+                    }
+                    
+                    Log.d("AlarmEditorActivity", "Fetched alarm ${savedAlarm.id} after save, enabled=${savedAlarm.enabled}, calculatedTime=${savedAlarm.calculatedTime}")
+                    
+                    if (!savedAlarm.enabled) {
+                        Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
+                        return@launch
+                    }
+                    
+                    // Schedule the specific alarm
+                    val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
                     result.fold(
-                        onSuccess = { alarm ->
-                            if (alarm != null) {
-                                Log.d("AlarmEditorActivity", "Alarm scheduled successfully: ${alarm.label} (ID: ${alarm.id})")
-                            } else {
-                                Log.d("AlarmEditorActivity", "No enabled alarms to schedule")
-                            }
+                        onSuccess = {
+                            Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled successfully")
                         },
                         onFailure = { e ->
-                            Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                            Log.e("AlarmEditorActivity", "Error scheduling alarm '${savedAlarm.label}' (ID: ${savedAlarm.id})", e)
                         }
                     )
                 } catch (e: Exception) {
@@ -1488,19 +1506,35 @@ class AlarmEditorActivity : AppCompatActivity() {
                 viewModel.updateAlarm(fullAlarm)
                 
                 // Schedule the alarm with AlarmManager after saving
+                // Wait for the database update to complete, then fetch and schedule the alarm
                 activityScope.launch(Dispatchers.IO) {
                     try {
-                        val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                        Log.d("AlarmEditorActivity", "Waiting for alarm update to complete...")
+                        // Wait a bit for the database update to complete
+                        kotlinx.coroutines.delay(500)
+                        
+                        // Fetch the updated alarm from the repository
+                        val savedAlarm = alarmRepository.getAlarmById(newAlarmId)
+                        if (savedAlarm == null) {
+                            Log.e("AlarmEditorActivity", "Could not find alarm $newAlarmId after save")
+                            return@launch
+                        }
+                        
+                        Log.d("AlarmEditorActivity", "Fetched alarm ${savedAlarm.id} after save, enabled=${savedAlarm.enabled}, calculatedTime=${savedAlarm.calculatedTime}")
+                        
+                        if (!savedAlarm.enabled) {
+                            Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
+                            return@launch
+                        }
+                        
+                        // Schedule the specific alarm
+                        val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
                         result.fold(
-                            onSuccess = { alarm ->
-                                if (alarm != null) {
-                                    Log.d("AlarmEditorActivity", "Alarm scheduled successfully: ${alarm.label} (ID: ${alarm.id})")
-                                } else {
-                                    Log.d("AlarmEditorActivity", "No enabled alarms to schedule")
-                                }
+                            onSuccess = {
+                                Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled successfully")
                             },
                             onFailure = { e ->
-                                Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                                Log.e("AlarmEditorActivity", "Error scheduling alarm '${savedAlarm.label}' (ID: ${savedAlarm.id})", e)
                             }
                         )
                     } catch (e: Exception) {
