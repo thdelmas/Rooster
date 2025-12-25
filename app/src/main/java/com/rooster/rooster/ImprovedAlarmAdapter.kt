@@ -25,7 +25,6 @@ class ImprovedAlarmAdapter(
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val alarmCard: MaterialCardView = itemView.findViewById(R.id.alarmCard)
-        val modeBadge: MaterialCardView = itemView.findViewById(R.id.modeBadge)
         val modeBadgeText: TextView = itemView.findViewById(R.id.modeBadgeText)
         val alarmLabel: TextView = itemView.findViewById(R.id.textViewAlarmLabel)
         val alarmTime: TextView = itemView.findViewById(R.id.tvAlarmTime)
@@ -66,12 +65,10 @@ class ImprovedAlarmAdapter(
         if (alarm.relative1 != "Pick Time") {
             // Sun mode
             holder.modeBadgeText.text = "☀️"
-            holder.modeBadge.setCardBackgroundColor(context.getColor(R.color.md_theme_dark_tertiaryContainer))
             holder.modeDescription.text = getModeDescription(alarm)
         } else {
             // Classic mode
             holder.modeBadgeText.text = "🕐"
-            holder.modeBadge.setCardBackgroundColor(context.getColor(R.color.md_theme_dark_primaryContainer))
             holder.modeDescription.text = "Classic alarm"
         }
 
