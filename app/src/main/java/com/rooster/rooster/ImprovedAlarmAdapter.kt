@@ -54,8 +54,12 @@ class ImprovedAlarmAdapter(
             .setInterpolator(android.view.animation.DecelerateInterpolator())
             .start()
 
-        // Set alarm label
-        holder.alarmLabel.text = alarm.label
+        // Set alarm label - hide if empty or default name
+        val shouldShowLabel = alarm.label.isNotBlank() && alarm.label != "Alarm"
+        holder.alarmLabel.visibility = if (shouldShowLabel) View.VISIBLE else View.GONE
+        if (shouldShowLabel) {
+            holder.alarmLabel.text = alarm.label
+        }
 
         // Display time (calculatedTime should already be set from repository)
         val timeStr = formatTime(alarm.calculatedTime)
