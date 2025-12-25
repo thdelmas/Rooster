@@ -24,7 +24,10 @@ class AlarmclockReceiver : BroadcastReceiver() {
     private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     
     override fun onReceive(context: Context, intent: Intent) {
-        Logger.i("AlarmclockReceiver", "Received broadcast: ${intent?.action}")
+        val action = intent?.action
+        Logger.i("AlarmclockReceiver", "=== ALARM RECEIVER TRIGGERED ===")
+        Logger.i("AlarmclockReceiver", "Received broadcast: $action")
+        Logger.i("AlarmclockReceiver", "Intent extras: ${intent?.extras?.keySet()?.joinToString()}")
         
         if (intent != null && "com.rooster.alarmmanager" == intent.action) {
             // Safe null handling - validate alarm_id before use

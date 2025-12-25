@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
+import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
@@ -43,6 +44,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     private val viewModel: AlarmListViewModel by viewModels()
     private val editorViewModel: AlarmEditorViewModel by viewModels()
     @Inject lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
+    @Inject lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
@@ -1351,6 +1353,27 @@ class AlarmEditorActivity : AppCompatActivity() {
             // Use ViewModel to update alarm (which uses Repository and recalculates time)
             viewModel.updateAlarm(updatedAlarm)
             
+            // Schedule the alarm with AlarmManager after saving
+            activityScope.launch(Dispatchers.IO) {
+                try {
+                    val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                    result.fold(
+                        onSuccess = { alarm ->
+                            if (alarm != null) {
+                                Log.d("AlarmEditorActivity", "Alarm scheduled successfully: ${alarm.label} (ID: ${alarm.id})")
+                            } else {
+                                Log.d("AlarmEditorActivity", "No enabled alarms to schedule")
+                            }
+                        },
+                        onFailure = { e ->
+                            Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                        }
+                    )
+                } catch (e: Exception) {
+                    Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                }
+            }
+            
             // Clear flag after a brief delay to allow observer updates again
             // The delay gives time for the save to complete and observer to process
             alarmLabelInput.postDelayed({
@@ -1463,6 +1486,27 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 // Update with all fields (this will also recalculate the time)
                 viewModel.updateAlarm(fullAlarm)
+                
+                // Schedule the alarm with AlarmManager after saving
+                activityScope.launch(Dispatchers.IO) {
+                    try {
+                        val result = scheduleAlarmUseCase.scheduleNextAlarm()
+                        result.fold(
+                            onSuccess = { alarm ->
+                                if (alarm != null) {
+                                    Log.d("AlarmEditorActivity", "Alarm scheduled successfully: ${alarm.label} (ID: ${alarm.id})")
+                                } else {
+                                    Log.d("AlarmEditorActivity", "No enabled alarms to schedule")
+                                }
+                            },
+                            onFailure = { e ->
+                                Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                            }
+                        )
+                    } catch (e: Exception) {
+                        Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                    }
+                }
                 
                 // Clear flag after a brief delay
                 alarmLabelInput.postDelayed({
