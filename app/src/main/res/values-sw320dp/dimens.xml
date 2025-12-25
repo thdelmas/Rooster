@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Small screens (phones) - Reduced sizes -->
+    <dimen name="text_time_display_large">64sp</dimen>
+    <dimen name="emoji_size_xlarge">40sp</dimen>
+    <dimen name="emoji_size_large">32sp</dimen>
+    <dimen name="card_padding_xlarge">24dp</dimen>
+    <dimen name="card_padding_large">16dp</dimen>
+    <dimen name="card_height_large">120dp</dimen>
+    <dimen name="screen_padding_large">16dp</dimen>
+</resources>
+
+
+
+
+
