@@ -318,24 +318,54 @@
                         android:visibility="gone"
                         android:layout_marginBottom="16dp">
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="8dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Offset"
+                                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                                android:textColor="@color/md_theme_dark_onSurfaceVariant"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/offsetTimeButton"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="30m"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:minWidth="80dp"
+                                app:cornerRadius="8dp"/>
+
+                        </LinearLayout>
+
+                        <!-- Slider for easy adjustment -->
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/offsetTimeSlider"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:valueFrom="5"
+                            android:valueTo="720"
+                            android:stepSize="5"
+                            android:value="30"
+                            android:layout_marginBottom="16dp"
+                            app:thumbColor="@color/md_theme_dark_primary"
+                            app:trackColorActive="@color/md_theme_dark_primary"
+                            app:trackColorInactive="@color/md_theme_dark_surfaceVariant"/>
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Offset"
-                            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                            android:text="Drag slider or tap button for precise time"
+                            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                             android:textColor="@color/md_theme_dark_onSurfaceVariant"
-                            android:layout_marginBottom="8dp"/>
-
-                        <!-- Offset Time Button (opens time picker) -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/offsetTimeButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="60dp"
-                            android:text="30m"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:gravity="center"
                             android:layout_marginBottom="12dp"/>
 
                         <!-- Quick Preset Buttons -->
@@ -497,17 +527,46 @@
                         android:text="Set Time"
                         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                         android:textColor="@color/md_theme_dark_onSurface"
-                        android:layout_marginBottom="16dp"/>
+                        android:layout_marginBottom="8dp"/>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/selectTimeButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tap to set alarm time"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+                        android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                        android:layout_marginBottom="12dp"/>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/classicTimeCard"
                         android:layout_width="match_parent"
-                        android:layout_height="120dp"
-                        android:text="08:30 AM"
-                        android:textSize="40sp"
-                        android:textStyle="bold"
-                            app:cornerRadius="6dp"/>
+                        android:layout_height="wrap_content"
+                        app:cardBackgroundColor="@color/md_theme_dark_primaryContainer"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="4dp"
+                        app:strokeWidth="2dp"
+                        app:strokeColor="@color/md_theme_dark_primary"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/selectTimeButton"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="140dp"
+                            android:text="08:30 AM"
+                            android:textSize="56sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/md_theme_dark_onPrimaryContainer"
+                            android:background="@android:color/transparent"
+                            app:icon="@android:drawable/ic_menu_edit"
+                            app:iconGravity="end"
+                            app:iconTint="@color/md_theme_dark_onPrimaryContainer"
+                            app:iconSize="24dp"
+                            android:padding="16dp"/>
+
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 
