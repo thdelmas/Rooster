@@ -16,6 +16,7 @@ import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
@@ -81,6 +82,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     private lateinit var offsetTimeLayout: View
     private lateinit var solarEvent2Layout: View
     private lateinit var selectTimeButton: MaterialButton
+    private lateinit var offsetTimeSlider: Slider
     private lateinit var saveFab: ExtendedFloatingActionButton
     private lateinit var sunCourseView: SunCourseView
     private lateinit var vibrateSwitch: MaterialSwitch
@@ -165,6 +167,9 @@ class AlarmEditorActivity : AppCompatActivity() {
         
         // Classic mode elements
         selectTimeButton = findViewById(R.id.selectTimeButton)
+        
+        // Offset time slider
+        offsetTimeSlider = findViewById(R.id.offsetTimeSlider)
         
         // Sun course view
         sunCourseView = findViewById(R.id.sunCourseView)
@@ -335,6 +340,18 @@ class AlarmEditorActivity : AppCompatActivity() {
             showOffsetTimePicker()
         }
         
+        // Offset time slider for easy adjustment
+        offsetTimeSlider.addOnChangeListener { slider, value, fromUser ->
+            if (fromUser) {
+                HapticFeedbackHelper.performLightClick(slider)
+                offsetMinutes = value.toInt()
+                updateOffsetDisplay()
+                updateCalculatedTime()
+                updateSunCourseVisualization()
+                saveAlarmDirectly()
+            }
+        }
+        
         // Quick preset buttons
         setupOffsetPresetButton(R.id.preset15mButton, 15)
         setupOffsetPresetButton(R.id.preset30mButton, 30)
@@ -391,10 +408,15 @@ class AlarmEditorActivity : AppCompatActivity() {
         }
         
         // Classic time selection - Use Apple-style time picker
-        selectTimeButton.setOnClickListener {
+        // Make both the button and the card clickable
+        val classicTimeCard = findViewById<MaterialCardView>(R.id.classicTimeCard)
+        val timePickerClickHandler = View.OnClickListener {
             HapticFeedbackHelper.performClick(it)
+            AnimationHelper.scaleWithBounce(it)
             showAppleTimePicker()
         }
+        selectTimeButton.setOnClickListener(timePickerClickHandler)
+        classicTimeCard?.setOnClickListener(timePickerClickHandler)
         
         // Day buttons
         dayButtons.forEach { (day, button) ->
@@ -633,7 +655,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 if (solarEvent2Layout.visibility == View.VISIBLE) {
                     AnimationHelper.fadeOut(solarEvent2Layout) { solarEvent2Layout.visibility = View.GONE }
                 }
-                // Initialize slider value
+                // Initialize slider and display value
                 updateOffsetDisplay()
             }
             "Between" -> {
@@ -687,6 +709,8 @@ class AlarmEditorActivity : AppCompatActivity() {
     private fun updateOffsetDisplay() {
         val offsetTimeButton = findViewById<MaterialButton>(R.id.offsetTimeButton)
         offsetTimeButton?.text = TimeUtils.formatMinutesAsHours(offsetMinutes)
+        // Update slider value without triggering listener
+        offsetTimeSlider.value = offsetMinutes.toFloat().coerceIn(5f, 720f)
     }
     
     private fun setupOffsetPresetButton(buttonId: Int, minutes: Int) {
