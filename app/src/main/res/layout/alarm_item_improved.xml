@@ -22,7 +22,7 @@
         android:orientation="vertical"
         android:padding="@dimen/card_padding_small">
 
-        <!-- 1st Line: Icon + (Alarm name above Solar event) + Toggle -->
+        <!-- 1st Line: Icon + (Alarm name above Solar event) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -70,6 +70,28 @@
 
             </LinearLayout>
 
+        </LinearLayout>
+
+        <!-- 2nd Line: Alarm Scheduled Time + Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvAlarmTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="06:30 AM"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-light"
+                android:letterSpacing="-0.02"/>
+
             <!-- Enable Switch -->
             <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switchAlarmEnabled"
@@ -80,19 +102,6 @@
                 app:trackTint="@color/md_theme_dark_primaryContainer"/>
 
         </LinearLayout>
-
-        <!-- 2nd Line: Alarm Scheduled Time -->
-        <TextView
-            android:id="@+id/tvAlarmTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="06:30 AM"
-            android:textColor="@color/md_theme_dark_primary"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-light"
-            android:letterSpacing="-0.02"
-            android:layout_marginBottom="8dp"/>
 
         <!-- 3rd Line: Day Information (Today/Tomorrow/Days interval/day list/every day) -->
         <TextView
