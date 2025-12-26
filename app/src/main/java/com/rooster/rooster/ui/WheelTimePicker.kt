@@ -193,7 +193,6 @@ class WheelTimePicker @JvmOverloads constructor(
     }
     
     private fun fling(velocityY: Int) {
-        val maxY = (items.size * itemHeight).toInt()
         scroller.fling(
             0, currentOffset.toInt(),
             0, velocityY,
