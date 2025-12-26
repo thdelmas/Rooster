@@ -56,6 +56,16 @@ android {
     }
 }
 
+kapt {
+    correctErrorTypes true
+    // Configure Dagger fastInit option
+    arguments {
+        arg("dagger.fastInit", "enabled")
+    }
+    // Map diagnostic locations for better error reporting
+    mapDiagnosticLocations = true
+}
+
 dependencies {
 
     implementation 'androidx.core:core-ktx:1.12.0'
