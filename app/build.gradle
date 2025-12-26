@@ -58,12 +58,12 @@ android {
 
 kapt {
     correctErrorTypes true
-    // Configure Dagger fastInit option
-    arguments {
-        arg("dagger.fastInit", "enabled")
-    }
     // Map diagnostic locations for better error reporting
     mapDiagnosticLocations = true
+    // Note: Warnings about unrecognized options (like dagger.fastInit, kapt.kotlin.generated)
+    // are expected and harmless. They occur because kapt passes options to all processors,
+    // but not all processors (e.g., Room) recognize Hilt-specific options.
+    // This is normal behavior and doesn't affect functionality.
 }
 
 dependencies {
