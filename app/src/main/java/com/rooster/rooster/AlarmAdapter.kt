@@ -181,7 +181,7 @@ class AlarmAdapter(
     ) {
         val dialog = AlertDialog.Builder(context)
             .setTitle("Choose Time Mode")
-            .setItems(alarmModes) { dialog, which ->
+            .setItems(alarmModes) { _, which ->
                 // Update the alarm mode
                 alarm.mode = alarmModes[which]
                 viewModel.updateAlarm(alarm)
@@ -280,7 +280,7 @@ class AlarmAdapter(
     ) {
         val dialog = AlertDialog.Builder(context)
             .setTitle("Choose Time Mode")
-            .setItems(alarmRelatives) { dialog, which ->
+            .setItems(alarmRelatives) { _, which ->
                 if (index == 1) {
                     alarm.relative1 = alarmRelatives[which]
                 } else if (index == 2) {
@@ -318,7 +318,6 @@ class AlarmAdapter(
         holder: ViewHolder
     ) {
         cleanView(container)
-        var tvTime1 = container.findViewById<TextView>(R.id.tvAlarmTime1)
         var tvTime2 = container.findViewById<TextView>(R.id.tvAlarmTime2)
         var tvTime3 = container.findViewById<TextView>(R.id.tvAlarmTime3)
         var tvTime4 = container.findViewById<TextView>(R.id.tvAlarmTime4)
@@ -458,7 +457,7 @@ class AlarmAdapter(
      * Helper function to get relative time from SharedPreferences
      * This replaces AlarmDbHelper.getRelativeTime() which reads astronomy data
      */
-    private fun getRelativeTimeFromPrefs(context: Context, relative: String, sharedPrefs: android.content.SharedPreferences): Long {
+    private fun getRelativeTimeFromPrefs(_context: Context, relative: String, sharedPrefs: android.content.SharedPreferences): Long {
         var timeInMillis = 0L
         when (relative) {
             "Astronomical Dawn" -> timeInMillis = sharedPrefs.getLong("astroDawn", 0)
@@ -492,13 +491,13 @@ class AlarmAdapter(
         if (isSelected) {
             if (button != null) {
                 textColor = button.context.getColor(R.color.md_theme_dark_onPrimaryContainer)
-                button?.setTextColor(textColor)
+                button.setTextColor(textColor)
             }
             bgDrawable = R.drawable.rounded_button_selected
         } else {
             if (button != null) {
                 textColor = button.context.getColor(R.color.md_theme_dark_onSurface)
-                button?.setTextColor(textColor)
+                button.setTextColor(textColor)
             }
             bgDrawable = R.drawable.rounded_button
         }

@@ -26,6 +26,7 @@ class AlarmListActivity : AppCompatActivity() {
         observeAlarms()
     }
     
+    @Suppress("DEPRECATION")
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)

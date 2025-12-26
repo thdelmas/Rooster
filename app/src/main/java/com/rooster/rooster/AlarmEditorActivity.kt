@@ -203,74 +203,75 @@ class AlarmEditorActivity : AppCompatActivity() {
                 }
                 
                 currentAlarm = alarms.find { it.id == alarmId }
-                currentAlarm?.let { alarm ->
-                // Set flag to prevent saves during loading
-                isLoadingData = true
-                
-                // Only set text if it's different to prevent triggering TextWatcher unnecessarily
-                val currentText = alarmLabelInput.text?.toString() ?: ""
-                if (currentText != alarm.label) {
-                    alarmLabelInput.setText(alarm.label)
-                }
-                
-                // Determine mode based on alarm data
-                if (alarm.relative1 != AppConstants.RELATIVE_TIME_PICK_TIME || alarm.mode != AppConstants.ALARM_MODE_AT) {
-                    currentMode = "sun"
-                    sunTimingMode = alarm.mode
-                    solarEvent1 = alarm.relative1
-                    solarEvent2 = alarm.relative2
-                    // Load offset from time1 (stored in milliseconds)
-                    if (alarm.mode == AppConstants.ALARM_MODE_BEFORE || alarm.mode == AppConstants.ALARM_MODE_AFTER) {
-                        offsetMinutes = (alarm.time1 / 1000 / 60).toInt()
+                if (currentAlarm != null) {
+                    val alarm = currentAlarm!!
+                    // Set flag to prevent saves during loading
+                    isLoadingData = true
+                    
+                    // Only set text if it's different to prevent triggering TextWatcher unnecessarily
+                    val currentText = alarmLabelInput.text?.toString() ?: ""
+                    if (currentText != alarm.label) {
+                        alarmLabelInput.setText(alarm.label)
                     }
-                } else {
-                    currentMode = "classic"
-                    selectedTime = alarm.time1
-                }
-                
-                // Set day selections - only update if state has changed and not from user interaction
-                // Skip updates during user interaction to prevent blinking
-                if (!isUpdatingFromUserInteraction) {
-                    dayButtons.forEach { (day, button) ->
-                        val isSelected = alarm.getDayEnabled(day)
-                        // Only update if the state has actually changed
-                        if (button.isSelected != isSelected) {
-                            button.isSelected = isSelected
-                            updateDayButtonState(button, isSelected)
+                    
+                    // Determine mode based on alarm data
+                    if (alarm.relative1 != AppConstants.RELATIVE_TIME_PICK_TIME || alarm.mode != AppConstants.ALARM_MODE_AT) {
+                        currentMode = "sun"
+                        sunTimingMode = alarm.mode
+                        solarEvent1 = alarm.relative1
+                        solarEvent2 = alarm.relative2
+                        // Load offset from time1 (stored in milliseconds)
+                        if (alarm.mode == AppConstants.ALARM_MODE_BEFORE || alarm.mode == AppConstants.ALARM_MODE_AFTER) {
+                            offsetMinutes = (alarm.time1 / 1000 / 60).toInt()
+                        }
+                    } else {
+                        currentMode = "classic"
+                        selectedTime = alarm.time1
+                    }
+                    
+                    // Set day selections - only update if state has changed and not from user interaction
+                    // Skip updates during user interaction to prevent blinking
+                    if (!isUpdatingFromUserInteraction) {
+                        dayButtons.forEach { (day, button) ->
+                            val isSelected = alarm.getDayEnabled(day)
+                            // Only update if the state has actually changed
+                            if (button.isSelected != isSelected) {
+                                button.isSelected = isSelected
+                                updateDayButtonState(button, isSelected)
+                            }
                         }
                     }
+                    
+                    // Load alarm settings
+                    vibrateEnabled = alarm.vibrate
+                    snoozeEnabled = alarm.snoozeEnabled
+                    snoozeDuration = alarm.snoozeDuration
+                    snoozeCount = alarm.snoozeCount
+                    alarmVolume = alarm.volume
+                    gradualVolumeEnabled = alarm.gradualVolume
+                    
+                    // Only update switches if values have changed (prevents triggering listeners)
+                    if (vibrateSwitch.isChecked != vibrateEnabled) {
+                        vibrateSwitch.isChecked = vibrateEnabled
+                    }
+                    if (snoozeSwitch.isChecked != snoozeEnabled) {
+                        snoozeSwitch.isChecked = snoozeEnabled
+                    }
+                    if (gradualVolumeSwitch.isChecked != gradualVolumeEnabled) {
+                        gradualVolumeSwitch.isChecked = gradualVolumeEnabled
+                    }
+                    updateSnoozeDisplay()
+                    
+                    updateUI()
+                    updateSunCourseVisualization()
+                    
+                    // Clear flag after loading is complete
+                    isLoadingData = false
+                } else {
+                    // Alarm not found
+                    Log.e("AlarmEditorActivity", "Alarm with ID $alarmId not found")
+                    finish()
                 }
-                
-                // Load alarm settings
-                vibrateEnabled = alarm.vibrate
-                snoozeEnabled = alarm.snoozeEnabled
-                snoozeDuration = alarm.snoozeDuration
-                snoozeCount = alarm.snoozeCount
-                alarmVolume = alarm.volume
-                gradualVolumeEnabled = alarm.gradualVolume
-                
-                // Only update switches if values have changed (prevents triggering listeners)
-                if (vibrateSwitch.isChecked != vibrateEnabled) {
-                    vibrateSwitch.isChecked = vibrateEnabled
-                }
-                if (snoozeSwitch.isChecked != snoozeEnabled) {
-                    snoozeSwitch.isChecked = snoozeEnabled
-                }
-                if (gradualVolumeSwitch.isChecked != gradualVolumeEnabled) {
-                    gradualVolumeSwitch.isChecked = gradualVolumeEnabled
-                }
-                updateSnoozeDisplay()
-                
-                updateUI()
-                updateSunCourseVisualization()
-                
-                // Clear flag after loading is complete
-                isLoadingData = false
-                }
-            } ?: run {
-                // Alarm not found
-                Log.e("AlarmEditorActivity", "Alarm with ID $alarmId not found")
-                finish()
             }
         } else {
             // New alarm defaults
@@ -420,7 +421,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         classicTimeCard?.setOnClickListener(timePickerClickHandler)
         
         // Day buttons
-        dayButtons.forEach { (day, button) ->
+        dayButtons.forEach { (_, button) ->
             button.setOnClickListener {
                 HapticFeedbackHelper.performLightClick(it)
                 AnimationHelper.scaleWithBounce(it)

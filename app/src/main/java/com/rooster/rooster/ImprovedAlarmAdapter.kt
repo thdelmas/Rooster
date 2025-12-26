@@ -218,7 +218,7 @@ class ImprovedAlarmAdapter(
         }
     }
 
-    private fun updateCardAppearance(holder: ViewHolder, enabled: Boolean, context: Context) {
+    private fun updateCardAppearance(holder: ViewHolder, enabled: Boolean, _context: Context) {
         if (enabled) {
             holder.alarmTime.alpha = 1.0f
             holder.modeDescription.alpha = 1.0f
