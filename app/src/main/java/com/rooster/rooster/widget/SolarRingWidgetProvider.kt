@@ -57,9 +57,10 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             // Use minimum dimension to ensure ring is always circular (1:1)
             // When widget is not square, ring will be sized to smallest side
             val minDimensionDp = Math.min(minWidthDp, minHeightDp).coerceAtLeast(100)
+            // Calculate size in pixels - use density to convert dp to pixels
             val size = (minDimensionDp * density).toInt()
             
-            // Generate square bitmap with minimum dimension
+            // Generate square bitmap with calculated size
             val bitmap = generateRingBitmap(context, astronomyData, size)
             
             // Create RemoteViews
