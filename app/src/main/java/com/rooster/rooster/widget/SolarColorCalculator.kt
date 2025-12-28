@@ -106,7 +106,7 @@ object SolarColorCalculator {
                 return interpolateColor(SUNRISE_COLOR, SOLAR_NOON_COLOR, progress)
             }
             
-            // Afternoon: solar noon -> sunset (symmetric to morning)
+            // Afternoon: solar noon -> sunset (exclude sunset itself, handled separately)
             time >= solarNoon && time < astronomyData.sunset -> {
                 val range = (astronomyData.sunset - solarNoon).toFloat()
                 val progress = if (range > 0) {
@@ -116,23 +116,32 @@ object SolarColorCalculator {
             }
             
             // Morning: civil dawn -> sunrise (symmetric to sunset -> civil dusk)
-            time >= astronomyData.civilDawn && time < astronomyData.sunrise -> {
+            time >= astronomyData.civilDawn && time <= astronomyData.sunrise -> {
+                if (time == astronomyData.sunrise) {
+                    return SUNRISE_COLOR
+                }
                 val morningRange = (astronomyData.sunrise - astronomyData.civilDawn).toFloat()
                 val morningProgress = if (morningRange > 0) {
                     (time - astronomyData.civilDawn).toFloat() / morningRange
                 } else 0f
-                // Reverse progress to map to afternoon segment
+                // Map to symmetric afternoon position: reverse the progress
+                // At civil dawn (progress 0) -> maps to civil dusk (progress 1)
+                // At sunrise (progress 1) -> maps to sunset (progress 0)
                 val afternoonProgress = 1f - morningProgress
-                // Use same color interpolation as afternoon: SUNRISE -> CIVIL (reversed)
+                // Use same color interpolation: SUNRISE_COLOR at sunset/civilDusk boundary, CIVIL_COLOR at civilDusk
                 return interpolateColor(SUNRISE_COLOR, CIVIL_COLOR, afternoonProgress)
             }
             
-            // Afternoon: sunset -> civil dusk (reference for morning)
+            // Afternoon: sunset -> civil dusk (reference for morning symmetry)
             time >= astronomyData.sunset && time < astronomyData.civilDusk -> {
+                if (time == astronomyData.sunset) {
+                    return SUNRISE_COLOR
+                }
                 val range = (astronomyData.civilDusk - astronomyData.sunset).toFloat()
                 val progress = if (range > 0) {
                     (time - astronomyData.sunset).toFloat() / range
                 } else 0f
+                // SUNRISE_COLOR at sunset (progress 0), CIVIL_COLOR at civil dusk (progress 1)
                 return interpolateColor(SUNRISE_COLOR, CIVIL_COLOR, progress)
             }
             
