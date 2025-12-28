@@ -169,6 +169,14 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             canvas.drawArc(rect, baseAngle, segmentAngle, false, paint)
         }
         
+        // Draw solar event markers
+        if (astronomyData != null) {
+            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, astronomyData, solarNoonOffset)
+        }
+        
+        // Draw current time marker
+        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, solarNoonOffset)
+        
         // Get current time
         val calendar = Calendar.getInstance()
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
@@ -247,6 +255,129 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val angleOffset = -totalHourOffset * 15f
         
         return angleOffset
+    }
+    
+    /**
+     * Draw markers for solar events on the ring
+     */
+    private fun drawSolarEventMarkers(
+        context: Context,
+        canvas: Canvas,
+        centerX: Float,
+        centerY: Float,
+        radius: Float,
+        astronomyData: AstronomyDataEntity,
+        solarNoonOffset: Float
+    ) {
+        val calendar = Calendar.getInstance()
+        val todayStart = calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        // Normalize solar event times to today
+        fun normalizeTime(originalTime: Long): Long {
+            calendar.timeInMillis = originalTime
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            calendar.timeInMillis = todayStart
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
+            calendar.set(Calendar.MINUTE, minute)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            return calendar.timeInMillis
+        }
+        
+        val events = listOf(
+            Pair("🌌", normalizeTime(astronomyData.astroDawn)),
+            Pair("🌃", normalizeTime(astronomyData.nauticalDawn)),
+            Pair("🌆", normalizeTime(astronomyData.civilDawn)),
+            Pair("🌅", normalizeTime(astronomyData.sunrise)),
+            Pair("☀️", normalizeTime(astronomyData.solarNoon)),
+            Pair("🌇", normalizeTime(astronomyData.sunset)),
+            Pair("🌆", normalizeTime(astronomyData.civilDusk)),
+            Pair("🌃", normalizeTime(astronomyData.nauticalDusk)),
+            Pair("🌌", normalizeTime(astronomyData.astroDusk))
+        )
+        
+        for ((emoji, eventTime) in events) {
+            if (eventTime <= 0) continue
+            
+            // Calculate angle for this event
+            val eventCalendar = Calendar.getInstance()
+            eventCalendar.timeInMillis = eventTime
+            val eventHour = eventCalendar.get(Calendar.HOUR_OF_DAY)
+            val eventMinute = eventCalendar.get(Calendar.MINUTE)
+            
+            // Calculate angle: (hour - 12) * 15 + (minute / 60) * 15 - 90 + solarNoonOffset
+            val hourOffset = eventHour - 12
+            val minuteOffset = eventMinute / 60f
+            val totalHourOffset = hourOffset + minuteOffset
+            val angle = totalHourOffset * 15f - 90f + solarNoonOffset
+            
+            // Convert to radians for drawing
+            val angleRad = Math.toRadians(angle.toDouble())
+            val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
+            val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
+            
+            // Draw marker circle
+            val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = ContextCompat.getColor(context, R.color.md_theme_dark_background)
+                style = Paint.Style.FILL
+            }
+            canvas.drawCircle(markerX, markerY, 12f, markerPaint)
+            
+            // Draw emoji
+            val emojiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                textSize = 20f
+                textAlign = Paint.Align.CENTER
+            }
+            canvas.drawText(emoji, markerX, markerY + 6f, emojiPaint)
+        }
+    }
+    
+    /**
+     * Draw marker for current time on the ring
+     */
+    private fun drawCurrentTimeMarker(
+        context: Context,
+        canvas: Canvas,
+        centerX: Float,
+        centerY: Float,
+        radius: Float,
+        solarNoonOffset: Float
+    ) {
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        
+        // Calculate angle for current time
+        val hourOffset = currentHour - 12
+        val minuteOffset = currentMinute / 60f
+        val totalHourOffset = hourOffset + minuteOffset
+        val angle = totalHourOffset * 15f - 90f + solarNoonOffset
+        
+        // Convert to radians for drawing
+        val angleRad = Math.toRadians(angle.toDouble())
+        val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
+        val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
+        
+        // Draw current time marker (larger, more prominent)
+        val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(context, R.color.accent_coral)
+            style = Paint.Style.FILL
+        }
+        canvas.drawCircle(markerX, markerY, 16f, markerPaint)
+        
+        // Draw white border
+        val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(context, R.color.white)
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+        }
+        canvas.drawCircle(markerX, markerY, 16f, borderPaint)
     }
     
     override fun onEnabled(context: Context) {
