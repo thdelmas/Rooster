@@ -156,7 +156,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
         // ringThickness/2 accounts for half the stroke width on each side
         // Small padding ensures the ring doesn't get clipped at edges
-        val ringThickness = 100f
+        val ringThickness = 67f // Reduced by a third (was 100f)
         val edgePadding = 8f // Small padding to prevent clipping
         val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
         
@@ -200,11 +200,11 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         
         // Draw solar event markers
         if (astronomyData != null) {
-            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, astronomyData)
+            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, ringThickness, astronomyData)
         }
         
         // Draw current time marker
-        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, astronomyData)
+        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, ringThickness, astronomyData)
         
         // Get current time and date
         val calendar = Calendar.getInstance()
@@ -556,6 +556,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerX: Float,
         centerY: Float,
         radius: Float,
+        ringThickness: Float,
         astronomyData: AstronomyDataEntity
     ) {
         val calendar = Calendar.getInstance()
@@ -634,9 +635,12 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             }
             
             // Convert to radians for drawing
+            // Position markers at the inner edge of the ring (radius - ringThickness/2)
+            // and slightly more inside for better visibility
+            val innerRadius = radius - (ringThickness / 2f) - 8f
             val angleRad = Math.toRadians(angle.toDouble())
-            val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
-            val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
+            val markerX = centerX + (innerRadius * Math.cos(angleRad)).toFloat()
+            val markerY = centerY + (innerRadius * Math.sin(angleRad)).toFloat()
             
             // Draw marker circle
             val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -663,6 +667,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerX: Float,
         centerY: Float,
         radius: Float,
+        ringThickness: Float,
         astronomyData: AstronomyDataEntity?
     ) {
         val calendar = Calendar.getInstance()
@@ -716,9 +721,12 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         }
         
         // Convert to radians for drawing
+        // Position current time marker at the inner edge of the ring (radius - ringThickness/2)
+        // and slightly more inside for better visibility
+        val innerRadius = radius - (ringThickness / 2f) - 8f
         val angleRad = Math.toRadians(angle.toDouble())
-        val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
-        val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
+        val markerX = centerX + (innerRadius * Math.cos(angleRad)).toFloat()
+        val markerY = centerY + (innerRadius * Math.sin(angleRad)).toFloat()
         
         // Draw current time marker (larger, more prominent)
         val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
