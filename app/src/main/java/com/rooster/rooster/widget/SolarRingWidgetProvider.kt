@@ -151,10 +151,12 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val centerX = size / 2f
         val centerY = size / 2f
         
-        // Calculate maximum radius for 1:1 rendering
+        // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
         // ringThickness/2 accounts for half the stroke width on each side
+        // Small padding ensures the ring doesn't get clipped at edges
         val ringThickness = 35f
-        val radius = (size / 2f) - (ringThickness / 2f)
+        val edgePadding = 8f // Small padding to prevent clipping
+        val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
         
         // Draw background
         canvas.drawColor(ContextCompat.getColor(context, R.color.md_theme_dark_background))
