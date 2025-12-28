@@ -9,150 +9,54 @@
     android:fitsSystemWindows="true"
     tools:context=".MainActivity">
 
-    <!-- App Bar -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/topAppBar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-            app:navigationIconTint="@color/md_theme_dark_primary"
-            app:title="Alarm Ringing"
-            app:titleTextColor="@color/md_theme_dark_onBackground"
-            style="@style/Widget.Material3.Toolbar"/>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
     <!-- Main Content -->
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp">
 
+        <!-- Large Time Display -->
+        <TextView
+            android:id="@+id/timeDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--:--"
+            android:textColor="@color/text_on_glass_primary"
+            android:textSize="96sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-light"
+            android:gravity="center"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- Alarm Name -->
+        <TextView
+            android:id="@+id/alarmName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alarm"
+            android:textColor="@color/text_on_glass_primary"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:layout_marginBottom="48dp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <!-- Button Row: Snooze and Stop -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:gravity="center"
-            android:padding="32dp">
-
-            <!-- Sun Icon Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="120dp"
-                android:layout_height="120dp"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="2dp"
-                app:strokeColor="@color/glass_border"
-                android:background="@drawable/gradient_sunrise"
-                android:layout_marginBottom="@dimen/spacing_xlarge">
-
-                <TextView
-                    android:id="@+id/sunEmojiTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="☀️"
-                    android:textSize="@dimen/emoji_size_xlarge"
-                    android:gravity="center"
-                    android:maxLines="1"/>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Title -->
-            <TextView
-                android:id="@+id/dayStartsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="The Day Starts!"
-                android:textAppearance="@style/TextAppearance.Rooster.HeadlineLarge"
-                android:textColor="@color/text_on_glass_primary"
-                android:layout_marginBottom="@dimen/spacing_xxlarge"
-                android:gravity="center"
-                android:maxLines="2"
-                android:ellipsize="end"/>
-
-            <!-- Progress Circle Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/glass_border"
-                android:background="@drawable/glass_card_background"
-                android:layout_marginBottom="56dp">
-
-                <RelativeLayout
-                    android:id="@+id/progress_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="40dp">
-
-                    <!-- Circular Progress Bar -->
-                    <ProgressBar
-                        android:id="@+id/progress_cycle"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_centerInParent="true"
-                        android:indeterminate="false"
-                        android:progressDrawable="@drawable/progress_circular"
-                        android:max="100"
-                        android:progress="0"/>
-
-                    <!-- Time Display -->
-                    <TextView
-                        android:id="@+id/progress_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
-                        android:text="--:--"
-                        android:textColor="@color/text_on_glass_primary"
-                        android:textSize="@dimen/text_time_display_medium"
-                        android:textStyle="bold"
-                        android:fontFamily="sans-serif-light"
-                        android:maxLines="1"
-                        android:ellipsize="none"/>
-
-                </RelativeLayout>
-
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Spacer to push slider to bottom -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
-
-            <!-- Dismiss Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/dismissButton"
-                android:layout_width="match_parent"
-                android:layout_height="64dp"
-                android:text="Dismiss"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                app:backgroundTint="@color/md_theme_dark_primary"
-                app:cornerRadius="8dp"
-                app:elevation="0dp"
-                android:layout_marginBottom="20dp"
-                style="@style/Widget.Rooster.Button.Filled"/>
+            android:layout_marginTop="32dp">
 
             <!-- Snooze Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/snoozeButton"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="64dp"
+                android:layout_weight="1"
                 android:text="Snooze"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -160,54 +64,37 @@
                 app:backgroundTint="@color/md_theme_dark_primaryContainer"
                 app:cornerRadius="8dp"
                 app:elevation="0dp"
-                android:layout_marginBottom="20dp"
+                android:layout_marginEnd="12dp"
                 android:visibility="gone"
                 style="@style/Widget.Rooster.Button.Filled"/>
 
-            <!-- Slider Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/glass_border"
-                android:background="@drawable/glass_card_background">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp">
-
-                    <TextView
-                        android:id="@+id/slideText"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Slide to stop the alarm"
-                        android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                        android:textColor="@color/md_theme_dark_onSurface"
-                        android:gravity="center"
-                        android:layout_marginBottom="16dp"/>
-
-                    <SeekBar
-                        android:id="@+id/seekBar"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:max="100"
-                        android:progress="0"
-                        android:thumb="@drawable/seekbar_thumb"
-                        android:progressBackgroundTint="@color/md_theme_dark_surfaceVariant"
-                        android:progressTint="@color/md_theme_dark_primaryContainer"
-                        android:paddingHorizontal="8dp"/>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
+            <!-- Stop Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dismissButton"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_weight="1"
+                android:text="Stop"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/md_theme_dark_primary"
+                app:cornerRadius="8dp"
+                app:elevation="0dp"
+                android:layout_marginStart="12dp"
+                style="@style/Widget.Rooster.Button.Filled"/>
 
         </LinearLayout>
 
-    </androidx.core.widget.NestedScrollView>
+        <!-- Hidden SeekBar for backward compatibility (if needed) -->
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:max="100"
+            android:progress="0"/>
+
+    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

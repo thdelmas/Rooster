@@ -16,14 +16,12 @@ import android.view.View
 import com.rooster.rooster.util.Logger
 import android.view.WindowManager
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
-import com.google.android.material.appbar.MaterialToolbar
 import com.rooster.rooster.presentation.viewmodel.AlarmViewModel
 import com.rooster.rooster.receiver.SnoozeReceiver
 import com.rooster.rooster.util.AlarmNotificationHelper
@@ -87,7 +85,7 @@ class AlarmActivity : FragmentActivity() {
                 maxSnoozeCount = alarm.snoozeCount
                 setupSnoozeButton()
                 setupDismissButton()
-                setupToolbar()
+                setupAlarmName()
                 alarmRing(alarm.ringtoneUri, alarm)
             } else if (alarm == null && currentAlarm == null) {
                 // Alarm not found
@@ -136,10 +134,13 @@ class AlarmActivity : FragmentActivity() {
         }
     }
     
-    private fun setupToolbar() {
-        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
-        toolbar.setNavigationOnClickListener {
-            stopAlarm(null)
+    private fun setupAlarmName() {
+        val alarmNameTextView = findViewById<TextView>(R.id.alarmName)
+        currentAlarm?.let { alarm ->
+            val alarmLabel = if (alarm.label.isNotEmpty()) alarm.label else "Alarm"
+            alarmNameTextView.text = alarmLabel
+        } ?: run {
+            alarmNameTextView.text = "Alarm"
         }
     }
 
@@ -535,8 +536,7 @@ class AlarmActivity : FragmentActivity() {
     }
     
     private fun refreshCycle() {
-        val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
-        val progressText = findViewById<TextView>(R.id.progress_text)
+        val timeDisplay = findViewById<TextView>(R.id.timeDisplay)
 
         // Cancel any existing refresh job
         refreshJob?.cancel()
@@ -546,10 +546,8 @@ class AlarmActivity : FragmentActivity() {
                 val currentTime = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
                 val formattedTime = sdf.format(Date(currentTime))
-                val percentage = getPercentageOfDay().toInt()
                 
-                progressText.text = formattedTime
-                progressBar.progress = percentage
+                timeDisplay.text = formattedTime
                 
                 delay(AppConstants.UI_REFRESH_INTERVAL_MS)
             }
