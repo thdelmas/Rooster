@@ -344,12 +344,31 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             astroDusk = normalizeTime(astronomyData.astroDusk)
         )
         
-        // Color constants for solar noon (brightest)
-        val SOLAR_NOON_BRIGHTEST = android.graphics.Color.parseColor("#FFE8B8") // Brighter than day sky
-        val GOLDEN_HOUR_COLOR = android.graphics.Color.parseColor("#FFB86C")
-        val SUNRISE_COLOR = android.graphics.Color.parseColor("#FF8E53")
+        // Color constants - ensure smooth progression to brightest at solar noon
+        val SOLAR_NOON_BRIGHTEST = android.graphics.Color.parseColor("#FFE8B8") // Brightest - solar noon
+        val DAY_SKY_COLOR = android.graphics.Color.parseColor("#FFD89C") // Day sky
+        val GOLDEN_HOUR_COLOR = android.graphics.Color.parseColor("#FFB86C") // Golden hour
+        val SUNRISE_COLOR = android.graphics.Color.parseColor("#FF8E53") // Sunrise
         
-        // Add events with their colors
+        // Helper function to interpolate colors (defined first so it can be used by other functions)
+        fun interpolateColor(color1: Int, color2: Int, factor: Float): Int {
+            val clampedFactor = factor.coerceIn(0f, 1f)
+            val a1 = android.graphics.Color.alpha(color1)
+            val r1 = android.graphics.Color.red(color1)
+            val g1 = android.graphics.Color.green(color1)
+            val b1 = android.graphics.Color.blue(color1)
+            val a2 = android.graphics.Color.alpha(color2)
+            val r2 = android.graphics.Color.red(color2)
+            val g2 = android.graphics.Color.green(color2)
+            val b2 = android.graphics.Color.blue(color2)
+            val a = (a1 + (a2 - a1) * clampedFactor).toInt()
+            val r = (r1 + (r2 - r1) * clampedFactor).toInt()
+            val g = (g1 + (g2 - g1) * clampedFactor).toInt()
+            val b = (b1 + (b2 - b1) * clampedFactor).toInt()
+            return android.graphics.Color.argb(a, r, g, b)
+        }
+        
+        // Add events with their colors - in chronological order
         if (normalizedData.astroDawn > 0) {
             events.add(Pair(normalizedData.astroDawn, SolarColorCalculator.getColorForTime(normalizedData.astroDawn, normalizedData)))
         }
@@ -363,32 +382,66 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             events.add(Pair(normalizedData.sunrise, SUNRISE_COLOR))
         }
         
-        // Add intermediate points between sunrise and solar noon for smoother gradient
+        // Add smooth gradient between sunrise and solar noon with multiple intermediate stops
         if (normalizedData.sunrise > 0 && normalizedData.solarNoon > 0 && normalizedData.sunrise < normalizedData.solarNoon) {
+            // Add multiple intermediate stops for very smooth transition
+            // Sunrise -> Golden Hour -> Day Sky -> Brighter Day Sky -> Solar Noon
             val sunriseToNoonRange = normalizedData.solarNoon - normalizedData.sunrise
-            // Add golden hour point (approximately 1/3 of the way from sunrise to solar noon)
-            val goldenHourTime = normalizedData.sunrise + (sunriseToNoonRange * 0.33f).toLong()
+            
+            // Golden hour point (~20% of the way)
+            val goldenHourTime = normalizedData.sunrise + (sunriseToNoonRange * 0.2f).toLong()
             events.add(Pair(goldenHourTime, GOLDEN_HOUR_COLOR))
-            // Add day sky point (approximately 2/3 of the way from sunrise to solar noon)
-            val daySkyTime = normalizedData.sunrise + (sunriseToNoonRange * 0.67f).toLong()
-            val DAY_SKY_COLOR = android.graphics.Color.parseColor("#FFD89C")
-            events.add(Pair(daySkyTime, DAY_SKY_COLOR))
+            
+            // Day sky point (~40% of the way)
+            val daySkyTime1 = normalizedData.sunrise + (sunriseToNoonRange * 0.4f).toLong()
+            events.add(Pair(daySkyTime1, DAY_SKY_COLOR))
+            
+            // Brighter day sky point (~60% of the way)
+            val daySkyTime2 = normalizedData.sunrise + (sunriseToNoonRange * 0.6f).toLong()
+            val brighterDaySky1 = interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.3f)
+            events.add(Pair(daySkyTime2, brighterDaySky1))
+            
+            // Even brighter point (~80% of the way) - transitioning to solar noon
+            val daySkyTime3 = normalizedData.sunrise + (sunriseToNoonRange * 0.8f).toLong()
+            val brighterDaySky2 = interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.6f)
+            events.add(Pair(daySkyTime3, brighterDaySky2))
+            
+            // Add a point close to solar noon (~95% of the way) for smooth transition
+            val nearNoonTime = normalizedData.solarNoon - (sunriseToNoonRange * 0.05f).toLong()
+            val nearNoonColor = interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.9f)
+            events.add(Pair(nearNoonTime, nearNoonColor))
         }
         
+        // Solar noon - MUST be the brightest and at exact position
         if (normalizedData.solarNoon > 0) {
-            // Use brightest color for solar noon
             events.add(Pair(normalizedData.solarNoon, SOLAR_NOON_BRIGHTEST))
         }
         
-        // Add intermediate points between solar noon and sunset for smoother gradient
+        // Add smooth gradient between solar noon and sunset with multiple intermediate stops
         if (normalizedData.solarNoon > 0 && normalizedData.sunset > 0 && normalizedData.solarNoon < normalizedData.sunset) {
             val noonToSunsetRange = normalizedData.sunset - normalizedData.solarNoon
-            // Add day sky point (approximately 1/3 of the way from solar noon to sunset)
-            val daySkyTime = normalizedData.solarNoon + (noonToSunsetRange * 0.33f).toLong()
-            val DAY_SKY_COLOR = android.graphics.Color.parseColor("#FFD89C")
-            events.add(Pair(daySkyTime, DAY_SKY_COLOR))
-            // Add golden hour point (approximately 2/3 of the way from solar noon to sunset)
-            val goldenHourTime = normalizedData.solarNoon + (noonToSunsetRange * 0.67f).toLong()
+            
+            // Add a point close to solar noon (~5% of the way) for smooth transition
+            val nearNoonTime = normalizedData.solarNoon + (noonToSunsetRange * 0.05f).toLong()
+            val nearNoonColor = interpolateColor(SOLAR_NOON_BRIGHTEST, DAY_SKY_COLOR, 0.9f)
+            events.add(Pair(nearNoonTime, nearNoonColor))
+            
+            // Brighter day sky point (~20% of the way)
+            val daySkyTime1 = normalizedData.solarNoon + (noonToSunsetRange * 0.2f).toLong()
+            val brighterDaySky1 = interpolateColor(SOLAR_NOON_BRIGHTEST, DAY_SKY_COLOR, 0.6f)
+            events.add(Pair(daySkyTime1, brighterDaySky1))
+            
+            // Brighter day sky point (~40% of the way)
+            val daySkyTime2 = normalizedData.solarNoon + (noonToSunsetRange * 0.4f).toLong()
+            val brighterDaySky2 = interpolateColor(SOLAR_NOON_BRIGHTEST, DAY_SKY_COLOR, 0.3f)
+            events.add(Pair(daySkyTime2, brighterDaySky2))
+            
+            // Day sky point (~60% of the way)
+            val daySkyTime3 = normalizedData.solarNoon + (noonToSunsetRange * 0.6f).toLong()
+            events.add(Pair(daySkyTime3, DAY_SKY_COLOR))
+            
+            // Golden hour point (~80% of the way)
+            val goldenHourTime = normalizedData.solarNoon + (noonToSunsetRange * 0.8f).toLong()
             events.add(Pair(goldenHourTime, GOLDEN_HOUR_COLOR))
         }
         
@@ -458,23 +511,39 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val midnight = todayStart
         events.add(Pair(midnight, nightColor))
         
-        // Create sorted list of events by position
-        val eventPositions = events.map { event ->
-            Pair(timeToPosition(event.first), event.second)
-        }.sortedBy { it.first }
+        // Create list of events with positions, ensuring solar noon is exactly at 0.0
+        val eventPositions = mutableListOf<Pair<Float, Int>>()
+        var solarNoonColor: Int? = null
         
-        // Build color and position arrays, removing duplicates
+        for (event in events) {
+            // If this is solar noon, force position to exactly 0.0
+            if (event.first == normalizedData.solarNoon && normalizedData.solarNoon > 0) {
+                solarNoonColor = event.second
+                eventPositions.add(Pair(0.0f, event.second)) // Force to exactly 0.0
+            } else {
+                val pos = timeToPosition(event.first)
+                eventPositions.add(Pair(pos, event.second))
+            }
+        }
+        
+        // Sort by position
+        val sortedEvents = eventPositions.sortedBy { it.first }
+        
+        // Build color and position arrays, removing duplicates but preserving solar noon
         val colors = mutableListOf<Int>()
         val positions = mutableListOf<Float>()
         
         var lastPosition = -1f
-        val POSITION_EPSILON = 0.001f // Small threshold for considering positions equal
+        val POSITION_EPSILON = 0.0001f // Smaller threshold for considering positions equal
         
         // Add all event positions (they're already sorted)
         // SweepGradient will automatically handle wrap-around from 1.0 to 0.0
-        for ((pos, color) in eventPositions) {
-            // Skip if this position is too close to the previous one (duplicate)
-            if (lastPosition >= 0 && kotlin.math.abs(pos - lastPosition) < POSITION_EPSILON) {
+        for ((pos, color) in sortedEvents) {
+            // Always include solar noon (position 0.0) - never skip it
+            val isSolarNoon = (pos == 0.0f && solarNoonColor != null && color == solarNoonColor)
+            
+            // Skip if this position is too close to the previous one (duplicate), but not if it's solar noon
+            if (!isSolarNoon && lastPosition >= 0 && kotlin.math.abs(pos - lastPosition) < POSITION_EPSILON) {
                 // If we have a duplicate, prefer the brighter color (higher RGB values)
                 val lastColor = colors.last()
                 val lastBrightness = android.graphics.Color.red(lastColor) + android.graphics.Color.green(lastColor) + android.graphics.Color.blue(lastColor)
@@ -489,6 +558,22 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             colors.add(color)
             positions.add(pos)
             lastPosition = pos
+        }
+        
+        // Ensure solar noon (0.0) is at the start of the arrays for proper gradient alignment
+        if (solarNoonColor != null) {
+            val solarNoonIndex = positions.indexOfFirst { it == 0.0f }
+            if (solarNoonIndex > 0) {
+                // Move solar noon to the beginning
+                val color = colors.removeAt(solarNoonIndex)
+                val pos = positions.removeAt(solarNoonIndex)
+                colors.add(0, color)
+                positions.add(0, pos)
+            } else if (solarNoonIndex < 0) {
+                // Solar noon not found, add it at the beginning
+                colors.add(0, solarNoonColor)
+                positions.add(0, 0.0f)
+            }
         }
         
         // Ensure we have at least 2 points for a valid gradient
