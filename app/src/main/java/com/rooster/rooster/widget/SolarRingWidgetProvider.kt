@@ -15,6 +15,7 @@ import com.rooster.rooster.R
 import com.rooster.rooster.data.local.AlarmDatabase
 import com.rooster.rooster.data.local.entity.AstronomyDataEntity
 import kotlinx.coroutines.runBlocking
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -154,7 +155,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
         // ringThickness/2 accounts for half the stroke width on each side
         // Small padding ensures the ring doesn't get clipped at edges
-        val ringThickness = 50f
+        val ringThickness = 100f
         val edgePadding = 8f // Small padding to prevent clipping
         val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
         
@@ -207,39 +208,41 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Draw current time marker
         drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, solarNoonOffset)
         
-        // Get current time
+        // Get current time and date
         val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = calendar.get(Calendar.MINUTE)
         
-        // Draw current hour in the center (larger, top)
-        val hourTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        // Format date as "Sun, Dec 28"
+        val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
+        val dateText = dateFormat.format(calendar.time)
+        
+        // Format time as "21:43"
+        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val timeText = timeFormat.format(calendar.time)
+        
+        // Draw date in the center (top)
+        val dateTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 96f
+            textSize = 48f
+            textAlign = Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT
+        }
+        
+        // Draw time below the date (larger)
+        val timeTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
+            textSize = 72f
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
-        
-        val hourText = String.format(Locale.getDefault(), "%02d", currentHour)
-        
-        // Draw current minutes below the hour (smaller)
-        val minuteTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 64f
-            textAlign = Paint.Align.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }
-        
-        val minuteText = String.format(Locale.getDefault(), "%02d", currentMinute)
         
         // Calculate text positions
-        // Hour text - positioned in upper center area
-        val hourTextY = centerY - 20f - (hourTextPaint.descent() + hourTextPaint.ascent()) / 2
-        canvas.drawText(hourText, centerX, hourTextY, hourTextPaint)
+        // Date text - positioned in upper center area
+        val dateTextY = centerY - 20f - (dateTextPaint.descent() + dateTextPaint.ascent()) / 2
+        canvas.drawText(dateText, centerX, dateTextY, dateTextPaint)
         
-        // Minute text - positioned below hour
-        val minuteTextY = centerY + 40f - (minuteTextPaint.descent() + minuteTextPaint.ascent()) / 2
-        canvas.drawText(minuteText, centerX, minuteTextY, minuteTextPaint)
+        // Time text - positioned below date
+        val timeTextY = centerY + 40f - (timeTextPaint.descent() + timeTextPaint.ascent()) / 2
+        canvas.drawText(timeText, centerX, timeTextY, timeTextPaint)
         
         return bitmap
     }
