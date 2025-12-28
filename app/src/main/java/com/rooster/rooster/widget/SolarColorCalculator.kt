@@ -1,0 +1,152 @@
+package com.rooster.rooster.widget
+
+import android.graphics.Color
+import com.rooster.rooster.data.local.entity.AstronomyDataEntity
+import java.util.*
+
+/**
+ * Utility class to calculate colors for each hour of the day based on solar events
+ */
+object SolarColorCalculator {
+    
+    // Solar event colors - transitioning through the day
+    private val NIGHT_COLOR = Color.parseColor("#0A0A14")        // Deep space
+    private val ASTRONOMICAL_COLOR = Color.parseColor("#1A1A2E")  // Astronomical twilight
+    private val NAUTICAL_COLOR = Color.parseColor("#2A2A4E")     // Nautical twilight
+    private val CIVIL_COLOR = Color.parseColor("#4A4A7E")        // Civil twilight
+    private val SUNRISE_COLOR = Color.parseColor("#FF8E53")      // Sunrise
+    private val GOLDEN_HOUR_COLOR = Color.parseColor("#FFB86C")  // Golden hour
+    private val DAY_SKY_COLOR = Color.parseColor("#FFD89C")      // Day sky
+    private val SOLAR_NOON_COLOR = Color.parseColor("#FFD89C")   // Solar noon (brightest)
+    
+    /**
+     * Get color for a specific hour of the day (0-23) based on solar events
+     * Solar noon is at the top (12 o'clock position), so hour 12 maps to top
+     */
+    fun getColorForHour(hour: Int, astronomyData: AstronomyDataEntity?): Int {
+        if (astronomyData == null) {
+            return NIGHT_COLOR
+        }
+        
+        val calendar = Calendar.getInstance()
+        val currentDayStart = calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        // Get the time for this hour (in milliseconds) for today
+        val hourTime = currentDayStart + (hour * 60 * 60 * 1000L)
+        
+        // Normalize astronomy data times to today
+        val normalizedData = normalizeAstronomyDataToToday(astronomyData, currentDayStart)
+        
+        // Calculate which solar period this hour falls into
+        return getColorForTime(hourTime, normalizedData)
+    }
+    
+    /**
+     * Normalize astronomy data times to today's date
+     * Extracts the time component (hour, minute, second) and applies it to today
+     */
+    private fun normalizeAstronomyDataToToday(data: AstronomyDataEntity, todayStart: Long): AstronomyDataEntity {
+        val calendar = Calendar.getInstance()
+        
+        // Helper to get time of day component and apply to today
+        fun normalizeTime(originalTime: Long): Long {
+            calendar.timeInMillis = originalTime
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            val second = calendar.get(Calendar.SECOND)
+            
+            calendar.timeInMillis = todayStart
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
+            calendar.set(Calendar.MINUTE, minute)
+            calendar.set(Calendar.SECOND, second)
+            calendar.set(Calendar.MILLISECOND, 0)
+            return calendar.timeInMillis
+        }
+        
+        return data.copy(
+            sunrise = normalizeTime(data.sunrise),
+            sunset = normalizeTime(data.sunset),
+            solarNoon = normalizeTime(data.solarNoon),
+            civilDawn = normalizeTime(data.civilDawn),
+            civilDusk = normalizeTime(data.civilDusk),
+            nauticalDawn = normalizeTime(data.nauticalDawn),
+            nauticalDusk = normalizeTime(data.nauticalDusk),
+            astroDawn = normalizeTime(data.astroDawn),
+            astroDusk = normalizeTime(data.astroDusk)
+        )
+    }
+    
+    /**
+     * Get color for a specific time based on solar events
+     */
+    fun getColorForTime(time: Long, astronomyData: AstronomyDataEntity): Int {
+        val times = listOf(
+            Pair(astronomyData.astroDawn, ASTRONOMICAL_COLOR),
+            Pair(astronomyData.nauticalDawn, NAUTICAL_COLOR),
+            Pair(astronomyData.civilDawn, CIVIL_COLOR),
+            Pair(astronomyData.sunrise, SUNRISE_COLOR),
+            Pair(astronomyData.solarNoon, SOLAR_NOON_COLOR),
+            Pair(astronomyData.sunset, SUNRISE_COLOR),
+            Pair(astronomyData.civilDusk, CIVIL_COLOR),
+            Pair(astronomyData.nauticalDusk, NAUTICAL_COLOR),
+            Pair(astronomyData.astroDusk, ASTRONOMICAL_COLOR)
+        ).sortedBy { it.first }
+        
+        // Before astronomical dawn or after astronomical dusk = night
+        if (time < astronomyData.astroDawn || time >= astronomyData.astroDusk) {
+            return NIGHT_COLOR
+        }
+        
+        // Find the two solar events this time falls between
+        for (i in 0 until times.size - 1) {
+            val (eventTime1, color1) = times[i]
+            val (eventTime2, color2) = times[i + 1]
+            
+            if (time >= eventTime1 && time < eventTime2) {
+                // Interpolate between the two colors
+                val progress = (time - eventTime1).toFloat() / (eventTime2 - eventTime1).toFloat()
+                return interpolateColor(color1, color2, progress)
+            }
+        }
+        
+        // Fallback
+        return NIGHT_COLOR
+    }
+    
+    /**
+     * Interpolate between two colors
+     */
+    private fun interpolateColor(color1: Int, color2: Int, factor: Float): Int {
+        val clampedFactor = factor.coerceIn(0f, 1f)
+        
+        val a1 = Color.alpha(color1)
+        val r1 = Color.red(color1)
+        val g1 = Color.green(color1)
+        val b1 = Color.blue(color1)
+        
+        val a2 = Color.alpha(color2)
+        val r2 = Color.red(color2)
+        val g2 = Color.green(color2)
+        val b2 = Color.blue(color2)
+        
+        val a = (a1 + (a2 - a1) * clampedFactor).toInt()
+        val r = (r1 + (r2 - r1) * clampedFactor).toInt()
+        val g = (g1 + (g2 - g1) * clampedFactor).toInt()
+        val b = (b1 + (b2 - b1) * clampedFactor).toInt()
+        
+        return Color.argb(a, r, g, b)
+    }
+    
+    /**
+     * Get colors for all 24 hours
+     */
+    fun getColorsFor24Hours(astronomyData: AstronomyDataEntity?): List<Int> {
+        return (0..23).map { hour -> getColorForHour(hour, astronomyData) }
+    }
+}
+
