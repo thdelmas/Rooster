@@ -124,8 +124,8 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         
         // Ensure ring fits completely within bounds with padding
         // ringThickness/2 accounts for half the stroke width on each side
-        val padding = 10f // Small padding from edges
-        val ringThickness = 40f
+        val padding = 15f // Padding from edges to ensure full visibility
+        val ringThickness = 35f
         val radius = (size / 2f) - (ringThickness / 2f) - padding
         
         // Draw background
@@ -134,16 +134,21 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Get colors for all 24 hours
         val hourColors = SolarColorCalculator.getColorsFor24Hours(astronomyData)
         
+        // Calculate solar noon offset angle
+        // Solar noon should be at the top (12 o'clock position = -90 degrees)
+        val solarNoonOffset = calculateSolarNoonOffset(astronomyData)
+        
         // Draw the ring segment by segment (24 segments for 24 hours)
         // Each segment represents 1 hour (15 degrees)
         val segmentAngle = 360f / 24f
         
         for (hour in 0..23) {
-            // Convert hour to angle: solar noon (12) is at top
-            // We want hour 12 at top (0 degrees in standard position = 12 o'clock)
+            // Convert hour to angle: solar noon should be at top
+            // Start with hour 12 at top, then apply solar noon offset
             // Clock position: 12 o'clock = -90 degrees, 3 o'clock = 0, 6 o'clock = 90, 9 o'clock = 180
             // Hour 12 should be at top: (hour - 12) * segmentAngle - 90
-            val baseAngle = (hour - 12) * segmentAngle - 90f
+            // Then offset by solar noon position
+            val baseAngle = (hour - 12) * segmentAngle - 90f + solarNoonOffset
             
             // Draw arc segment with gradient color
             val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -199,6 +204,49 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         canvas.drawText(minuteText, centerX, minuteTextY, minuteTextPaint)
         
         return bitmap
+    }
+    
+    /**
+     * Calculate the offset angle to align solar noon at the top (12 o'clock position)
+     * Returns the angle in degrees to rotate the ring
+     */
+    private fun calculateSolarNoonOffset(astronomyData: AstronomyDataEntity?): Float {
+        if (astronomyData == null || astronomyData.solarNoon <= 0) {
+            return 0f // No offset if no solar noon data
+        }
+        
+        val calendar = Calendar.getInstance()
+        val todayStart = calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        // Get solar noon time for today
+        calendar.timeInMillis = astronomyData.solarNoon
+        val solarNoonHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val solarNoonMinute = calendar.get(Calendar.MINUTE)
+        
+        // Normalize solar noon to today
+        calendar.timeInMillis = todayStart
+        calendar.set(Calendar.HOUR_OF_DAY, solarNoonHour)
+        calendar.set(Calendar.MINUTE, solarNoonMinute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val solarNoonToday = calendar.timeInMillis
+        
+        // Calculate the offset from hour 12 (midday)
+        // Each hour is 15 degrees (360 / 24)
+        // Each minute is 0.25 degrees (15 / 60)
+        val hourOffset = solarNoonHour - 12
+        val minuteOffset = solarNoonMinute / 60f
+        val totalHourOffset = hourOffset + minuteOffset
+        
+        // Convert to angle offset (negative because we want to rotate counter-clockwise if solar noon is after 12:00)
+        val angleOffset = -totalHourOffset * 15f
+        
+        return angleOffset
     }
     
     override fun onEnabled(context: Context) {
