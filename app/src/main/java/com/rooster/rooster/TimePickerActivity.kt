@@ -12,8 +12,9 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
 import com.rooster.rooster.presentation.viewmodel.MainViewModel
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.rooster.rooster.ui.SolarRingTimePickerView
-import com.rooster.rooster.ui.WheelTimePicker
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.HapticFeedbackHelper
@@ -31,9 +32,8 @@ class TimePickerActivity : AppCompatActivity() {
     private lateinit var solarModeButton: MaterialButton
     private lateinit var traditionalTimePickerCard: MaterialCardView
     private lateinit var solarTimePickerCard: MaterialCardView
-    private lateinit var hourPicker: WheelTimePicker
-    private lateinit var minutePicker: WheelTimePicker
-    private lateinit var periodPicker: WheelTimePicker
+    private lateinit var selectTimeButton: MaterialButton
+    private lateinit var selectedTimeText: TextView
     private lateinit var solarRingTimePicker: SolarRingTimePickerView
     private lateinit var continueButton: ExtendedFloatingActionButton
 
@@ -67,9 +67,8 @@ class TimePickerActivity : AppCompatActivity() {
         solarModeButton = findViewById(R.id.solarModeButton)
         traditionalTimePickerCard = findViewById(R.id.traditionalTimePickerCard)
         solarTimePickerCard = findViewById(R.id.solarTimePickerCard)
-        hourPicker = findViewById(R.id.hourPicker)
-        minutePicker = findViewById(R.id.minutePicker)
-        periodPicker = findViewById(R.id.periodPicker)
+        selectTimeButton = findViewById(R.id.selectTimeButton)
+        selectedTimeText = findViewById(R.id.selectedTimeText)
         solarRingTimePicker = findViewById(R.id.solarRingTimePicker)
         continueButton = findViewById(R.id.continueButton)
     }
@@ -86,25 +85,10 @@ class TimePickerActivity : AppCompatActivity() {
             setMode("solar")
         }
 
-        // Traditional time picker listeners
-        hourPicker.onValueChangedListener = { index ->
-            val (hour12, isPM) = convertTo12Hour(selectedHour)
-            selectedHour = convertTo24Hour(index + 1, periodPicker.getSelectedIndex() == 1)
-            updateSelectedTime()
-            HapticFeedbackHelper.performLightClick(hourPicker)
-        }
-
-        minutePicker.onValueChangedListener = { index ->
-            selectedMinute = index
-            updateSelectedTime()
-            HapticFeedbackHelper.performLightClick(minutePicker)
-        }
-
-        periodPicker.onValueChangedListener = { index ->
-            val currentHour12 = hourPicker.getSelectedIndex() + 1
-            selectedHour = convertTo24Hour(currentHour12, index == 1)
-            updateSelectedTime()
-            HapticFeedbackHelper.performLightClick(periodPicker)
+        // Traditional time picker button - opens MaterialTimePicker
+        selectTimeButton.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            showMaterialTimePicker()
         }
 
         // Solar time picker listener
@@ -133,20 +117,46 @@ class TimePickerActivity : AppCompatActivity() {
         selectedHour = calendar.get(Calendar.HOUR_OF_DAY)
         selectedMinute = calendar.get(Calendar.MINUTE)
 
-        // Initialize traditional time picker
-        val (hour12, isPM) = convertTo12Hour(selectedHour)
-        hourPicker.setItems((1..12).map { String.format("%02d", it) })
-        minutePicker.setItems((0..59).map { String.format("%02d", it) })
-        periodPicker.setItems(listOf("AM", "PM"))
-
-        hourPicker.setSelectedIndex(hour12 - 1, false)
-        minutePicker.setSelectedIndex(selectedMinute, false)
-        periodPicker.setSelectedIndex(if (isPM) 1 else 0, false)
-
         updateSelectedTime()
+        updateTimeDisplay()
 
         // Set initial mode to traditional
         setMode("traditional")
+    }
+    
+    private fun showMaterialTimePicker() {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
+        calendar.set(Calendar.MINUTE, selectedMinute)
+        
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(TimeFormat.CLOCK_12H)
+            .setHour(selectedHour)
+            .setMinute(selectedMinute)
+            .setTitleText("Select Time")
+            .build()
+        
+        picker.addOnPositiveButtonClickListener {
+            selectedHour = picker.hour
+            selectedMinute = picker.minute
+            updateSelectedTime()
+            updateTimeDisplay()
+            HapticFeedbackHelper.performSuccessFeedback(this)
+        }
+        
+        picker.show(supportFragmentManager, "MaterialTimePicker")
+    }
+    
+    private fun updateTimeDisplay() {
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
+        calendar.set(Calendar.MINUTE, selectedMinute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        
+        val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.getDefault())
+        val timeText = timeFormat.format(calendar.time)
+        selectedTimeText.text = timeText
     }
 
     private fun setMode(mode: String) {
@@ -218,24 +228,6 @@ class TimePickerActivity : AppCompatActivity() {
         }
     }
 
-    private fun convertTo12Hour(hour24: Int): Pair<Int, Boolean> {
-        val isPM = hour24 >= 12
-        val hour12 = when {
-            hour24 == 0 -> 12
-            hour24 > 12 -> hour24 - 12
-            else -> hour24
-        }
-        return Pair(hour12, isPM)
-    }
-
-    private fun convertTo24Hour(hour12: Int, isPM: Boolean): Int {
-        return when {
-            hour12 == 12 && !isPM -> 0
-            hour12 == 12 && isPM -> 12
-            isPM -> hour12 + 12
-            else -> hour12
-        }
-    }
 
     private fun createAlarmAndContinue() {
         val calendar = Calendar.getInstance()
