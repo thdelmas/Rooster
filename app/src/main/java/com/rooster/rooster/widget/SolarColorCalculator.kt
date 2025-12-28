@@ -85,55 +85,115 @@ object SolarColorCalculator {
     
     /**
      * Get color for a specific time based on solar events
-     * Uses symmetric color calculation around solar noon for perfect alignment
+     * Uses symmetric color calculation for dawn/dusk pairs to ensure matching colors
      */
     fun getColorForTime(time: Long, astronomyData: AstronomyDataEntity): Int {
-        val solarNoon = astronomyData.solarNoon
-        
         // Before astronomical dawn or after astronomical dusk = night
         if (time < astronomyData.astroDawn || time >= astronomyData.astroDusk) {
             return NIGHT_COLOR
         }
         
-        // Calculate distance from solar noon
-        val timeFromNoon = time - solarNoon
-        val isMorning = timeFromNoon < 0
+        val solarNoon = astronomyData.solarNoon
         
-        // Build afternoon events (use as reference for symmetric coloring)
-        val afternoonEvents = listOf(
-            Pair(solarNoon, SOLAR_NOON_COLOR),
-            Pair(astronomyData.sunset, SUNRISE_COLOR),
-            Pair(astronomyData.civilDusk, CIVIL_COLOR),
-            Pair(astronomyData.nauticalDusk, NAUTICAL_COLOR),
-            Pair(astronomyData.astroDusk, ASTRONOMICAL_COLOR)
-        ).sortedBy { it.first }
-        
-        // For morning times, mirror to afternoon side for symmetry
-        val referenceTime = if (isMorning) {
-            solarNoon + Math.abs(timeFromNoon)
-        } else {
-            time
-        }
-        
-        // Find the two solar events this reference time falls between
-        for (i in 0 until afternoonEvents.size - 1) {
-            val (eventTime1, color1) = afternoonEvents[i]
-            val (eventTime2, color2) = afternoonEvents[i + 1]
-            
-            if (referenceTime >= eventTime1 && referenceTime <= eventTime2) {
-                // Interpolate between the two colors
-                val range = (eventTime2 - eventTime1).toFloat()
-                val progress = if (range > 0) {
-                    (referenceTime - eventTime1).toFloat() / range
-                } else {
-                    0f
-                }
-                return interpolateColor(color1, color2, progress)
+        // Determine which period this time falls into and map to symmetric segment
+        when {
+            // Morning periods - map to corresponding afternoon periods for symmetry
+            time >= astronomyData.astroDawn && time < astronomyData.nauticalDawn -> {
+                // Map astro dawn -> nautical dawn to nautical dusk -> astro dusk (reversed)
+                return getSymmetricColor(
+                    time, astronomyData.astroDawn, astronomyData.nauticalDawn,
+                    astronomyData.nauticalDusk, astronomyData.astroDusk,
+                    ASTRONOMICAL_COLOR, NAUTICAL_COLOR, true
+                )
             }
+            
+            time >= astronomyData.nauticalDawn && time < astronomyData.civilDawn -> {
+                // Map nautical dawn -> civil dawn to civil dusk -> nautical dusk (reversed)
+                return getSymmetricColor(
+                    time, astronomyData.nauticalDawn, astronomyData.civilDawn,
+                    astronomyData.civilDusk, astronomyData.nauticalDusk,
+                    NAUTICAL_COLOR, CIVIL_COLOR, true
+                )
+            }
+            
+            time >= astronomyData.civilDawn && time < astronomyData.sunrise -> {
+                // Map civil dawn -> sunrise to sunset -> civil dusk (reversed)
+                return getSymmetricColor(
+                    time, astronomyData.civilDawn, astronomyData.sunrise,
+                    astronomyData.sunset, astronomyData.civilDusk,
+                    CIVIL_COLOR, SUNRISE_COLOR, true
+                )
+            }
+            
+            time >= astronomyData.sunrise && time < solarNoon -> {
+                // Map sunrise -> solar noon to solar noon -> sunset
+                return getSymmetricColor(
+                    time, astronomyData.sunrise, solarNoon,
+                    solarNoon, astronomyData.sunset,
+                    SUNRISE_COLOR, SOLAR_NOON_COLOR, false
+                )
+            }
+            
+            // Afternoon periods - use directly
+            time >= solarNoon && time < astronomyData.sunset -> {
+                val range = (astronomyData.sunset - solarNoon).toFloat()
+                val progress = if (range > 0) {
+                    (time - solarNoon).toFloat() / range
+                } else 0f
+                return interpolateColor(SOLAR_NOON_COLOR, SUNRISE_COLOR, progress)
+            }
+            
+            time >= astronomyData.sunset && time < astronomyData.civilDusk -> {
+                val range = (astronomyData.civilDusk - astronomyData.sunset).toFloat()
+                val progress = if (range > 0) {
+                    (time - astronomyData.sunset).toFloat() / range
+                } else 0f
+                return interpolateColor(SUNRISE_COLOR, CIVIL_COLOR, progress)
+            }
+            
+            time >= astronomyData.civilDusk && time < astronomyData.nauticalDusk -> {
+                val range = (astronomyData.nauticalDusk - astronomyData.civilDusk).toFloat()
+                val progress = if (range > 0) {
+                    (time - astronomyData.civilDusk).toFloat() / range
+                } else 0f
+                return interpolateColor(CIVIL_COLOR, NAUTICAL_COLOR, progress)
+            }
+            
+            time >= astronomyData.nauticalDusk && time < astronomyData.astroDusk -> {
+                val range = (astronomyData.astroDusk - astronomyData.nauticalDusk).toFloat()
+                val progress = if (range > 0) {
+                    (time - astronomyData.nauticalDusk).toFloat() / range
+                } else 0f
+                return interpolateColor(NAUTICAL_COLOR, ASTRONOMICAL_COLOR, progress)
+            }
+            
+            else -> return SOLAR_NOON_COLOR
+        }
+    }
+    
+    /**
+     * Get symmetric color by mapping morning segment to corresponding afternoon segment
+     */
+    private fun getSymmetricColor(
+        time: Long,
+        morningStart: Long, morningEnd: Long,
+        afternoonStart: Long, afternoonEnd: Long,
+        startColor: Int, endColor: Int,
+        reversed: Boolean
+    ): Int {
+        // Calculate progress in morning segment
+        val morningRange = (morningEnd - morningStart).toFloat()
+        val progress = if (morningRange > 0) {
+            (time - morningStart).toFloat() / morningRange
+        } else {
+            0f
         }
         
-        // Fallback
-        return NIGHT_COLOR
+        // Apply same progress to afternoon segment (reversed if needed)
+        val symmetricProgress = if (reversed) 1f - progress else progress
+        
+        // Interpolate using the same color transition
+        return interpolateColor(startColor, endColor, symmetricProgress)
     }
     
     /**

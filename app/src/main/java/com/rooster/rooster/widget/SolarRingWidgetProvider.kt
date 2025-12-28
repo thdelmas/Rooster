@@ -45,8 +45,27 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
                 getAstronomyData(context)
             }
             
-            // Generate bitmap
-            val bitmap = generateRingBitmap(context, astronomyData)
+            // Get widget size to ensure ring fits properly
+            val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+            val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+            val minHeightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
+            
+            // Convert from dp to pixels using device density
+            val displayMetrics = context.resources.displayMetrics
+            val density = displayMetrics.density
+            
+            // Account for padding in layout (8dp on each side = 16dp total)
+            val paddingDp = 16
+            val availableWidthDp = minWidthDp - paddingDp
+            val availableHeightDp = minHeightDp - paddingDp
+            
+            // Use the minimum dimension to ensure ring fits in all cases
+            // This ensures the ring is always fully visible and circular
+            val minDimensionDp = Math.min(availableWidthDp, availableHeightDp).coerceAtLeast(100)
+            val size = (minDimensionDp * density).toInt()
+            
+            // Generate bitmap with calculated size (always square to ensure circular ring)
+            val bitmap = generateRingBitmap(context, astronomyData, size)
             
             // Create RemoteViews
             val views = RemoteViews(context.packageName, R.layout.widget_solar_ring)
@@ -127,9 +146,9 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
     
     private fun generateRingBitmap(
         context: Context,
-        astronomyData: AstronomyDataEntity?
+        astronomyData: AstronomyDataEntity?,
+        size: Int = 512 // Default size, but can be overridden
     ): Bitmap {
-        val size = 512 // Widget bitmap size
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         
