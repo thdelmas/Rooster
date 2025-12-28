@@ -635,26 +635,24 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             }
             
             // Convert to radians for drawing
-            // Position markers at the inner edge of the ring (radius - ringThickness/2)
-            // and slightly more inside for better visibility
-            val innerRadius = radius - (ringThickness / 2f) - 8f
+            // Position markers on the ring
             val angleRad = Math.toRadians(angle.toDouble())
-            val markerX = centerX + (innerRadius * Math.cos(angleRad)).toFloat()
-            val markerY = centerY + (innerRadius * Math.sin(angleRad)).toFloat()
+            val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
+            val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
             
-            // Draw marker circle
+            // Draw marker circle (bigger)
             val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = ContextCompat.getColor(context, R.color.md_theme_dark_background)
                 style = Paint.Style.FILL
             }
-            canvas.drawCircle(markerX, markerY, 12f, markerPaint)
+            canvas.drawCircle(markerX, markerY, 20f, markerPaint)
             
-            // Draw emoji
+            // Draw emoji (bigger)
             val emojiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                textSize = 20f
+                textSize = 32f
                 textAlign = Paint.Align.CENTER
             }
-            canvas.drawText(emoji, markerX, markerY + 6f, emojiPaint)
+            canvas.drawText(emoji, markerX, markerY + 10f, emojiPaint)
         }
     }
     
@@ -721,12 +719,10 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         }
         
         // Convert to radians for drawing
-        // Position current time marker at the inner edge of the ring (radius - ringThickness/2)
-        // and slightly more inside for better visibility
-        val innerRadius = radius - (ringThickness / 2f) - 8f
+        // Position current time marker on the ring
         val angleRad = Math.toRadians(angle.toDouble())
-        val markerX = centerX + (innerRadius * Math.cos(angleRad)).toFloat()
-        val markerY = centerY + (innerRadius * Math.sin(angleRad)).toFloat()
+        val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
+        val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
         
         // Draw current time marker (larger, more prominent)
         val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
