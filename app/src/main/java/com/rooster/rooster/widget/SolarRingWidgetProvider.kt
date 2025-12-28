@@ -54,14 +54,17 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             val displayMetrics = context.resources.displayMetrics
             val density = displayMetrics.density
             
-            // Use the minimum dimension to ensure ring fits in all cases
-            // This ensures the ring is always fully visible and circular
-            // Use full widget dimensions for 1:1 rendering
-            val minDimensionDp = Math.min(minWidthDp, minHeightDp).coerceAtLeast(100)
-            val size = (minDimensionDp * density).toInt()
+            // Use actual widget dimensions for 1:1 rendering
+            val widthDp = minWidthDp.coerceAtLeast(100)
+            val heightDp = minHeightDp.coerceAtLeast(100)
+            val width = (widthDp * density).toInt()
+            val height = (heightDp * density).toInt()
             
-            // Generate bitmap with calculated size (always square to ensure circular ring)
-            val bitmap = generateRingBitmap(context, astronomyData, size)
+            // Use minimum dimension for ring radius to ensure it fits properly
+            val minDimension = Math.min(width, height)
+            
+            // Generate bitmap with actual widget dimensions
+            val bitmap = generateRingBitmap(context, astronomyData, width, height, minDimension)
             
             // Create RemoteViews
             val views = RemoteViews(context.packageName, R.layout.widget_solar_ring)
@@ -143,20 +146,22 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
     private fun generateRingBitmap(
         context: Context,
         astronomyData: AstronomyDataEntity?,
-        size: Int = 512 // Default size, but can be overridden
+        width: Int = 512,
+        height: Int = 512,
+        sizeForRing: Int = 512 // Minimum dimension for calculating ring radius
     ): Bitmap {
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         
-        val centerX = size / 2f
-        val centerY = size / 2f
+        val centerX = width / 2f
+        val centerY = height / 2f
         
-        // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
+        // Calculate radius using minimum dimension to ensure ring fits properly
         // ringThickness/2 accounts for half the stroke width on each side
         // Small padding ensures the ring doesn't get clipped at edges
         val ringThickness = 35f
         val edgePadding = 8f // Small padding to prevent clipping
-        val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
+        val radius = (sizeForRing / 2f) - (ringThickness / 2f) - edgePadding
         
         // Draw background
         canvas.drawColor(ContextCompat.getColor(context, R.color.md_theme_dark_background))
