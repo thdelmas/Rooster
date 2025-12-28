@@ -121,8 +121,12 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         
         val centerX = size / 2f
         val centerY = size / 2f
-        val radius = size / 2f - 50f
-        val ringThickness = 50f
+        
+        // Ensure ring fits completely within bounds with padding
+        // ringThickness/2 accounts for half the stroke width on each side
+        val padding = 10f // Small padding from edges
+        val ringThickness = 40f
+        val radius = (size / 2f) - (ringThickness / 2f) - padding
         
         // Draw background
         canvas.drawColor(ContextCompat.getColor(context, R.color.md_theme_dark_background))
@@ -160,21 +164,39 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             canvas.drawArc(rect, baseAngle, segmentAngle, false, paint)
         }
         
-        // Draw current hour in the center
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        // Get current time
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        
+        // Draw current hour in the center (larger, top)
+        val hourTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
             textSize = 72f
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
         
-        // Get current hour
-        val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         val hourText = String.format(Locale.getDefault(), "%02d", currentHour)
         
-        // Calculate text position (center of canvas)
-        val textY = centerY - (textPaint.descent() + textPaint.ascent()) / 2
-        canvas.drawText(hourText, centerX, textY, textPaint)
+        // Draw current minutes below the hour (smaller)
+        val minuteTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
+            textSize = 48f
+            textAlign = Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        
+        val minuteText = String.format(Locale.getDefault(), "%02d", currentMinute)
+        
+        // Calculate text positions
+        // Hour text - positioned in upper center area
+        val hourTextY = centerY - 20f - (hourTextPaint.descent() + hourTextPaint.ascent()) / 2
+        canvas.drawText(hourText, centerX, hourTextY, hourTextPaint)
+        
+        // Minute text - positioned below hour
+        val minuteTextY = centerY + 40f - (minuteTextPaint.descent() + minuteTextPaint.ascent()) / 2
+        canvas.drawText(minuteText, centerX, minuteTextY, minuteTextPaint)
         
         return bitmap
     }
