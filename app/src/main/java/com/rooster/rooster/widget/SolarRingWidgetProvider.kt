@@ -1,13 +1,16 @@
 package com.rooster.rooster.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
+import com.rooster.rooster.MainActivity
 import com.rooster.rooster.R
 import com.rooster.rooster.data.local.AlarmDatabase
 import com.rooster.rooster.data.local.entity.AstronomyDataEntity
@@ -48,6 +51,17 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             // Create RemoteViews
             val views = RemoteViews(context.packageName, R.layout.widget_solar_ring)
             views.setImageViewBitmap(R.id.widget_ring_image, bitmap)
+            
+            // Set click intent to open the app
+            val intent = Intent(context, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_ring_image, pendingIntent)
             
             // Update widget
             appWidgetManager.updateAppWidget(appWidgetId, views)

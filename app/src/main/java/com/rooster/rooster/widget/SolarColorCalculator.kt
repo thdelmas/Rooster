@@ -10,10 +10,11 @@ import java.util.*
 object SolarColorCalculator {
     
     // Solar event colors - transitioning through the day
-    private val NIGHT_COLOR = Color.parseColor("#0A0A14")        // Deep space
-    private val ASTRONOMICAL_COLOR = Color.parseColor("#1A1A2E")  // Astronomical twilight
-    private val NAUTICAL_COLOR = Color.parseColor("#2A2A4E")     // Nautical twilight
-    private val CIVIL_COLOR = Color.parseColor("#4A4A7E")        // Civil twilight
+    // Night colors made lighter to be visible against black background
+    private val NIGHT_COLOR = Color.parseColor("#2A2A3A")        // Deep space (lighter for visibility)
+    private val ASTRONOMICAL_COLOR = Color.parseColor("#3A3A4E")  // Astronomical twilight (lighter)
+    private val NAUTICAL_COLOR = Color.parseColor("#4A4A6E")     // Nautical twilight (lighter)
+    private val CIVIL_COLOR = Color.parseColor("#6A6A9E")        // Civil twilight (lighter)
     private val SUNRISE_COLOR = Color.parseColor("#FF8E53")      // Sunrise
     private val GOLDEN_HOUR_COLOR = Color.parseColor("#FFB86C")  // Golden hour
     private val DAY_SKY_COLOR = Color.parseColor("#FFD89C")      // Day sky
@@ -21,6 +22,7 @@ object SolarColorCalculator {
     
     /**
      * Get color for a specific hour of the day (0-23) based on solar events
+     * Uses the midpoint of the hour for more accurate color representation
      * Solar noon is at the top (12 o'clock position), so hour 12 maps to top
      */
     fun getColorForHour(hour: Int, astronomyData: AstronomyDataEntity?): Int {
@@ -36,8 +38,8 @@ object SolarColorCalculator {
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
         
-        // Get the time for this hour (in milliseconds) for today
-        val hourTime = currentDayStart + (hour * 60 * 60 * 1000L)
+        // Use the midpoint of the hour (30 minutes) for more accurate color
+        val hourTime = currentDayStart + (hour * 60 * 60 * 1000L) + (30 * 60 * 1000L)
         
         // Normalize astronomy data times to today
         val normalizedData = normalizeAstronomyDataToToday(astronomyData, currentDayStart)
@@ -83,33 +85,49 @@ object SolarColorCalculator {
     
     /**
      * Get color for a specific time based on solar events
+     * Uses symmetric color calculation around solar noon for perfect alignment
      */
     fun getColorForTime(time: Long, astronomyData: AstronomyDataEntity): Int {
-        val times = listOf(
-            Pair(astronomyData.astroDawn, ASTRONOMICAL_COLOR),
-            Pair(astronomyData.nauticalDawn, NAUTICAL_COLOR),
-            Pair(astronomyData.civilDawn, CIVIL_COLOR),
-            Pair(astronomyData.sunrise, SUNRISE_COLOR),
-            Pair(astronomyData.solarNoon, SOLAR_NOON_COLOR),
-            Pair(astronomyData.sunset, SUNRISE_COLOR),
-            Pair(astronomyData.civilDusk, CIVIL_COLOR),
-            Pair(astronomyData.nauticalDusk, NAUTICAL_COLOR),
-            Pair(astronomyData.astroDusk, ASTRONOMICAL_COLOR)
-        ).sortedBy { it.first }
+        val solarNoon = astronomyData.solarNoon
         
         // Before astronomical dawn or after astronomical dusk = night
         if (time < astronomyData.astroDawn || time >= astronomyData.astroDusk) {
             return NIGHT_COLOR
         }
         
-        // Find the two solar events this time falls between
-        for (i in 0 until times.size - 1) {
-            val (eventTime1, color1) = times[i]
-            val (eventTime2, color2) = times[i + 1]
+        // Calculate distance from solar noon
+        val timeFromNoon = time - solarNoon
+        val isMorning = timeFromNoon < 0
+        
+        // Build afternoon events (use as reference for symmetric coloring)
+        val afternoonEvents = listOf(
+            Pair(solarNoon, SOLAR_NOON_COLOR),
+            Pair(astronomyData.sunset, SUNRISE_COLOR),
+            Pair(astronomyData.civilDusk, CIVIL_COLOR),
+            Pair(astronomyData.nauticalDusk, NAUTICAL_COLOR),
+            Pair(astronomyData.astroDusk, ASTRONOMICAL_COLOR)
+        ).sortedBy { it.first }
+        
+        // For morning times, mirror to afternoon side for symmetry
+        val referenceTime = if (isMorning) {
+            solarNoon + Math.abs(timeFromNoon)
+        } else {
+            time
+        }
+        
+        // Find the two solar events this reference time falls between
+        for (i in 0 until afternoonEvents.size - 1) {
+            val (eventTime1, color1) = afternoonEvents[i]
+            val (eventTime2, color2) = afternoonEvents[i + 1]
             
-            if (time >= eventTime1 && time < eventTime2) {
+            if (referenceTime >= eventTime1 && referenceTime <= eventTime2) {
                 // Interpolate between the two colors
-                val progress = (time - eventTime1).toFloat() / (eventTime2 - eventTime1).toFloat()
+                val range = (eventTime2 - eventTime1).toFloat()
+                val progress = if (range > 0) {
+                    (referenceTime - eventTime1).toFloat() / range
+                } else {
+                    0f
+                }
                 return interpolateColor(color1, color2, progress)
             }
         }
