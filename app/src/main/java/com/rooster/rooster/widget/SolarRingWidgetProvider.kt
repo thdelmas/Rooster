@@ -382,6 +382,13 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             events.add(Pair(normalizedData.sunrise, SUNRISE_COLOR))
         }
         
+        // Calculate the color just before/after solar noon once to ensure perfect match on both sides
+        val nearNoonColor = if (normalizedData.solarNoon > 0) {
+            interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.97f)
+        } else {
+            DAY_SKY_COLOR
+        }
+        
         // Add smooth gradient between sunrise and solar noon with multiple intermediate stops
         if (normalizedData.sunrise > 0 && normalizedData.solarNoon > 0 && normalizedData.sunrise < normalizedData.solarNoon) {
             // Add multiple intermediate stops for very smooth transition
@@ -406,10 +413,9 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             val brighterDaySky2 = interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.6f)
             events.add(Pair(daySkyTime3, brighterDaySky2))
             
-            // Add a point close to solar noon (~95% of the way) for smooth transition
-            val nearNoonTime = normalizedData.solarNoon - (sunriseToNoonRange * 0.05f).toLong()
-            val nearNoonColor = interpolateColor(DAY_SKY_COLOR, SOLAR_NOON_BRIGHTEST, 0.9f)
-            events.add(Pair(nearNoonTime, nearNoonColor))
+            // Add point just before solar noon using the pre-calculated color
+            val nearNoonTimeBefore = normalizedData.solarNoon - (sunriseToNoonRange * 0.02f).toLong()
+            events.add(Pair(nearNoonTimeBefore, nearNoonColor))
         }
         
         // Solar noon - MUST be the brightest and at exact position
@@ -421,10 +427,9 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         if (normalizedData.solarNoon > 0 && normalizedData.sunset > 0 && normalizedData.solarNoon < normalizedData.sunset) {
             val noonToSunsetRange = normalizedData.sunset - normalizedData.solarNoon
             
-            // Add a point close to solar noon (~5% of the way) for smooth transition
-            val nearNoonTime = normalizedData.solarNoon + (noonToSunsetRange * 0.05f).toLong()
-            val nearNoonColor = interpolateColor(SOLAR_NOON_BRIGHTEST, DAY_SKY_COLOR, 0.9f)
-            events.add(Pair(nearNoonTime, nearNoonColor))
+            // Add point just after solar noon using the EXACT SAME pre-calculated color
+            val nearNoonTimeAfter = normalizedData.solarNoon + (noonToSunsetRange * 0.02f).toLong()
+            events.add(Pair(nearNoonTimeAfter, nearNoonColor))
             
             // Brighter day sky point (~20% of the way)
             val daySkyTime1 = normalizedData.solarNoon + (noonToSunsetRange * 0.2f).toLong()
