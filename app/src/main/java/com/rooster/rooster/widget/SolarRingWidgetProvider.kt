@@ -54,14 +54,10 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             val displayMetrics = context.resources.displayMetrics
             val density = displayMetrics.density
             
-            // Account for padding in layout (8dp on each side = 16dp total)
-            val paddingDp = 16
-            val availableWidthDp = minWidthDp - paddingDp
-            val availableHeightDp = minHeightDp - paddingDp
-            
             // Use the minimum dimension to ensure ring fits in all cases
             // This ensures the ring is always fully visible and circular
-            val minDimensionDp = Math.min(availableWidthDp, availableHeightDp).coerceAtLeast(100)
+            // Use full widget dimensions for 1:1 rendering
+            val minDimensionDp = Math.min(minWidthDp, minHeightDp).coerceAtLeast(100)
             val size = (minDimensionDp * density).toInt()
             
             // Generate bitmap with calculated size (always square to ensure circular ring)
