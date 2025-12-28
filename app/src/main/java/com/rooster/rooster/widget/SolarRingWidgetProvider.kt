@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
@@ -343,6 +344,11 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             astroDusk = normalizeTime(astronomyData.astroDusk)
         )
         
+        // Color constants for solar noon (brightest)
+        val SOLAR_NOON_BRIGHTEST = android.graphics.Color.parseColor("#FFE8B8") // Brighter than day sky
+        val GOLDEN_HOUR_COLOR = android.graphics.Color.parseColor("#FFB86C")
+        val SUNRISE_COLOR = android.graphics.Color.parseColor("#FF8E53")
+        
         // Add events with their colors
         if (normalizedData.astroDawn > 0) {
             events.add(Pair(normalizedData.astroDawn, SolarColorCalculator.getColorForTime(normalizedData.astroDawn, normalizedData)))
@@ -354,13 +360,40 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             events.add(Pair(normalizedData.civilDawn, SolarColorCalculator.getColorForTime(normalizedData.civilDawn, normalizedData)))
         }
         if (normalizedData.sunrise > 0) {
-            events.add(Pair(normalizedData.sunrise, SolarColorCalculator.getColorForTime(normalizedData.sunrise, normalizedData)))
+            events.add(Pair(normalizedData.sunrise, SUNRISE_COLOR))
         }
+        
+        // Add intermediate points between sunrise and solar noon for smoother gradient
+        if (normalizedData.sunrise > 0 && normalizedData.solarNoon > 0 && normalizedData.sunrise < normalizedData.solarNoon) {
+            val sunriseToNoonRange = normalizedData.solarNoon - normalizedData.sunrise
+            // Add golden hour point (approximately 1/3 of the way from sunrise to solar noon)
+            val goldenHourTime = normalizedData.sunrise + (sunriseToNoonRange * 0.33f).toLong()
+            events.add(Pair(goldenHourTime, GOLDEN_HOUR_COLOR))
+            // Add day sky point (approximately 2/3 of the way from sunrise to solar noon)
+            val daySkyTime = normalizedData.sunrise + (sunriseToNoonRange * 0.67f).toLong()
+            val DAY_SKY_COLOR = android.graphics.Color.parseColor("#FFD89C")
+            events.add(Pair(daySkyTime, DAY_SKY_COLOR))
+        }
+        
         if (normalizedData.solarNoon > 0) {
-            events.add(Pair(normalizedData.solarNoon, SolarColorCalculator.getColorForTime(normalizedData.solarNoon, normalizedData)))
+            // Use brightest color for solar noon
+            events.add(Pair(normalizedData.solarNoon, SOLAR_NOON_BRIGHTEST))
         }
+        
+        // Add intermediate points between solar noon and sunset for smoother gradient
+        if (normalizedData.solarNoon > 0 && normalizedData.sunset > 0 && normalizedData.solarNoon < normalizedData.sunset) {
+            val noonToSunsetRange = normalizedData.sunset - normalizedData.solarNoon
+            // Add day sky point (approximately 1/3 of the way from solar noon to sunset)
+            val daySkyTime = normalizedData.solarNoon + (noonToSunsetRange * 0.33f).toLong()
+            val DAY_SKY_COLOR = android.graphics.Color.parseColor("#FFD89C")
+            events.add(Pair(daySkyTime, DAY_SKY_COLOR))
+            // Add golden hour point (approximately 2/3 of the way from solar noon to sunset)
+            val goldenHourTime = normalizedData.solarNoon + (noonToSunsetRange * 0.67f).toLong()
+            events.add(Pair(goldenHourTime, GOLDEN_HOUR_COLOR))
+        }
+        
         if (normalizedData.sunset > 0) {
-            events.add(Pair(normalizedData.sunset, SolarColorCalculator.getColorForTime(normalizedData.sunset, normalizedData)))
+            events.add(Pair(normalizedData.sunset, SUNRISE_COLOR))
         }
         if (normalizedData.civilDusk > 0) {
             events.add(Pair(normalizedData.civilDusk, SolarColorCalculator.getColorForTime(normalizedData.civilDusk, normalizedData)))
@@ -378,17 +411,38 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Positions are calculated relative to solar noon (which will be at position 0.0)
         // The gradient will be rotated so position 0.0 aligns with -90 + solarNoonOffset (top)
         fun timeToPosition(time: Long): Float {
-            calendar.timeInMillis = time
-            val hour = calendar.get(Calendar.HOUR_OF_DAY)
-            val minute = calendar.get(Calendar.MINUTE)
+            // Calculate time difference from solar noon in milliseconds
+            val solarNoonTime = normalizedData.solarNoon
+            if (solarNoonTime <= 0) {
+                // Fallback: calculate relative to hour 12:00
+                calendar.timeInMillis = time
+                val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                val minute = calendar.get(Calendar.MINUTE)
+                val hourOffset = hour - 12
+                val minuteOffset = minute / 60f
+                val angleFromSolarNoon = (hourOffset + minuteOffset) * 15f
+                var position = angleFromSolarNoon / 360f
+                while (position < 0) position += 1f
+                while (position >= 1) position -= 1f
+                return position
+            }
             
-            // Calculate angle relative to solar noon
-            // Solar noon angle in world coordinates: -90 + solarNoonOffset
-            // Time angle in world coordinates: (hour - 12) * 15 + (minute / 60) * 15 - 90 + solarNoonOffset
-            // Difference: (hour - 12) * 15 + (minute / 60) * 15
-            val hourOffset = hour - 12
-            val minuteOffset = minute / 60f
-            val angleFromSolarNoon = (hourOffset + minuteOffset) * 15f
+            // Calculate time difference from solar noon
+            var timeDiff = time - solarNoonTime
+            
+            // Handle wrap-around (times before solar noon in the same day)
+            // If time is before solar noon, it should be negative, which is correct
+            // But we need to handle the case where time is from the previous day
+            val dayInMillis = 24 * 60 * 60 * 1000L
+            if (timeDiff > dayInMillis / 2) {
+                timeDiff -= dayInMillis
+            } else if (timeDiff < -dayInMillis / 2) {
+                timeDiff += dayInMillis
+            }
+            
+            // Convert time difference to angle (each hour = 15 degrees)
+            val hoursFromSolarNoon = timeDiff / (60f * 60f * 1000f)
+            val angleFromSolarNoon = hoursFromSolarNoon * 15f
             
             // Convert to position (0.0 to 1.0), where 0.0 is solar noon
             var position = angleFromSolarNoon / 360f
@@ -409,15 +463,32 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             Pair(timeToPosition(event.first), event.second)
         }.sortedBy { it.first }
         
-        // Build color and position arrays
+        // Build color and position arrays, removing duplicates
         val colors = mutableListOf<Int>()
         val positions = mutableListOf<Float>()
+        
+        var lastPosition = -1f
+        val POSITION_EPSILON = 0.001f // Small threshold for considering positions equal
         
         // Add all event positions (they're already sorted)
         // SweepGradient will automatically handle wrap-around from 1.0 to 0.0
         for ((pos, color) in eventPositions) {
+            // Skip if this position is too close to the previous one (duplicate)
+            if (lastPosition >= 0 && kotlin.math.abs(pos - lastPosition) < POSITION_EPSILON) {
+                // If we have a duplicate, prefer the brighter color (higher RGB values)
+                val lastColor = colors.last()
+                val lastBrightness = android.graphics.Color.red(lastColor) + android.graphics.Color.green(lastColor) + android.graphics.Color.blue(lastColor)
+                val currentBrightness = android.graphics.Color.red(color) + android.graphics.Color.green(color) + android.graphics.Color.blue(color)
+                if (currentBrightness > lastBrightness) {
+                    // Replace with brighter color
+                    colors[colors.size - 1] = color
+                }
+                continue
+            }
+            
             colors.add(color)
             positions.add(pos)
+            lastPosition = pos
         }
         
         // Ensure we have at least 2 points for a valid gradient
