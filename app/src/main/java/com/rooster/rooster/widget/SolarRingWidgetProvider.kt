@@ -154,7 +154,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
         // ringThickness/2 accounts for half the stroke width on each side
         // Small padding ensures the ring doesn't get clipped at edges
-        val ringThickness = 35f
+        val ringThickness = 50f
         val edgePadding = 8f // Small padding to prevent clipping
         val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
         
@@ -215,7 +215,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Draw current hour in the center (larger, top)
         val hourTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 72f
+            textSize = 96f
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
@@ -225,7 +225,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Draw current minutes below the hour (smaller)
         val minuteTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 48f
+            textSize = 64f
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
