@@ -68,6 +68,18 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".widget.SolarRingWidgetProvider"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/solar_ring_widget_info" />
+        </receiver>
+
         <activity
             android:name=".RingtoneActivity"
             android:exported="false"

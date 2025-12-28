@@ -20,4 +20,5 @@
         <item>Nautical Dusk</item>
         <item>Astronomical Dusk</item>
     </string-array>
+    <string name="widget_solar_ring_description">Solar Ring Widget - Shows hours in a ring with gradient colors representing solar events throughout the day</string>
 </resources>
