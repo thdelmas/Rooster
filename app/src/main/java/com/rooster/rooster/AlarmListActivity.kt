@@ -66,13 +66,10 @@ class AlarmListActivity : AppCompatActivity() {
     }
     
     private fun createNewAlarm() {
-        val alarm = AlarmCreation("Alarm", false, "At", "Default", "Pick Time", "Pick Time", 0, 0, 0)
-        viewModel.insertAlarm(alarm) { alarmId ->
-            // Open editor with the new alarm ID
-            val intent = android.content.Intent(this, AlarmEditorActivity::class.java)
-            intent.putExtra("alarm_id", alarmId)
-            startActivity(intent)
-        }
+        // Open time picker activity instead of directly creating alarm
+        val intent = android.content.Intent(this, TimePickerActivity::class.java)
+        startActivity(intent)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
     private fun updateAlarmList(alarms: List<Alarm>) {
