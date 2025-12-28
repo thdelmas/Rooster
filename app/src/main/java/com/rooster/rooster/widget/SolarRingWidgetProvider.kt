@@ -162,43 +162,43 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Draw background
         canvas.drawColor(ContextCompat.getColor(context, R.color.md_theme_dark_background))
         
-        // Get colors for all 24 hours
-        val hourColors = SolarColorCalculator.getColorsFor24Hours(astronomyData)
-        
         // Calculate solar noon offset angle
         // Solar noon should be at the top (12 o'clock position = -90 degrees)
         val solarNoonOffset = calculateSolarNoonOffset(astronomyData)
         
-        // Draw the ring segment by segment (24 segments for 24 hours)
-        // Each segment represents 1 hour (15 degrees)
-        val segmentAngle = 360f / 24f
+        // Create sweep gradient with color stops at each solar event
+        val (colors, positions) = createGradientColorStops(astronomyData, solarNoonOffset)
         
-        for (hour in 0..23) {
-            // Convert hour to angle: solar noon should be at top
-            // Start with hour 12 at top, then apply solar noon offset
-            // Clock position: 12 o'clock = -90 degrees, 3 o'clock = 0, 6 o'clock = 90, 9 o'clock = 180
-            // Hour 12 should be at top: (hour - 12) * segmentAngle - 90
-            // Then offset by solar noon position
-            val baseAngle = (hour - 12) * segmentAngle - 90f + solarNoonOffset
-            
-            // Draw arc segment with gradient color
-            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = hourColors[hour]
-                style = Paint.Style.STROKE
-                strokeWidth = ringThickness
-                strokeCap = Paint.Cap.ROUND
-            }
-            
-            // Create arc
-            val rect = android.graphics.RectF(
-                centerX - radius,
-                centerY - radius,
-                centerX + radius,
-                centerY + radius
-            )
-            
-            canvas.drawArc(rect, baseAngle, segmentAngle, false, paint)
+        // Create sweep gradient (starts at 0 degrees = 3 o'clock by default)
+        val gradient = android.graphics.SweepGradient(
+            centerX, centerY,
+            colors.toIntArray(),
+            positions.toFloatArray()
+        )
+        
+        // Rotate gradient so it starts at -90 degrees (12 o'clock) + solarNoonOffset
+        val matrix = android.graphics.Matrix()
+        matrix.setRotate(-90f + solarNoonOffset, centerX, centerY)
+        gradient.setLocalMatrix(matrix)
+        
+        // Draw the ring with gradient (single arc, not segments)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = gradient
+            style = Paint.Style.STROKE
+            strokeWidth = ringThickness
+            strokeCap = Paint.Cap.ROUND
         }
+        
+        // Create arc rectangle
+        val rect = android.graphics.RectF(
+            centerX - radius,
+            centerY - radius,
+            centerX + radius,
+            centerY + radius
+        )
+        
+        // Draw full circle with gradient
+        canvas.drawArc(rect, -90f + solarNoonOffset, 360f, false, paint)
         
         // Draw solar event markers
         if (astronomyData != null) {
@@ -288,6 +288,149 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val angleOffset = -totalHourOffset * 15f
         
         return angleOffset
+    }
+    
+    /**
+     * Create gradient color stops at each solar event
+     * Returns a Pair of (colors list, positions list) for SweepGradient
+     * Positions are calculated relative to 0 degrees (3 o'clock), gradient will be rotated
+     */
+    private fun createGradientColorStops(
+        astronomyData: AstronomyDataEntity?,
+        solarNoonOffset: Float
+    ): Pair<List<Int>, List<Float>> {
+        if (astronomyData == null) {
+            // Default: single night color for full circle
+            val nightColor = android.graphics.Color.parseColor("#2A2A3A")
+            return Pair(listOf(nightColor, nightColor), listOf(0f, 1f))
+        }
+        
+        val calendar = Calendar.getInstance()
+        val todayStart = calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        // Normalize astronomy data times to today
+        fun normalizeTime(originalTime: Long): Long {
+            if (originalTime <= 0) return 0
+            calendar.timeInMillis = originalTime
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            calendar.timeInMillis = todayStart
+            calendar.set(Calendar.HOUR_OF_DAY, hour)
+            calendar.set(Calendar.MINUTE, minute)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            return calendar.timeInMillis
+        }
+        
+        // Create list of solar events with their times and colors
+        val events = mutableListOf<Pair<Long, Int>>()
+        
+        // Add all solar events
+        val normalizedData = astronomyData.copy(
+            sunrise = normalizeTime(astronomyData.sunrise),
+            sunset = normalizeTime(astronomyData.sunset),
+            solarNoon = normalizeTime(astronomyData.solarNoon),
+            civilDawn = normalizeTime(astronomyData.civilDawn),
+            civilDusk = normalizeTime(astronomyData.civilDusk),
+            nauticalDawn = normalizeTime(astronomyData.nauticalDawn),
+            nauticalDusk = normalizeTime(astronomyData.nauticalDusk),
+            astroDawn = normalizeTime(astronomyData.astroDawn),
+            astroDusk = normalizeTime(astronomyData.astroDusk)
+        )
+        
+        // Add events with their colors
+        if (normalizedData.astroDawn > 0) {
+            events.add(Pair(normalizedData.astroDawn, SolarColorCalculator.getColorForTime(normalizedData.astroDawn, normalizedData)))
+        }
+        if (normalizedData.nauticalDawn > 0) {
+            events.add(Pair(normalizedData.nauticalDawn, SolarColorCalculator.getColorForTime(normalizedData.nauticalDawn, normalizedData)))
+        }
+        if (normalizedData.civilDawn > 0) {
+            events.add(Pair(normalizedData.civilDawn, SolarColorCalculator.getColorForTime(normalizedData.civilDawn, normalizedData)))
+        }
+        if (normalizedData.sunrise > 0) {
+            events.add(Pair(normalizedData.sunrise, SolarColorCalculator.getColorForTime(normalizedData.sunrise, normalizedData)))
+        }
+        if (normalizedData.solarNoon > 0) {
+            events.add(Pair(normalizedData.solarNoon, SolarColorCalculator.getColorForTime(normalizedData.solarNoon, normalizedData)))
+        }
+        if (normalizedData.sunset > 0) {
+            events.add(Pair(normalizedData.sunset, SolarColorCalculator.getColorForTime(normalizedData.sunset, normalizedData)))
+        }
+        if (normalizedData.civilDusk > 0) {
+            events.add(Pair(normalizedData.civilDusk, SolarColorCalculator.getColorForTime(normalizedData.civilDusk, normalizedData)))
+        }
+        if (normalizedData.nauticalDusk > 0) {
+            events.add(Pair(normalizedData.nauticalDusk, SolarColorCalculator.getColorForTime(normalizedData.nauticalDusk, normalizedData)))
+        }
+        if (normalizedData.astroDusk > 0) {
+            events.add(Pair(normalizedData.astroDusk, SolarColorCalculator.getColorForTime(normalizedData.astroDusk, normalizedData)))
+        }
+        
+        val nightColor = android.graphics.Color.parseColor("#2A2A3A")
+        
+        // Convert times to angles and then to positions (0.0 to 1.0)
+        // Positions are calculated relative to solar noon (which will be at position 0.0)
+        // The gradient will be rotated so position 0.0 aligns with -90 + solarNoonOffset (top)
+        fun timeToPosition(time: Long): Float {
+            calendar.timeInMillis = time
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            
+            // Calculate angle relative to solar noon
+            // Solar noon angle in world coordinates: -90 + solarNoonOffset
+            // Time angle in world coordinates: (hour - 12) * 15 + (minute / 60) * 15 - 90 + solarNoonOffset
+            // Difference: (hour - 12) * 15 + (minute / 60) * 15
+            val hourOffset = hour - 12
+            val minuteOffset = minute / 60f
+            val angleFromSolarNoon = (hourOffset + minuteOffset) * 15f
+            
+            // Convert to position (0.0 to 1.0), where 0.0 is solar noon
+            var position = angleFromSolarNoon / 360f
+            
+            // Normalize to 0-1 range
+            while (position < 0) position += 1f
+            while (position >= 1) position -= 1f
+            
+            return position
+        }
+        
+        // Add midnight (00:00) to ensure full circle coverage
+        val midnight = todayStart
+        events.add(Pair(midnight, nightColor))
+        
+        // Create sorted list of events by position
+        val eventPositions = events.map { event ->
+            Pair(timeToPosition(event.first), event.second)
+        }.sortedBy { it.first }
+        
+        // Build color and position arrays
+        val colors = mutableListOf<Int>()
+        val positions = mutableListOf<Float>()
+        
+        // Add all event positions (they're already sorted)
+        // SweepGradient will automatically handle wrap-around from 1.0 to 0.0
+        for ((pos, color) in eventPositions) {
+            colors.add(color)
+            positions.add(pos)
+        }
+        
+        // Ensure we have at least 2 points for a valid gradient
+        if (colors.size < 2) {
+            colors.clear()
+            positions.clear()
+            colors.add(nightColor)
+            positions.add(0f)
+            colors.add(nightColor)
+            positions.add(1f)
+        }
+        
+        return Pair(colors, positions)
     }
     
     /**
