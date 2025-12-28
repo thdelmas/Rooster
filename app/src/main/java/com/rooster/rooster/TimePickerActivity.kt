@@ -267,13 +267,10 @@ class TimePickerActivity : AppCompatActivity() {
             )
         }
 
-        // Insert alarm and open editor
-        alarmListViewModel.insertAlarm(alarm) { alarmId ->
-            val intent = Intent(this, AlarmEditorActivity::class.java)
-            intent.putExtra("alarm_id", alarmId)
-            startActivity(intent)
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        // Insert alarm and return to alarm list
+        alarmListViewModel.insertAlarm(alarm) {
             finish()
+            overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
         }
     }
 
