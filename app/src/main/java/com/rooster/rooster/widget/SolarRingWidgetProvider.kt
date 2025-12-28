@@ -163,12 +163,9 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         // Draw background
         canvas.drawColor(ContextCompat.getColor(context, R.color.md_theme_dark_background))
         
-        // Calculate solar noon offset angle
-        // Solar noon should be at the top (12 o'clock position = -90 degrees)
-        val solarNoonOffset = calculateSolarNoonOffset(astronomyData)
-        
         // Create sweep gradient with color stops at each solar event
-        val (colors, positions) = createGradientColorStops(astronomyData, solarNoonOffset)
+        // Positions are calculated relative to solar noon (0.0 = solar noon)
+        val (colors, positions) = createGradientColorStops(astronomyData)
         
         // Create sweep gradient (starts at 0 degrees = 3 o'clock by default)
         val gradient = android.graphics.SweepGradient(
@@ -177,9 +174,9 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             positions.toFloatArray()
         )
         
-        // Rotate gradient so it starts at -90 degrees (12 o'clock) + solarNoonOffset
+        // Rotate gradient so solar noon (position 0.0) is at -90 degrees (12 o'clock position)
         val matrix = android.graphics.Matrix()
-        matrix.setRotate(-90f + solarNoonOffset, centerX, centerY)
+        matrix.setRotate(-90f, centerX, centerY)
         gradient.setLocalMatrix(matrix)
         
         // Draw the ring with gradient (single arc, not segments)
@@ -198,16 +195,16 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             centerY + radius
         )
         
-        // Draw full circle with gradient
-        canvas.drawArc(rect, -90f + solarNoonOffset, 360f, false, paint)
+        // Draw full circle with gradient (start at -90 degrees = 12 o'clock)
+        canvas.drawArc(rect, -90f, 360f, false, paint)
         
         // Draw solar event markers
         if (astronomyData != null) {
-            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, astronomyData, solarNoonOffset)
+            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, astronomyData)
         }
         
         // Draw current time marker
-        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, solarNoonOffset)
+        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, astronomyData)
         
         // Get current time and date
         val calendar = Calendar.getInstance()
@@ -249,56 +246,12 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
     }
     
     /**
-     * Calculate the offset angle to align solar noon at the top (12 o'clock position)
-     * Returns the angle in degrees to rotate the ring
-     */
-    private fun calculateSolarNoonOffset(astronomyData: AstronomyDataEntity?): Float {
-        if (astronomyData == null || astronomyData.solarNoon <= 0) {
-            return 0f // No offset if no solar noon data
-        }
-        
-        val calendar = Calendar.getInstance()
-        val todayStart = calendar.apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-        
-        // Get solar noon time for today
-        calendar.timeInMillis = astronomyData.solarNoon
-        val solarNoonHour = calendar.get(Calendar.HOUR_OF_DAY)
-        val solarNoonMinute = calendar.get(Calendar.MINUTE)
-        
-        // Normalize solar noon to today
-        calendar.timeInMillis = todayStart
-        calendar.set(Calendar.HOUR_OF_DAY, solarNoonHour)
-        calendar.set(Calendar.MINUTE, solarNoonMinute)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val solarNoonToday = calendar.timeInMillis
-        
-        // Calculate the offset from hour 12 (midday)
-        // Each hour is 15 degrees (360 / 24)
-        // Each minute is 0.25 degrees (15 / 60)
-        val hourOffset = solarNoonHour - 12
-        val minuteOffset = solarNoonMinute / 60f
-        val totalHourOffset = hourOffset + minuteOffset
-        
-        // Convert to angle offset (negative because we want to rotate counter-clockwise if solar noon is after 12:00)
-        val angleOffset = -totalHourOffset * 15f
-        
-        return angleOffset
-    }
-    
-    /**
      * Create gradient color stops at each solar event
      * Returns a Pair of (colors list, positions list) for SweepGradient
-     * Positions are calculated relative to 0 degrees (3 o'clock), gradient will be rotated
+     * Positions are calculated relative to solar noon (0.0 = solar noon)
      */
     private fun createGradientColorStops(
-        astronomyData: AstronomyDataEntity?,
-        solarNoonOffset: Float
+        astronomyData: AstronomyDataEntity?
     ): Pair<List<Int>, List<Float>> {
         if (astronomyData == null) {
             // Default: single night color for full circle
@@ -603,8 +556,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerX: Float,
         centerY: Float,
         radius: Float,
-        astronomyData: AstronomyDataEntity,
-        solarNoonOffset: Float
+        astronomyData: AstronomyDataEntity
     ) {
         val calendar = Calendar.getInstance()
         val todayStart = calendar.apply {
@@ -627,12 +579,19 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             return calendar.timeInMillis
         }
         
+        // Normalize solar noon to today
+        val normalizedSolarNoon = if (astronomyData.solarNoon > 0) {
+            normalizeTime(astronomyData.solarNoon)
+        } else {
+            0L
+        }
+        
         val events = listOf(
             Pair("🌌", normalizeTime(astronomyData.astroDawn)),
             Pair("🌃", normalizeTime(astronomyData.nauticalDawn)),
             Pair("🌆", normalizeTime(astronomyData.civilDawn)),
             Pair("🌅", normalizeTime(astronomyData.sunrise)),
-            Pair("☀️", normalizeTime(astronomyData.solarNoon)),
+            Pair("☀️", normalizedSolarNoon),
             Pair("🌇", normalizeTime(astronomyData.sunset)),
             Pair("🌆", normalizeTime(astronomyData.civilDusk)),
             Pair("🌃", normalizeTime(astronomyData.nauticalDusk)),
@@ -642,17 +601,37 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         for ((emoji, eventTime) in events) {
             if (eventTime <= 0) continue
             
-            // Calculate angle for this event
-            val eventCalendar = Calendar.getInstance()
-            eventCalendar.timeInMillis = eventTime
-            val eventHour = eventCalendar.get(Calendar.HOUR_OF_DAY)
-            val eventMinute = eventCalendar.get(Calendar.MINUTE)
-            
-            // Calculate angle: (hour - 12) * 15 + (minute / 60) * 15 - 90 + solarNoonOffset
-            val hourOffset = eventHour - 12
-            val minuteOffset = eventMinute / 60f
-            val totalHourOffset = hourOffset + minuteOffset
-            val angle = totalHourOffset * 15f - 90f + solarNoonOffset
+            // Calculate angle relative to solar noon (not 12:00)
+            // If no solar noon data, fall back to 12:00
+            val angle = if (normalizedSolarNoon > 0) {
+                // Calculate time difference from solar noon
+                var timeDiff = eventTime - normalizedSolarNoon
+                
+                // Handle wrap-around (times before solar noon in the same day)
+                val dayInMillis = 24 * 60 * 60 * 1000L
+                if (timeDiff > dayInMillis / 2) {
+                    timeDiff -= dayInMillis
+                } else if (timeDiff < -dayInMillis / 2) {
+                    timeDiff += dayInMillis
+                }
+                
+                // Convert time difference to angle (each hour = 15 degrees)
+                val hoursFromSolarNoon = timeDiff / (60f * 60f * 1000f)
+                val angleFromSolarNoon = hoursFromSolarNoon * 15f
+                
+                // Start from -90 degrees (12 o'clock position) and add the angle offset
+                -90f + angleFromSolarNoon
+            } else {
+                // Fallback: calculate relative to 12:00
+                val eventCalendar = Calendar.getInstance()
+                eventCalendar.timeInMillis = eventTime
+                val eventHour = eventCalendar.get(Calendar.HOUR_OF_DAY)
+                val eventMinute = eventCalendar.get(Calendar.MINUTE)
+                val hourOffset = eventHour - 12
+                val minuteOffset = eventMinute / 60f
+                val totalHourOffset = hourOffset + minuteOffset
+                totalHourOffset * 15f - 90f
+            }
             
             // Convert to radians for drawing
             val angleRad = Math.toRadians(angle.toDouble())
@@ -684,17 +663,57 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerX: Float,
         centerY: Float,
         radius: Float,
-        solarNoonOffset: Float
+        astronomyData: AstronomyDataEntity?
     ) {
         val calendar = Calendar.getInstance()
-        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentTime = calendar.timeInMillis
         
-        // Calculate angle for current time
-        val hourOffset = currentHour - 12
-        val minuteOffset = currentMinute / 60f
-        val totalHourOffset = hourOffset + minuteOffset
-        val angle = totalHourOffset * 15f - 90f + solarNoonOffset
+        // Calculate angle relative to solar noon (not 12:00)
+        val angle = if (astronomyData != null && astronomyData.solarNoon > 0) {
+            val todayStart = calendar.apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            
+            // Normalize solar noon to today
+            calendar.timeInMillis = astronomyData.solarNoon
+            val solarNoonHour = calendar.get(Calendar.HOUR_OF_DAY)
+            val solarNoonMinute = calendar.get(Calendar.MINUTE)
+            calendar.timeInMillis = todayStart
+            calendar.set(Calendar.HOUR_OF_DAY, solarNoonHour)
+            calendar.set(Calendar.MINUTE, solarNoonMinute)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+            val normalizedSolarNoon = calendar.timeInMillis
+            
+            // Calculate time difference from solar noon
+            var timeDiff = currentTime - normalizedSolarNoon
+            
+            // Handle wrap-around (times before solar noon in the same day)
+            val dayInMillis = 24 * 60 * 60 * 1000L
+            if (timeDiff > dayInMillis / 2) {
+                timeDiff -= dayInMillis
+            } else if (timeDiff < -dayInMillis / 2) {
+                timeDiff += dayInMillis
+            }
+            
+            // Convert time difference to angle (each hour = 15 degrees)
+            val hoursFromSolarNoon = timeDiff / (60f * 60f * 1000f)
+            val angleFromSolarNoon = hoursFromSolarNoon * 15f
+            
+            // Start from -90 degrees (12 o'clock position) and add the angle offset
+            -90f + angleFromSolarNoon
+        } else {
+            // Fallback: calculate relative to 12:00
+            val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = calendar.get(Calendar.MINUTE)
+            val hourOffset = currentHour - 12
+            val minuteOffset = currentMinute / 60f
+            val totalHourOffset = hourOffset + minuteOffset
+            totalHourOffset * 15f - 90f
+        }
         
         // Convert to radians for drawing
         val angleRad = Math.toRadians(angle.toDouble())
