@@ -125,22 +125,17 @@
                         android:layout_marginBottom="@dimen/spacing_medium"
                         android:alpha="0.9"/>
 
-                    <!-- Time Display -->
-                    <TextView
-                        android:id="@+id/progress_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="--:--"
-                        android:textColor="@color/text_on_glass_primary"
-                        android:textSize="@dimen/text_time_display_large"
-                        android:textStyle="bold"
-                        android:fontFamily="sans-serif-light"
-                        android:letterSpacing="-0.05"
-                        android:layout_marginBottom="@dimen/spacing_xlarge"
-                        android:maxLines="1"
-                        android:ellipsize="none"/>
+                    <!-- Solar Ring Clock -->
+                    <com.rooster.rooster.ui.SolarRingView
+                        android:id="@+id/solarRingView"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:minHeight="320dp"
+                        android:maxHeight="400dp"
+                        android:layout_marginVertical="16dp"/>
 
-                    <!-- Progress Bar -->
+                    <!-- Progress Bar (kept for backward compatibility, can be hidden if desired) -->
                     <ProgressBar
                         android:id="@+id/progress_cycle"
                         style="?android:attr/progressBarStyleHorizontal"
@@ -150,7 +145,9 @@
                         android:progressDrawable="@drawable/progress_circular"
                         android:max="100"
                         android:progress="0"
-                        android:layout_marginBottom="20dp"/>
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -158,7 +155,8 @@
                         android:text="Day progress"
                         android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                         android:textColor="@color/text_on_glass_secondary"
-                        android:alpha="0.85"/>
+                        android:alpha="0.85"
+                        android:visibility="gone"/>
 
                 </LinearLayout>
 

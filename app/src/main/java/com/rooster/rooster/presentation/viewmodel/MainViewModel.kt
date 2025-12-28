@@ -2,9 +2,11 @@ package com.rooster.rooster.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.data.repository.LocationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -14,7 +16,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val astronomyRepository: AstronomyRepository
 ) : ViewModel() {
     
     /**
@@ -24,5 +27,12 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             locationRepository.saveLocation(latitude, longitude, altitude)
         }
+    }
+    
+    /**
+     * Get astronomy data flow for observing updates
+     */
+    fun getAstronomyDataFlow(): Flow<com.rooster.rooster.data.local.entity.AstronomyDataEntity?> {
+        return astronomyRepository.getAstronomyDataFlow()
     }
 }

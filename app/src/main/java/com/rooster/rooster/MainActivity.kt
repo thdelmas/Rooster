@@ -35,6 +35,9 @@ import com.rooster.rooster.worker.WorkManagerHelper
 import com.rooster.rooster.presentation.viewmodel.MainViewModel
 import androidx.activity.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.rooster.rooster.ui.SolarRingView
 
 
 @AndroidEntryPoint
@@ -48,6 +51,7 @@ class MainActivity() : ComponentActivity() {
     
     private val handler = Handler(Looper.getMainLooper())
     private var updateRunnable: Runnable? = null
+    private var solarRingView: SolarRingView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +66,15 @@ class MainActivity() : ComponentActivity() {
         // USE FIXED MAIN LAYOUT
         setContentView(R.layout.activity_main)
         Logger.d("MainActivity", "Layout set")
+        
+        solarRingView = findViewById(R.id.solarRingView)
+        
+        // Observe astronomy data and update solar ring
+        lifecycleScope.launch {
+            viewModel.getAstronomyDataFlow().collect { astronomyData ->
+                solarRingView?.setAstronomyData(astronomyData)
+            }
+        }
         
         getPermissions()
         linkButtons()
@@ -270,19 +283,15 @@ class MainActivity() : ComponentActivity() {
     }
     private fun refreshCycle() {
         val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
-        val progressText = findViewById<TextView>(R.id.progress_text)
         val delayMillis = 1000L
-        val maxProgress = 100
 
         updateRunnable = object : Runnable {
             override fun run() {
-                val currentTime = System.currentTimeMillis()
-                val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                val formattedTime = sdf.format(Date(currentTime))
                 val percentage = getPercentageOfDay().toLong()
-                
-                progressText.text = formattedTime
                 progressBar.progress = percentage.toInt()
+                
+                // Refresh solar ring view to update current time marker and time display
+                solarRingView?.invalidate()
                 
                 handler.postDelayed(this, delayMillis)
             }
