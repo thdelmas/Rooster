@@ -32,6 +32,7 @@ import com.rooster.rooster.util.ValidationHelper
 import com.rooster.rooster.util.toast
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,6 +50,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     @Inject lateinit var calculateAlarmTimeUseCase: CalculateAlarmTimeUseCase
     @Inject lateinit var scheduleAlarmUseCase: ScheduleAlarmUseCase
     @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var astronomyRepository: com.rooster.rooster.data.repository.AstronomyRepository
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
     
@@ -86,6 +88,7 @@ class AlarmEditorActivity : AppCompatActivity() {
     private lateinit var offsetTimeSlider: Slider
     private lateinit var saveFab: ExtendedFloatingActionButton
     private lateinit var sunCourseView: SunCourseView
+    private lateinit var solarRingTimePicker: com.rooster.rooster.ui.SolarRingTimePickerView
     private lateinit var vibrateSwitch: MaterialSwitch
     private lateinit var snoozeSwitch: MaterialSwitch
     private lateinit var gradualVolumeSwitch: MaterialSwitch
@@ -171,6 +174,9 @@ class AlarmEditorActivity : AppCompatActivity() {
         
         // Offset time slider
         offsetTimeSlider = findViewById(R.id.offsetTimeSlider)
+        
+        // Solar ring time picker
+        solarRingTimePicker = findViewById(R.id.solarRingTimePicker)
         
         // Sun course view
         sunCourseView = findViewById(R.id.sunCourseView)
@@ -315,6 +321,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                     else -> AppConstants.ALARM_MODE_AT
                 }
                 updateSunModeUI()
+                updateSolarRingTimePicker()
                 updateCalculatedTime()
                 updateSunCourseVisualization()
                 saveAlarmDirectly()
@@ -342,12 +349,16 @@ class AlarmEditorActivity : AppCompatActivity() {
             showOffsetTimePicker()
         }
         
+        // Setup solar ring time picker
+        setupSolarRingTimePicker()
+        
         // Offset time slider for easy adjustment
         offsetTimeSlider.addOnChangeListener { slider, value, fromUser ->
             if (fromUser) {
                 HapticFeedbackHelper.performLightClick(slider)
                 offsetMinutes = value.toInt()
                 updateOffsetDisplay()
+                updateSolarRingTimePicker()
                 updateCalculatedTime()
                 updateSunCourseVisualization()
                 saveAlarmDirectly()
@@ -721,10 +732,131 @@ class AlarmEditorActivity : AppCompatActivity() {
             AnimationHelper.scaleWithBounce(it)
             offsetMinutes = minutes
             updateOffsetDisplay()
+            updateSolarRingTimePicker()
             updateCalculatedTime()
             updateSunCourseVisualization()
             saveAlarmDirectly()
         }
+    }
+    
+    /**
+     * Setup solar ring time picker with astronomy data and time selection listener
+     */
+    private fun setupSolarRingTimePicker() {
+        // Observe astronomy data and update the ring
+        lifecycleScope.launch {
+            astronomyRepository.getAstronomyDataFlow().collect { astronomyData ->
+                solarRingTimePicker.setAstronomyData(astronomyData)
+                updateSolarRingTimePicker()
+            }
+        }
+        
+        // Set listener for time selection
+        solarRingTimePicker.setOnTimeSelectedListener { selectedTime ->
+            // Calculate offset from the selected solar event
+            lifecycleScope.launch(Dispatchers.IO) {
+                val astronomyData = astronomyRepository.getAstronomyData()
+                if (astronomyData != null) {
+                    val solarEventTime = getSolarEventTime(solarEvent1, astronomyData)
+                    if (solarEventTime > 0) {
+                        val diffMs = selectedTime - solarEventTime
+                        val diffMinutes = (diffMs / 1000 / 60).toInt()
+                        
+                        // Update offset based on mode
+                        // For "before", the selected time is before the solar event, so diffMs is negative
+                        // For "after", the selected time is after the solar event, so diffMs is positive
+                        offsetMinutes = kotlin.math.abs(diffMinutes)
+                        
+                        // Constrain to valid range
+                        offsetMinutes = offsetMinutes.coerceIn(5, 720)
+                        
+                        launch(Dispatchers.Main) {
+                            updateOffsetDisplay()
+                            updateCalculatedTime()
+                            updateSunCourseVisualization()
+                            saveAlarmDirectly()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Update solar ring time picker with current offset
+     */
+    private fun updateSolarRingTimePicker() {
+        if (sunTimingMode != AppConstants.ALARM_MODE_BEFORE && 
+            sunTimingMode != AppConstants.ALARM_MODE_AFTER) {
+            return
+        }
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            val astronomyData = astronomyRepository.getAstronomyData()
+            if (astronomyData != null) {
+                val solarEventTime = getSolarEventTime(solarEvent1, astronomyData)
+                if (solarEventTime > 0) {
+                    val offsetMs = offsetMinutes * 60 * 1000L
+                    val targetTime = when (sunTimingMode) {
+                        AppConstants.ALARM_MODE_BEFORE -> solarEventTime - offsetMs
+                        AppConstants.ALARM_MODE_AFTER -> solarEventTime + offsetMs
+                        else -> solarEventTime
+                    }
+                    
+                    launch(Dispatchers.Main) {
+                        solarRingTimePicker.setSelectedTime(targetTime)
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Get solar event time from astronomy data, normalized to today
+     */
+    private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
+        // Trim the event name to handle any leading/trailing spaces
+        val trimmedEvent = event.trim()
+        
+        val calendar = Calendar.getInstance()
+        val todayStart = calendar.apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        
+        val originalTime = when (trimmedEvent) {
+            "Astronomical Dawn" -> astronomyData.astroDawn
+            "Nautical Dawn" -> astronomyData.nauticalDawn
+            "Civil Dawn" -> astronomyData.civilDawn
+            "Sunrise" -> astronomyData.sunrise
+            "Solar Noon" -> astronomyData.solarNoon
+            "Sunset" -> astronomyData.sunset
+            "Civil Dusk" -> astronomyData.civilDusk
+            "Nautical Dusk" -> astronomyData.nauticalDusk
+            "Astronomical Dusk" -> astronomyData.astroDusk
+            else -> {
+                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
+                0L
+            }
+        }
+        
+        if (originalTime <= 0) {
+            Log.w("AlarmEditorActivity", "No astronomy data available for event: $event")
+            return 0L
+        }
+        
+        // Normalize to today - extract time component and apply to today's date
+        calendar.timeInMillis = originalTime
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        calendar.timeInMillis = todayStart
+        calendar.set(Calendar.HOUR_OF_DAY, hour)
+        calendar.set(Calendar.MINUTE, minute)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        return calendar.timeInMillis
     }
     
     private fun showOffsetTimePicker() {
@@ -975,49 +1107,6 @@ class AlarmEditorActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-    
-    private fun getSolarEventTime(event: String, astronomyData: com.rooster.rooster.data.local.entity.AstronomyDataEntity): Long {
-        // Trim the event name to handle any leading/trailing spaces
-        val trimmedEvent = event.trim()
-        val timeInMillis = when (trimmedEvent) {
-            "Astronomical Dawn" -> astronomyData.astroDawn
-            "Nautical Dawn" -> astronomyData.nauticalDawn
-            "Civil Dawn" -> astronomyData.civilDawn
-            "Sunrise" -> astronomyData.sunrise
-            "Solar Noon" -> astronomyData.solarNoon
-            "Sunset" -> astronomyData.sunset
-            "Civil Dusk" -> astronomyData.civilDusk
-            "Nautical Dusk" -> astronomyData.nauticalDusk
-            "Astronomical Dusk" -> astronomyData.astroDusk
-            else -> {
-                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
-                0L
-            }
-        }
-        
-        if (timeInMillis == 0L) {
-            Log.w("AlarmEditorActivity", "No astronomy data available for event: $event")
-            return 0L
-        }
-        
-        // Apply timezone conversion: UTC timestamp from API needs to be converted to local time for today
-        val localCalendar = Calendar.getInstance().apply {
-            this.timeInMillis = timeInMillis
-        }
-        
-        val hour = localCalendar.get(Calendar.HOUR_OF_DAY)
-        val minute = localCalendar.get(Calendar.MINUTE)
-        val second = localCalendar.get(Calendar.SECOND)
-        
-        val todayCalendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
-            set(Calendar.SECOND, second)
-            set(Calendar.MILLISECOND, 0)
-        }
-        
-        return todayCalendar.timeInMillis
     }
     
     private fun getSolarEventTime(event: String, prefs: android.content.SharedPreferences): Long {

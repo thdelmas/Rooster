@@ -318,6 +318,24 @@
                         android:visibility="gone"
                         android:layout_marginBottom="16dp">
 
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Select Time Offset"
+                            android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                            android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                            android:layout_marginBottom="12dp"/>
+
+                        <!-- Solar Ring Time Picker -->
+                        <com.rooster.rooster.ui.SolarRingTimePickerView
+                            android:id="@+id/solarRingTimePicker"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp"
+                            android:layout_weight="1"
+                            android:minHeight="300dp"
+                            android:maxHeight="400dp"
+                            android:layout_marginBottom="16dp"/>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -329,8 +347,8 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Offset"
-                                android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                                android:text="Or use slider"
+                                android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
                                 android:textColor="@color/md_theme_dark_onSurfaceVariant"/>
 
                             <com.google.android.material.button.MaterialButton
