@@ -123,47 +123,29 @@
                         android:textColor="@color/md_theme_dark_onSurfaceVariant"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Wheel Pickers Container -->
-                    <LinearLayout
+                    <!-- Selected Time Display -->
+                    <TextView
+                        android:id="@+id/selectedTimeText"
                         android:layout_width="match_parent"
-                        android:layout_height="300dp"
-                        android:orientation="horizontal"
+                        android:layout_height="wrap_content"
+                        android:text="12:00 PM"
+                        android:textAppearance="@style/TextAppearance.Material3.DisplayMedium"
+                        android:textColor="@color/md_theme_dark_primary"
+                        android:textStyle="bold"
                         android:gravity="center"
-                        android:layout_marginBottom="24dp">
+                        android:layout_marginBottom="24dp"
+                        android:minHeight="80dp"/>
 
-                        <!-- Hour Picker -->
-                        <com.rooster.rooster.ui.WheelTimePicker
-                            android:id="@+id/hourPicker"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"/>
-
-                        <!-- Colon Separator -->
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text=":"
-                            android:textSize="48sp"
-                            android:textColor="@color/md_theme_dark_primary"
-                            android:textStyle="bold"
-                            android:layout_gravity="center"
-                            android:paddingHorizontal="8dp"/>
-
-                        <!-- Minute Picker -->
-                        <com.rooster.rooster.ui.WheelTimePicker
-                            android:id="@+id/minutePicker"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"/>
-
-                        <!-- Period Picker (AM/PM) -->
-                        <com.rooster.rooster.ui.WheelTimePicker
-                            android:id="@+id/periodPicker"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="0.7"/>
-
-                    </LinearLayout>
+                    <!-- Select Time Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/selectTimeButton"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Change Time"
+                        android:textSize="16sp"
+                        app:icon="@android:drawable/ic_menu_recent_history"
+                        app:iconGravity="textStart"/>
 
                 </LinearLayout>
 
