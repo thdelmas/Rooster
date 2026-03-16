@@ -455,7 +455,6 @@ class AlarmAdapter(
     
     /**
      * Helper function to get relative time from SharedPreferences
-     * This replaces AlarmDbHelper.getRelativeTime() which reads astronomy data
      */
     private fun getRelativeTimeFromPrefs(_context: Context, relative: String, sharedPrefs: android.content.SharedPreferences): Long {
         var timeInMillis = 0L

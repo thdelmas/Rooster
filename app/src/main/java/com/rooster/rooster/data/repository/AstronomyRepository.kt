@@ -140,20 +140,6 @@ class AstronomyRepository @Inject constructor(
     }
     
     /**
-     * Legacy method for backward compatibility - returns Result<AstronomyDataEntity>
-     * @deprecated Use fetchAndCacheAstronomyData() which returns AstronomyDataResult
-     */
-    @Deprecated("Use fetchAndCacheAstronomyData() which returns AstronomyDataResult with freshness info")
-    suspend fun fetchAndCacheAstronomyDataLegacy(latitude: Float, longitude: Float): Result<AstronomyDataEntity> {
-        val result = fetchAndCacheAstronomyData(latitude, longitude)
-        return when (result) {
-            is AstronomyDataResult.Fresh -> Result.success(result.data)
-            is AstronomyDataResult.Cached -> Result.success(result.data)
-            is AstronomyDataResult.Failure -> Result.failure(result.exception)
-        }
-    }
-    
-    /**
      * Check if cached data is still valid
      */
     fun isDataValid(data: AstronomyDataEntity): Boolean {
