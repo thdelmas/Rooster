@@ -27,6 +27,7 @@ import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.util.AnimationHelper
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.SleepProfileHelper
 import com.rooster.rooster.util.TimeUtils
 import com.rooster.rooster.util.ValidationHelper
 import com.rooster.rooster.util.toast
@@ -280,12 +281,30 @@ class AlarmEditorActivity : AppCompatActivity() {
                 }
             }
         } else {
-            // New alarm defaults
-            currentMode = "classic"
-            val calendar = Calendar.getInstance()
-            calendar.set(Calendar.HOUR_OF_DAY, 8)
-            calendar.set(Calendar.MINUTE, 30)
-            selectedTime = calendar.timeInMillis
+            // New alarm defaults based on sleep profile
+            val profile = SleepProfileHelper.getSleepProfile(this)
+            when (profile) {
+                AppConstants.SLEEP_PROFILE_EARLY_BIRD -> {
+                    currentMode = "sun"
+                    sunTimingMode = AppConstants.ALARM_MODE_AT
+                    solarEvent1 = AppConstants.SOLAR_EVENT_SUNRISE
+                    setDayPreset("weekdays")
+                }
+                AppConstants.SLEEP_PROFILE_NIGHT_OWL -> {
+                    currentMode = "sun"
+                    sunTimingMode = AppConstants.ALARM_MODE_BEFORE
+                    solarEvent1 = AppConstants.SOLAR_EVENT_SUNSET
+                    offsetMinutes = AppConstants.DEFAULT_OFFSET_MINUTES_NIGHT_OWL
+                    setDayPreset("weekdays")
+                }
+                else -> {
+                    currentMode = "classic"
+                    val calendar = Calendar.getInstance()
+                    calendar.set(Calendar.HOUR_OF_DAY, 8)
+                    calendar.set(Calendar.MINUTE, 30)
+                    selectedTime = calendar.timeInMillis
+                }
+            }
             updateUI()
         }
     }

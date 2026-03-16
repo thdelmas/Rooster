@@ -761,6 +761,84 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Sleep Profile Section -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Sleep Profile"
+                android:textAppearance="@style/TextAppearance.Material3.TitleSmall"
+                android:textColor="@color/md_theme_dark_primary"
+                android:textStyle="bold"
+                android:paddingHorizontal="8dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="12dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/glass_border"
+                android:background="@drawable/glass_card_background">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:id="@+id/sleepProfileSetting"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingVertical="12dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Sleep Profile"
+                                android:textColor="@color/md_theme_dark_onSurface"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Set defaults for new alarms"
+                                android:textColor="@color/md_theme_dark_onSurfaceVariant"
+                                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                                android:layout_marginTop="4dp"/>
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/sleepProfileValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="None"
+                            android:textColor="@color/md_theme_dark_primary"
+                            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                            android:layout_marginStart="16dp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- About Section -->
             <TextView
                 android:layout_width="match_parent"
