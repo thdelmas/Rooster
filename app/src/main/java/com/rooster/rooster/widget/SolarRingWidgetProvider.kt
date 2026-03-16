@@ -47,6 +47,11 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
                 getAstronomyData(context)
             }
             
+            // Get next alarm (using runBlocking for suspend)
+            val nextAlarm = runBlocking {
+                getNextAlarm(context)
+            }
+            
             // Get widget size to ensure ring fits properly
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             val minWidthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
@@ -63,7 +68,7 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             val size = (minDimensionDp * density).toInt()
             
             // Generate square bitmap with calculated size
-            val bitmap = generateRingBitmap(context, astronomyData, size)
+            val bitmap = generateRingBitmap(context, astronomyData, size, nextAlarm)
             
             // Create RemoteViews
             val views = RemoteViews(context.packageName, R.layout.widget_solar_ring)
@@ -142,10 +147,43 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         }
     }
     
+    private suspend fun getNextAlarm(context: Context): com.rooster.rooster.data.local.entity.AlarmEntity? {
+        return try {
+            val database = androidx.room.Room.databaseBuilder(
+                context,
+                com.rooster.rooster.data.local.AlarmDatabase::class.java,
+                com.rooster.rooster.data.local.AlarmDatabase.DATABASE_NAME
+            )
+                .addMigrations(
+                    com.rooster.rooster.data.local.AlarmDatabase.MIGRATION_1_2,
+                    com.rooster.rooster.data.local.AlarmDatabase.MIGRATION_2_3,
+                    com.rooster.rooster.data.local.AlarmDatabase.MIGRATION_3_4,
+                    com.rooster.rooster.data.local.AlarmDatabase.MIGRATION_4_5,
+                    com.rooster.rooster.data.local.AlarmDatabase.MIGRATION_5_6
+                )
+                .build()
+            
+            val enabledAlarms = database.alarmDao().getEnabledAlarms()
+            database.close()
+            
+            val currentTime = System.currentTimeMillis()
+            
+            // Find the first alarm with calculated_time > current time
+            val nextAlarm = enabledAlarms.firstOrNull { it.calculatedTime > currentTime }
+            
+            // If no alarm found for today, return the first enabled alarm (for tomorrow)
+            nextAlarm ?: enabledAlarms.firstOrNull()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
     private fun generateRingBitmap(
         context: Context,
         astronomyData: AstronomyDataEntity?,
-        size: Int = 512 // Square size based on minimum dimension
+        size: Int = 512, // Square size based on minimum dimension
+        nextAlarm: com.rooster.rooster.data.local.entity.AlarmEntity? = null
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -153,11 +191,18 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val centerX = size / 2f
         val centerY = size / 2f
         
+        // Calculate scale factor based on widget size
+        // Reference size is 512dp (typical medium widget size)
+        val referenceSize = 512f
+        val scaleFactor = (size / referenceSize).coerceIn(0.5f, 1.5f) // Limit scaling between 50% and 150%
+        
         // Calculate radius for 1:1 rendering with minimal padding to prevent clipping
         // ringThickness/2 accounts for half the stroke width on each side
         // Small padding ensures the ring doesn't get clipped at edges
-        val ringThickness = 67f // Reduced by a third (was 100f)
-        val edgePadding = 8f // Small padding to prevent clipping
+        val baseRingThickness = 67f // Base thickness for reference size
+        val ringThickness = baseRingThickness * scaleFactor
+        val baseEdgePadding = 8f
+        val edgePadding = baseEdgePadding * scaleFactor
         val radius = (size / 2f) - (ringThickness / 2f) - edgePadding
         
         // Draw background
@@ -200,11 +245,11 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         
         // Draw solar event markers
         if (astronomyData != null) {
-            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, ringThickness, astronomyData)
+            drawSolarEventMarkers(context, canvas, centerX, centerY, radius, ringThickness, astronomyData, scaleFactor)
         }
         
         // Draw current time marker
-        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, ringThickness, astronomyData)
+        drawCurrentTimeMarker(context, canvas, centerX, centerY, radius, ringThickness, astronomyData, scaleFactor)
         
         // Get current time and date
         val calendar = Calendar.getInstance()
@@ -218,29 +263,89 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val timeText = timeFormat.format(calendar.time)
         
         // Draw date in the center (top)
+        val baseDateTextSize = 48f
         val dateTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 48f
+            textSize = baseDateTextSize * scaleFactor
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT
         }
         
         // Draw time below the date (larger)
+        val baseTimeTextSize = 72f
         val timeTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground)
-            textSize = 72f
+            textSize = baseTimeTextSize * scaleFactor
             textAlign = Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
         }
         
-        // Calculate text positions
+        // Calculate text positions (scaled)
         // Date text - positioned in upper center area
-        val dateTextY = centerY - 20f - (dateTextPaint.descent() + dateTextPaint.ascent()) / 2
+        val baseDateOffset = 20f
+        val dateTextY = centerY - (baseDateOffset * scaleFactor) - (dateTextPaint.descent() + dateTextPaint.ascent()) / 2
         canvas.drawText(dateText, centerX, dateTextY, dateTextPaint)
         
         // Time text - positioned below date
-        val timeTextY = centerY + 40f - (timeTextPaint.descent() + timeTextPaint.ascent()) / 2
+        val baseTimeOffset = 40f
+        val timeTextY = centerY + (baseTimeOffset * scaleFactor) - (timeTextPaint.descent() + timeTextPaint.ascent()) / 2
         canvas.drawText(timeText, centerX, timeTextY, timeTextPaint)
+        
+        // Draw next alarm info below time
+        if (nextAlarm != null && nextAlarm.calculatedTime > 0) {
+            val currentTime = System.currentTimeMillis()
+            val alarmTime = nextAlarm.calculatedTime
+            
+            // Format alarm time
+            val alarmCalendar = Calendar.getInstance()
+            alarmCalendar.timeInMillis = alarmTime
+            val alarmTimeText = timeFormat.format(alarmCalendar.time)
+            
+            // Check if alarm is today or tomorrow
+            val todayCalendar = Calendar.getInstance()
+            todayCalendar.set(Calendar.HOUR_OF_DAY, 0)
+            todayCalendar.set(Calendar.MINUTE, 0)
+            todayCalendar.set(Calendar.SECOND, 0)
+            todayCalendar.set(Calendar.MILLISECOND, 0)
+            val todayStart = todayCalendar.timeInMillis
+            
+            val tomorrowStart = todayStart + (24 * 60 * 60 * 1000L)
+            val isTomorrow = alarmTime >= tomorrowStart || alarmTime < currentTime
+            
+            val alarmLabel = if (nextAlarm.label.isNotBlank()) {
+                nextAlarm.label
+            } else {
+                "Alarm"
+            }
+            
+            val alarmText = if (isTomorrow) {
+                "Next: $alarmTimeText ($alarmLabel)"
+            } else {
+                "Next: $alarmTimeText ($alarmLabel)"
+            }
+            
+            // Draw alarm text (smaller than time)
+            val baseAlarmTextSize = 32f
+            val alarmTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = ContextCompat.getColor(context, R.color.md_theme_dark_onBackground).let { color ->
+                    // Make it slightly dimmer
+                    android.graphics.Color.argb(
+                        (android.graphics.Color.alpha(color) * 0.7f).toInt(),
+                        android.graphics.Color.red(color),
+                        android.graphics.Color.green(color),
+                        android.graphics.Color.blue(color)
+                    )
+                }
+                textSize = baseAlarmTextSize * scaleFactor
+                textAlign = Paint.Align.CENTER
+                typeface = android.graphics.Typeface.DEFAULT
+            }
+            
+            // Position alarm text below time
+            val baseAlarmOffset = 80f
+            val alarmTextY = centerY + (baseAlarmOffset * scaleFactor) - (alarmTextPaint.descent() + alarmTextPaint.ascent()) / 2
+            canvas.drawText(alarmText, centerX, alarmTextY, alarmTextPaint)
+        }
         
         return bitmap
     }
@@ -557,7 +662,8 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerY: Float,
         radius: Float,
         ringThickness: Float,
-        astronomyData: AstronomyDataEntity
+        astronomyData: AstronomyDataEntity,
+        scaleFactor: Float
     ) {
         val calendar = Calendar.getInstance()
         val todayStart = calendar.apply {
@@ -640,19 +746,22 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
             val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
             val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
             
-            // Draw marker circle (bigger)
+            // Draw marker circle (scaled)
+            val baseMarkerRadius = 20f
             val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 color = ContextCompat.getColor(context, R.color.md_theme_dark_background)
                 style = Paint.Style.FILL
             }
-            canvas.drawCircle(markerX, markerY, 20f, markerPaint)
+            canvas.drawCircle(markerX, markerY, baseMarkerRadius * scaleFactor, markerPaint)
             
-            // Draw emoji (bigger)
+            // Draw emoji (scaled)
+            val baseEmojiSize = 32f
+            val baseEmojiOffset = 10f
             val emojiPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                textSize = 32f
+                textSize = baseEmojiSize * scaleFactor
                 textAlign = Paint.Align.CENTER
             }
-            canvas.drawText(emoji, markerX, markerY + 10f, emojiPaint)
+            canvas.drawText(emoji, markerX, markerY + (baseEmojiOffset * scaleFactor), emojiPaint)
         }
     }
     
@@ -666,7 +775,8 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         centerY: Float,
         radius: Float,
         ringThickness: Float,
-        astronomyData: AstronomyDataEntity?
+        astronomyData: AstronomyDataEntity?,
+        scaleFactor: Float
     ) {
         val calendar = Calendar.getInstance()
         val currentTime = calendar.timeInMillis
@@ -724,20 +834,23 @@ class SolarRingWidgetProvider : AppWidgetProvider() {
         val markerX = centerX + (radius * Math.cos(angleRad)).toFloat()
         val markerY = centerY + (radius * Math.sin(angleRad)).toFloat()
         
-        // Draw current time marker (larger, more prominent)
+        // Draw current time marker (scaled, more prominent)
+        val baseCurrentMarkerRadius = 16f
         val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.accent_coral)
             style = Paint.Style.FILL
         }
-        canvas.drawCircle(markerX, markerY, 16f, markerPaint)
+        val markerRadius = baseCurrentMarkerRadius * scaleFactor
+        canvas.drawCircle(markerX, markerY, markerRadius, markerPaint)
         
-        // Draw white border
+        // Draw white border (scaled)
+        val baseBorderWidth = 3f
         val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = ContextCompat.getColor(context, R.color.white)
             style = Paint.Style.STROKE
-            strokeWidth = 3f
+            strokeWidth = baseBorderWidth * scaleFactor
         }
-        canvas.drawCircle(markerX, markerY, 16f, borderPaint)
+        canvas.drawCircle(markerX, markerY, markerRadius, borderPaint)
     }
     
     override fun onEnabled(context: Context) {
