@@ -102,9 +102,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
                             }
                         )
                     } else {
-                        Logger.w("AlarmclockReceiver", "ScheduleAlarmUseCase not available, using fallback AlarmHandler")
-                        // Fallback to AlarmHandler if Hilt is not available
-                        AlarmHandler().setNextAlarm(context)
+                        Logger.e("AlarmclockReceiver", "ScheduleAlarmUseCase not available — Hilt may not be initialized")
                     }
                 } catch (e: Exception) {
                     Logger.e("AlarmclockReceiver", "Error scheduling next alarm", e)
@@ -181,10 +179,7 @@ class AlarmclockReceiver : BroadcastReceiver() {
                             }
                         )
                     } else {
-                        Logger.w("AlarmclockReceiver", "ScheduleAlarmUseCase or AlarmRepository not available, using fallback AlarmHandler")
-                        // Fallback to AlarmHandler if Hilt is not available
-                        // Note: AlarmHandler also validates alarms (skips disabled and past alarms)
-                        AlarmHandler().setNextAlarm(context)
+                        Logger.e("AlarmclockReceiver", "ScheduleAlarmUseCase or AlarmRepository not available — Hilt may not be initialized")
                     }
                 } catch (e: Exception) {
                     Logger.e("AlarmclockReceiver", "Error validating/rescheduling alarms after boot", e)

@@ -81,7 +81,6 @@ class AlarmListActivity : AppCompatActivity() {
             // Calculate minutes since midnight for comparison
             calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
         }
-        // Use ImprovedAlarmAdapter with ViewModel instead of AlarmDbHelper
         recyclerView.adapter = ImprovedAlarmAdapter(sortedAlarms, viewModel)
     }
 

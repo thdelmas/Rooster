@@ -10,7 +10,6 @@ import com.rooster.rooster.data.repository.AstronomyDataResult
 import com.rooster.rooster.data.repository.LocationRepository
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.Logger
-import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
 
@@ -49,17 +48,6 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         Logger.d("Rooster", "Next Iteration: $formattedDate\n---")
         
         return finalTime
-    }
-    
-    /**
-     * Synchronous version for backward compatibility
-     * @deprecated Use suspend execute() instead
-     */
-    @Deprecated("Use suspend execute() instead for better async support")
-    fun executeSync(alarm: Alarm): Long {
-        return runBlocking {
-            execute(alarm)
-        }
     }
     
     /**
