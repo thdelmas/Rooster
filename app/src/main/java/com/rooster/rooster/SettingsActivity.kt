@@ -27,6 +27,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.rooster.rooster.presentation.viewmodel.SettingsViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.SleepProfileHelper
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.AstronomyUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
@@ -60,6 +61,7 @@ class SettingsActivity : AppCompatActivity() {
         
         linkButtons()
         setupThemeSettings()
+        setupSleepProfileSettings()
         updateValues()
     }
 
@@ -122,6 +124,36 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
     
+    private fun setupSleepProfileSettings() {
+        val sleepProfileSetting = findViewById<LinearLayout>(R.id.sleepProfileSetting)
+        val sleepProfileValue = findViewById<TextView>(R.id.sleepProfileValue)
+
+        val currentProfile = SleepProfileHelper.getSleepProfile(this)
+        sleepProfileValue.text = SleepProfileHelper.getProfileName(currentProfile)
+
+        sleepProfileSetting.setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            showSleepProfileDialog()
+        }
+    }
+
+    private fun showSleepProfileDialog() {
+        val profiles = arrayOf("None", "Early Bird (Sunrise)", "Night Owl (Sunset)")
+        val currentProfile = SleepProfileHelper.getSleepProfile(this)
+
+        AlertDialog.Builder(this)
+            .setTitle("Choose Sleep Profile")
+            .setSingleChoiceItems(profiles, currentProfile) { dialog, which ->
+                HapticFeedbackHelper.performSuccessFeedback(this)
+                SleepProfileHelper.setSleepProfile(this, which)
+                val sleepProfileValue = findViewById<TextView>(R.id.sleepProfileValue)
+                sleepProfileValue.text = SleepProfileHelper.getProfileName(which)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
