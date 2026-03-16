@@ -9,17 +9,17 @@ Rooster is a functional solar alarm clock with location-based sunrise/sunset sch
 ## Short-term (v1.6 - v1.7)
 
 ### Code Health
-- [ ] Refactor `AlarmEditorActivity` (1,676 lines) — extract logic into fragments or Compose screens
+- [x] Refactor `AlarmEditorActivity` (1,695 → 1,458 lines) — extracted 6 shared helper methods
 - [ ] Refactor `SolarRingWidgetProvider` (864 lines) — split rendering and data logic
-- [ ] Remove legacy `AlarmHandler` — consolidate all scheduling through `ScheduleAlarmUseCase`
-- [ ] Fix remaining audit issues: WakeLock leak in `AlarmActivity`, Handler-based snooze (use `AlarmManager`)
-- [ ] Fix memory leak: replace `CoroutineScope(Dispatchers.Main)` with `lifecycleScope` in `AlarmActivity`
+- [x] Remove legacy `AlarmHandler` + `AlarmDbHelper` — all scheduling through `ScheduleAlarmUseCase`
+- [x] Fix remaining audit issues: WakeLock, snooze, memory leak — all already fixed in v1.2-1.4
+- [x] Standardize logging — migrated all `Log.*` to `Logger.*` (11 files, ~112 calls)
 
 ### Reliability
-- [ ] Add MediaPlayer fallback to default ringtone on playback failure
-- [ ] Validate alarms on boot before scheduling (filter past times)
-- [ ] Persist snooze state in database (survive app kill / reboot)
-- [ ] Add crash reporting (Firebase Crashlytics or Sentry)
+- [x] MediaPlayer fallback to default ringtone + retry with backoff (already in v1.4)
+- [x] Validate alarms on boot before scheduling (already in v1.2)
+- [x] Persist snooze state in database via SnoozeReceiver + AlarmManager (already in v1.4)
+- [ ] Add crash reporting (Firebase Crashlytics or Sentry) — needs Firebase project setup
 
 ### Testing
 - [ ] Increase test coverage to 70%+ on business logic
