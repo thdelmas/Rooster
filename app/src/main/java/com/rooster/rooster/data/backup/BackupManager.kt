@@ -2,7 +2,7 @@ package com.rooster.rooster.data.backup
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.AlarmCreation
 import kotlinx.coroutines.Dispatchers
@@ -44,10 +44,10 @@ class BackupManager @Inject constructor(
                 }
             }
             
-            Log.i(TAG, "Backup completed: ${alarms.size} alarms exported")
+            Logger.i(TAG, "Backup completed: ${alarms.size} alarms exported")
             Result.success("Successfully exported ${alarms.size} alarm(s)")
         } catch (e: Exception) {
-            Log.e(TAG, "Error exporting alarms", e)
+            Logger.e(TAG, "Error exporting alarms", e)
             // Let ErrorMessageMapper handle the user-friendly message
             Result.failure(e)
         }
@@ -64,10 +64,10 @@ class BackupManager @Inject constructor(
             
             val importedCount = parseAndImportBackup(jsonString)
             
-            Log.i(TAG, "Import completed: $importedCount alarms imported")
+            Logger.i(TAG, "Import completed: $importedCount alarms imported")
             Result.success("Successfully imported $importedCount alarm(s)")
         } catch (e: Exception) {
-            Log.e(TAG, "Error importing alarms", e)
+            Logger.e(TAG, "Error importing alarms", e)
             // Let ErrorMessageMapper handle the user-friendly message
             Result.failure(e)
         }
@@ -107,7 +107,7 @@ class BackupManager @Inject constructor(
                 }
                 alarmsArray.put(alarmJson)
             } catch (e: Exception) {
-                Log.e(TAG, "Error serializing alarm ${alarm.id}", e)
+                Logger.e(TAG, "Error serializing alarm ${alarm.id}", e)
             }
         }
         
@@ -164,7 +164,7 @@ class BackupManager @Inject constructor(
                 
                 importedCount++
             } catch (e: Exception) {
-                Log.e(TAG, "Error importing alarm $i", e)
+                Logger.e(TAG, "Error importing alarm $i", e)
                 // Continue with next alarm
             }
         }
@@ -215,7 +215,7 @@ class BackupManager @Inject constructor(
             
             Result.success(info)
         } catch (e: Exception) {
-            Log.e(TAG, "Error validating backup file", e)
+            Logger.e(TAG, "Error validating backup file", e)
             // Let ErrorMessageMapper handle the user-friendly message
             Result.failure(e)
         }
@@ -227,10 +227,10 @@ class BackupManager @Inject constructor(
     suspend fun deleteAllAlarms(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             alarmRepository.deleteAllAlarms()
-            Log.i(TAG, "All alarms deleted")
+            Logger.i(TAG, "All alarms deleted")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error deleting alarms", e)
+            Logger.e(TAG, "Error deleting alarms", e)
             Result.failure(e)
         }
     }

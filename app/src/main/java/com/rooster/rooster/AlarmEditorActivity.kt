@@ -3,7 +3,7 @@ package com.rooster.rooster
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -276,7 +276,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                     isLoadingData = false
                 } else {
                     // Alarm not found
-                    Log.e("AlarmEditorActivity", "Alarm with ID $alarmId not found")
+                    Logger.e("AlarmEditorActivity", "Alarm with ID $alarmId not found")
                     finish()
                 }
             }
@@ -847,13 +847,13 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Nautical Dusk" -> astronomyData.nauticalDusk
             "Astronomical Dusk" -> astronomyData.astroDusk
             else -> {
-                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
+                Logger.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
                 0L
             }
         }
         
         if (originalTime <= 0) {
-            Log.w("AlarmEditorActivity", "No astronomy data available for event: $event")
+            Logger.w("AlarmEditorActivity", "No astronomy data available for event: $event")
             return 0L
         }
         
@@ -960,7 +960,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("AlarmEditorActivity", "Error loading astronomy data", e)
+                Logger.e("AlarmEditorActivity", "Error loading astronomy data", e)
                 launch(Dispatchers.Main) {
                     loadSunTimesFromSharedPreferences()
                 }
@@ -985,7 +985,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 // If no data, try to fetch fresh data
                 if (astronomyData == null) {
-                    Log.d("AlarmEditorActivity", "No cached astronomy data, attempting to fetch fresh data")
+                    Logger.d("AlarmEditorActivity", "No cached astronomy data, attempting to fetch fresh data")
                     editorViewModel.getAstronomyData(forceRefresh = true)
                     kotlinx.coroutines.delay(500) // Wait longer for fetch
                     astronomyData = editorViewModel.astronomyData.value
@@ -997,19 +997,19 @@ class AlarmEditorActivity : AppCompatActivity() {
                 
                 // If SharedPreferences doesn't have it, try Room database
                 if (event1Time == 0L && astronomyData != null) {
-                    Log.d("AlarmEditorActivity", "SharedPreferences had no data, trying Room database")
+                    Logger.d("AlarmEditorActivity", "SharedPreferences had no data, trying Room database")
                     event1Time = getSolarEventTime(solarEvent1, astronomyData)
                 }
                 
                 if (event1Time == 0L) {
                     launch(Dispatchers.Main) {
                         calculatedTimeText.text = "No data"
-                        Log.w("AlarmEditorActivity", "No astronomy data available for $solarEvent1")
+                        Logger.w("AlarmEditorActivity", "No astronomy data available for $solarEvent1")
                     }
                     return@launch
                 }
                 
-                Log.d("AlarmEditorActivity", "Got event1Time for $solarEvent1: $event1Time")
+                Logger.d("AlarmEditorActivity", "Got event1Time for $solarEvent1: $event1Time")
                 
                 val calculatedTime = when (sunTimingMode) {
                     AppConstants.ALARM_MODE_AT -> event1Time
@@ -1045,7 +1045,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                     calculatedTimeText.text = sdf.format(calendar.time)
                 }
             } catch (e: Exception) {
-                Log.e("AlarmEditorActivity", "Error updating calculated time", e)
+                Logger.e("AlarmEditorActivity", "Error updating calculated time", e)
                 // Fallback to SharedPreferences on error
                 launch(Dispatchers.Main) {
                     val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
@@ -1098,17 +1098,17 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Nautical Dusk" -> prefs.getLong("nauticalDusk", 0)
             "Astronomical Dusk" -> prefs.getLong("astroDusk", 0)
             else -> {
-                Log.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
+                Logger.w("AlarmEditorActivity", "Unknown event name: '$trimmedEvent' (original: '$event')")
                 0L
             }
         }
         
         if (timeInMillis == 0L) {
-            Log.w("AlarmEditorActivity", "No SharedPreferences data available for event: '$trimmedEvent' (original: '$event')")
+            Logger.w("AlarmEditorActivity", "No SharedPreferences data available for event: '$trimmedEvent' (original: '$event')")
             return 0L
         }
         
-        Log.d("AlarmEditorActivity", "SharedPreferences data for $event: $timeInMillis")
+        Logger.d("AlarmEditorActivity", "SharedPreferences data for $event: $timeInMillis")
         
         // The timestamp from SharedPreferences is a UTC timestamp from the API
         // We need to extract the local time and apply it to today's date
@@ -1121,7 +1121,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         val minute = localCalendar.get(Calendar.MINUTE)
         val second = localCalendar.get(Calendar.SECOND)
         
-        Log.d("AlarmEditorActivity", "Extracted time from $event: $hour:$minute:$second")
+        Logger.d("AlarmEditorActivity", "Extracted time from $event: $hour:$minute:$second")
         
         // Create a new calendar for today in local timezone with the extracted time
         val todayCalendar = Calendar.getInstance().apply {
@@ -1132,7 +1132,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         }
         
         val result = todayCalendar.timeInMillis
-        Log.d("AlarmEditorActivity", "Final time for $event: $result (${SimpleDateFormat("HH:mm", Locale.getDefault()).format(todayCalendar.time)})")
+        Logger.d("AlarmEditorActivity", "Final time for $event: $result (${SimpleDateFormat("HH:mm", Locale.getDefault()).format(todayCalendar.time)})")
         
         return result
     }
@@ -1313,7 +1313,7 @@ class AlarmEditorActivity : AppCompatActivity() {
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
+                Logger.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
             }
         }
     }
@@ -1330,20 +1330,20 @@ class AlarmEditorActivity : AppCompatActivity() {
                 kotlinx.coroutines.delay(500) // Wait for DB update
                 val savedAlarm = alarmRepository.getAlarmById(targetAlarmId)
                 if (savedAlarm == null) {
-                    Log.e("AlarmEditorActivity", "Could not find alarm $targetAlarmId after save")
+                    Logger.e("AlarmEditorActivity", "Could not find alarm $targetAlarmId after save")
                     return@launch
                 }
                 if (!savedAlarm.enabled) {
-                    Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
+                    Logger.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
                     return@launch
                 }
                 val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
                 result.fold(
-                    onSuccess = { Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled") },
-                    onFailure = { e -> Log.e("AlarmEditorActivity", "Error scheduling alarm ${savedAlarm.id}", e) }
+                    onSuccess = { Logger.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled") },
+                    onFailure = { e -> Logger.e("AlarmEditorActivity", "Error scheduling alarm ${savedAlarm.id}", e) }
                 )
             } catch (e: Exception) {
-                Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+                Logger.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
             }
         }
     }

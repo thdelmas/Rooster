@@ -14,7 +14,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -69,7 +69,7 @@ class SettingsActivity : AppCompatActivity() {
         val syncGPSButton = findViewById<TextView>(R.id.syncGpsTitle)
         syncGPSButton.setOnClickListener {
             HapticFeedbackHelper.performClick(it)
-            Log.i("SettingsActivity", "Manual Sync GPS")
+            Logger.i("SettingsActivity", "Manual Sync GPS")
             getLastKnownPosition()
         }
     }
@@ -193,10 +193,10 @@ class SettingsActivity : AppCompatActivity() {
         
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.i("SettingsActivity", "Location permission granted")
+                Logger.i("SettingsActivity", "Location permission granted")
                 requestLocationUpdates()
             } else {
-                Log.w("SettingsActivity", "Location permission denied")
+                Logger.w("SettingsActivity", "Location permission denied")
             }
         }
     }
@@ -213,7 +213,7 @@ class SettingsActivity : AppCompatActivity() {
                 )
             }
         } catch (e: SecurityException) {
-            Log.e("SettingsActivity", "Security exception requesting location updates", e)
+            Logger.e("SettingsActivity", "Security exception requesting location updates", e)
         }
     }
 
@@ -223,13 +223,13 @@ class SettingsActivity : AppCompatActivity() {
         requestFullScreenIntentPermission(this) { granted ->
             if (granted) {
                 // Full screen intent permission is granted, so show the PopTime dialog
-                Log.e("Rooster", "Full Screen Permission Granted")
+                Logger.i("SettingsActivity", "Full screen intent permission granted")
                 val popTime = PopTime(tgt)
                 val fm = supportFragmentManager
                 popTime.show(fm, "Select time")
             } else {
                 // Full screen intent permission is not granted
-                Log.e("Rooster", "Full Screen Not Permission Granted")
+                Logger.w("SettingsActivity", "Full screen intent permission not granted")
             }
         }
     }
@@ -267,7 +267,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         
         val formattedTime = SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(calendar.time)
-        Log.d("SettingsActivity", "Time set: $formattedTime (${calendar.timeInMillis})")
+        Logger.d("SettingsActivity", "Time set: $formattedTime (${calendar.timeInMillis})")
     }
 
     private fun updateValues() {
@@ -328,7 +328,7 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("SettingsActivity", "Error reading location from database", e)
+                Logger.e("SettingsActivity", "Error reading location from database", e)
                 // Fallback to SharedPreferences on error
                 launch(Dispatchers.Main) {
                     val coordinates = arrayOf("altitude", "latitude", "longitude")
@@ -345,7 +345,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private val networkLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            Log.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
+            Logger.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
 
             // Store the location through ViewModel (which uses Repository)
             viewModel.saveLocation(location)
@@ -359,7 +359,7 @@ class SettingsActivity : AppCompatActivity() {
                     // Update UI
                     updateValues()
                 } catch (e: Exception) {
-                    Log.e("SettingsActivity", "Error triggering astronomy update", e)
+                    Logger.e("SettingsActivity", "Error triggering astronomy update", e)
                     // Fallback to SharedPreferences if update fails
                     getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
                         putFloat("altitude", location.altitude.toFloat())
@@ -376,7 +376,7 @@ class SettingsActivity : AppCompatActivity() {
         }
         
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            Log.d("SettingsActivity", "Provider status changed: $provider, status: $status")
+            Logger.d("SettingsActivity", "Provider status changed: $provider, status: $status")
         }
     }
     fun getFormattedTime(timeInSec: Long): String {

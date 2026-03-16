@@ -5,7 +5,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -81,10 +81,10 @@ class RingtoneActivity : AppCompatActivity() {
                 result?.let {
                     when (it) {
                         is RingtoneViewModel.UpdateResult.Success -> {
-                            Log.i("RingtoneActivity", "Ringtone updated successfully")
+                            Logger.i("RingtoneActivity", "Ringtone updated successfully")
                         }
                         is RingtoneViewModel.UpdateResult.Error -> {
-                            Log.e("RingtoneActivity", "Error updating ringtone: ${it.message}")
+                            Logger.e("RingtoneActivity", "Error updating ringtone: ${it.message}")
                         }
                     }
                     viewModel.resetUpdateResult()
@@ -117,7 +117,7 @@ class RingtoneActivity : AppCompatActivity() {
                 ringtones.add(RingtoneItem(title, uri))
             }
         } catch (e: Exception) {
-            Log.e("RingtoneActivity", "Error getting ringtones", e)
+            Logger.e("RingtoneActivity", "Error getting ringtones", e)
         }
 
         return ringtones
@@ -170,13 +170,13 @@ class RingtoneActivity : AppCompatActivity() {
 
     private fun updateAlarmRingtone(alarmId: Long, ringtoneUri: String) {
         if (alarmId == -1L) {
-            Log.w("RingtoneActivity", "Invalid alarm ID")
+            Logger.w("RingtoneActivity", "Invalid alarm ID")
             finish()
             return
         }
 
         soundPreviewHelper.stopPreview()
-        Log.i("RingtoneActivity", "Updating ringtone for alarm $alarmId")
+        Logger.i("RingtoneActivity", "Updating ringtone for alarm $alarmId")
         
         // Use ViewModel to update alarm ringtone
         viewModel.updateAlarmRingtone(alarmId, ringtoneUri)

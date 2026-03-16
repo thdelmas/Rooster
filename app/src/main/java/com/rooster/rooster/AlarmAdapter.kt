@@ -8,7 +8,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -167,7 +167,7 @@ class AlarmAdapter(
         deleteButton.setOnClickListener{
             HapticFeedbackHelper.performHeavyClick(it)
             HapticFeedbackHelper.performDeleteFeedback(context)
-            Log.i("Delete", "Alarm ID: " + alarm.id.toString())
+            Logger.i("Delete", "Alarm ID: " + alarm.id.toString())
             viewModel.deleteAlarm(alarm)
             // Alarm list will update automatically via LiveData
         }
@@ -433,7 +433,7 @@ class AlarmAdapter(
 
 
     fun onDaysClicked(view: View, alarm: Alarm) {
-        Log.e("Update", "Alarm ID: " + alarm.id.toString())
+        Logger.e("Update", "Alarm ID: " + alarm.id.toString())
         if (view is Button) {
             val day = when (view.id) {
                 R.id.mondayButton -> "monday"
@@ -513,7 +513,7 @@ class AlarmAdapter(
             val ringtone = RingtoneManager.getRingtone(context, uri)
             ringtone?.getTitle(context) ?: "Default Ringtone"
         } catch (e: Exception) {
-            Log.e("AlarmAdapter", "Error getting ringtone title", e)
+            Logger.e("AlarmAdapter", "Error getting ringtone title", e)
             "Unknown Ringtone"
         }
     }
@@ -591,7 +591,7 @@ class AlarmAdapter(
                 alarm.time1 = (hour.toLong() * 60 + minute) * 60
                 alarm.enabled = true
                 swicthEnabled.isChecked = alarm.enabled
-                Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
+                Logger.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
                 viewModel.updateAlarm(alarm)
                 arrangeLayout(context, container, alarm, alarm.mode, holder)
             }, currentHour, currentMinute, true).show()
@@ -613,7 +613,7 @@ class AlarmAdapter(
             alarm.time1 = (picker.hour.toLong() * 60 + picker.minute) * 60
             alarm.enabled = true
             swicthEnabled.isChecked = alarm.enabled
-            Log.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
+            Logger.i("ALARM", alarm.getFormattedTime(alarm.time1, false).toString())
             viewModel.updateAlarm(alarm)
             arrangeLayout(context, container, alarm, alarm.mode, holder)
         }

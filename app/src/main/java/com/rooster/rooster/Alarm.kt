@@ -3,7 +3,7 @@ package com.rooster.rooster
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import java.util.Date
 
 class AlarmCreation(

@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.os.Vibrator
-import android.util.Log
 import android.view.View
 import com.rooster.rooster.util.Logger
 import android.view.WindowManager
@@ -176,7 +175,7 @@ class AlarmActivity : FragmentActivity() {
                         PowerManager.ON_AFTER_RELEASE, "rooster:wakelock"
             )
             wakeLock?.acquire(AppConstants.ALARM_WAKE_LOCK_TIMEOUT_MS)
-            Log.d("AlarmActivity", "WakeLock acquired successfully")
+            Logger.d("AlarmActivity", "WakeLock acquired successfully")
         } catch (e: Exception) {
             Logger.e("AlarmActivity", "Error acquiring wake lock", e)
             // Ensure cleanup on failure
@@ -195,10 +194,10 @@ class AlarmActivity : FragmentActivity() {
             try {
                 if (lock.isHeld) {
                     lock.release()
-                    Log.d("AlarmActivity", "WakeLock released")
+                    Logger.d("AlarmActivity", "WakeLock released")
                 }
             } catch (e: Exception) {
-                Log.e("AlarmActivity", "Error releasing WakeLock", e)
+                Logger.e("AlarmActivity", "Error releasing WakeLock", e)
             } finally {
                 wakeLock = null
             }
@@ -265,7 +264,7 @@ class AlarmActivity : FragmentActivity() {
                 try {
                     setDataSource(applicationContext, uri)
                     dataSourceSet = true
-                    Log.i("AlarmActivity", "Data source set successfully: $uri")
+                    Logger.i("AlarmActivity", "Data source set successfully: $uri")
                 } catch (e: Exception) {
                     ErrorHandler.logError("AlarmActivity", "Error setting data source with URI: $uri", e)
                     
@@ -275,7 +274,7 @@ class AlarmActivity : FragmentActivity() {
                             val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
                             setDataSource(applicationContext, defaultUri)
                             dataSourceSet = true
-                            Log.i("AlarmActivity", "Using default ringtone as fallback")
+                            Logger.i("AlarmActivity", "Using default ringtone as fallback")
                         } catch (fallbackException: Exception) {
                             ErrorHandler.logError("AlarmActivity", "Error setting default ringtone", fallbackException)
                             dataSourceSet = false
@@ -304,7 +303,7 @@ class AlarmActivity : FragmentActivity() {
                             mp?.setDataSource(applicationContext, defaultUri)
                             mp?.prepareAsync()
                             playbackRetryCount++
-                            Log.i("AlarmActivity", "Attempting recovery with default ringtone (attempt $playbackRetryCount)")
+                            Logger.i("AlarmActivity", "Attempting recovery with default ringtone (attempt $playbackRetryCount)")
                         } catch (e: Exception) {
                             ErrorHandler.logError("AlarmActivity", "Failed to recover from MediaPlayer error", e)
                             // Retry with exponential backoff
@@ -319,7 +318,7 @@ class AlarmActivity : FragmentActivity() {
                 
                 setOnPreparedListener { mp ->
                     try {
-                        Log.i("AlarmActivity", "MediaPlayer prepared, starting playback")
+                        Logger.i("AlarmActivity", "MediaPlayer prepared, starting playback")
                         mp.setVolume(currentVolume, currentVolume)
                         mp.start()
                         
@@ -341,7 +340,7 @@ class AlarmActivity : FragmentActivity() {
                 setOnCompletionListener { mp ->
                     // If playback completes unexpectedly (shouldn't happen with looping), retry
                     if (alarmIsRunning && !playbackFailed) {
-                        Log.w("AlarmActivity", "MediaPlayer completed unexpectedly, retrying")
+                        Logger.w("AlarmActivity", "MediaPlayer completed unexpectedly, retrying")
                         retryPlaybackWithBackoff(ringtoneUri, alarm, useDefault)
                     }
                 }
@@ -372,7 +371,7 @@ class AlarmActivity : FragmentActivity() {
         // Exponential backoff: 1s, 2s, 4s
         val delayMs = (1000L * (1 shl (playbackRetryCount - 1))).coerceAtMost(4000L)
         
-        Log.i("AlarmActivity", "Retrying playback in ${delayMs}ms (attempt $playbackRetryCount/$maxRetryAttempts)")
+        Logger.i("AlarmActivity", "Retrying playback in ${delayMs}ms (attempt $playbackRetryCount/$maxRetryAttempts)")
         
         lifecycleScope.launch {
             delay(delayMs)
@@ -404,7 +403,7 @@ class AlarmActivity : FragmentActivity() {
             vibrator?.vibrate(AppConstants.VIBRATION_PATTERN, 0)
         }
         
-        Log.w("AlarmActivity", "Alarm will continue with vibration only")
+        Logger.w("AlarmActivity", "Alarm will continue with vibration only")
     }
     
     private fun startGradualVolumeIncrease(targetVolume: Float) {
@@ -434,14 +433,14 @@ class AlarmActivity : FragmentActivity() {
     
     private fun snoozeAlarm() {
         if (snoozeCount >= maxSnoozeCount) {
-            Log.w("AlarmActivity", "Max snooze count reached: $snoozeCount/$maxSnoozeCount")
+            Logger.w("AlarmActivity", "Max snooze count reached: $snoozeCount/$maxSnoozeCount")
             return
         }
         
         snoozeCount++
         val snoozeDuration = currentAlarm?.snoozeDuration ?: AppConstants.DEFAULT_SNOOZE_DURATION_MINUTES
         
-        Log.i("AlarmActivity", "Snoozing alarm for $snoozeDuration minutes (count: $snoozeCount/$maxSnoozeCount)")
+        Logger.i("AlarmActivity", "Snoozing alarm for $snoozeDuration minutes (count: $snoozeCount/$maxSnoozeCount)")
         
         // Stop alarm temporarily
         alarmIsRunning = false
@@ -457,9 +456,9 @@ class AlarmActivity : FragmentActivity() {
                 }
                 
                 sendBroadcast(snoozeIntent)
-                Log.i("AlarmActivity", "Snooze broadcast sent for alarm $alarmId")
+                Logger.i("AlarmActivity", "Snooze broadcast sent for alarm $alarmId")
             } catch (e: Exception) {
-                Log.e("AlarmActivity", "Error sending snooze broadcast", e)
+                Logger.e("AlarmActivity", "Error sending snooze broadcast", e)
             }
         }
         
@@ -476,17 +475,17 @@ class AlarmActivity : FragmentActivity() {
                     try {
                         stop()
                     } catch (e: Exception) {
-                        Log.w("AlarmActivity", "Error stopping MediaPlayer", e)
+                        Logger.w("AlarmActivity", "Error stopping MediaPlayer", e)
                     }
                 }
                 try {
                     release()
                 } catch (e: Exception) {
-                    Log.w("AlarmActivity", "Error releasing MediaPlayer", e)
+                    Logger.w("AlarmActivity", "Error releasing MediaPlayer", e)
                 }
             }
         } catch (e: Exception) {
-            Log.e("AlarmActivity", "Error in MediaPlayer cleanup", e)
+            Logger.e("AlarmActivity", "Error in MediaPlayer cleanup", e)
         } finally {
             mediaPlayer = null
         }
@@ -498,7 +497,7 @@ class AlarmActivity : FragmentActivity() {
         try {
             vibrator?.cancel()
         } catch (e: Exception) {
-            Log.w("AlarmActivity", "Error cancelling vibrator", e)
+            Logger.w("AlarmActivity", "Error cancelling vibrator", e)
         } finally {
             vibrator = null
         }
@@ -519,7 +518,7 @@ class AlarmActivity : FragmentActivity() {
         volumeIncreaseJob = null
         // Always release resources, including WakeLock, when activity is destroyed
         releaseResources()
-        Log.i("AlarmActivity", "Activity destroyed")
+        Logger.i("AlarmActivity", "Activity destroyed")
     }
 
     fun stopAlarm(view: View?) {
