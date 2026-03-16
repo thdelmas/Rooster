@@ -53,16 +53,19 @@ Stay tuned – it's coming soon to the Play Store!
 
 
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | Codebase structure, tech stack, key components |
+| [Roadmap](docs/ROADMAP.md) | Planned features and priorities |
+| [Changelog](docs/CHANGELOG.md) | Version history and release notes |
+| [Contributing](docs/CONTRIBUTING.md) | How to build, test, and submit PRs |
+| [Audit](docs/AUDIT.md) | Security and code quality audit report |
+
 ## How to Contribute
 
-We warmly welcome contributions from everyone! Here's how you can get involved:
-
-* **Bug fixes and improvements:** We appreciate any fixes for bugs or ways to improve the project. Feel free to open an issue or submit a pull request. 
-* **New features:** Do you have an idea for a new feature? We'd love to hear about it! Open an issue to discuss or create a pull request with your implementation.
-* **Documentation:** Help improve the project's documentation by fixing typos, clarifying steps, or adding new content.
-* **Testing:**  Writing unit tests helps ensure the project's stability. Consider contributing tests for new features or existing code.
-
-For a detailed guide on contributing, refer to our [CONTRIBUTING.md](CONTRIBUTING.md) file. Additionally, you can find potential bounties for contributions on [Bount.ing](https://bount.ing).
+We warmly welcome contributions from everyone! For a detailed guide, refer to our [Contributing guide](docs/CONTRIBUTING.md). You can also find bounties on [Bount.ing](https://bount.ing).
 
 ## Sponsorship
 
