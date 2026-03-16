@@ -706,8 +706,8 @@ class AlarmEditorActivity : AppCompatActivity() {
         updateSunCourseVisualization()
     }
     
-    private fun updateSolarEventDisplay() {
-        val emoji = when (solarEvent1) {
+    private fun getSolarEventEmoji(event: String): String {
+        return when (event) {
             "Astronomical Dawn" -> "🌄"
             "Nautical Dawn" -> "🌅"
             "Civil Dawn" -> "🌆"
@@ -719,22 +719,13 @@ class AlarmEditorActivity : AppCompatActivity() {
             "Astronomical Dusk" -> "🌌"
             else -> "🌅"
         }
-        solarEvent1Button.text = "$emoji $solarEvent1"
-        
+    }
+
+    private fun updateSolarEventDisplay() {
+        solarEvent1Button.text = "${getSolarEventEmoji(solarEvent1)} $solarEvent1"
+
         if (sunTimingMode == AppConstants.ALARM_MODE_BETWEEN) {
-            val emoji2 = when (solarEvent2) {
-                "Astronomical Dawn" -> "🌄"
-                "Nautical Dawn" -> "🌅"
-                "Civil Dawn" -> "🌆"
-                "Sunrise" -> "🌅"
-                "Solar Noon" -> "☀️"
-                "Sunset" -> "🌇"
-                "Civil Dusk" -> "🌆"
-                "Nautical Dusk" -> "🌃"
-                "Astronomical Dusk" -> "🌌"
-                else -> "🌇"
-            }
-            solarEvent2Button.text = "$emoji2 $solarEvent2"
+            solarEvent2Button.text = "${getSolarEventEmoji(solarEvent2)} $solarEvent2"
         }
     }
     
@@ -899,114 +890,79 @@ class AlarmEditorActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.snoozeCountText).text = "$snoozeCount times"
     }
     
+    private fun loadSunTimesFromSharedPreferences() {
+        val prefs = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+        sunCourseView.setAllSunTimes(
+            prefs.getLong("astroDawn", 0), prefs.getLong("nauticalDawn", 0), prefs.getLong("civilDawn", 0),
+            prefs.getLong("sunrise", 0), prefs.getLong("solarNoon", 0), prefs.getLong("sunset", 0),
+            prefs.getLong("civilDusk", 0), prefs.getLong("nauticalDusk", 0), prefs.getLong("astroDusk", 0)
+        )
+    }
+
+    private fun getMarkerLabel(): String {
+        return when (sunTimingMode) {
+            AppConstants.ALARM_MODE_AT -> "Alarm"
+            AppConstants.ALARM_MODE_BEFORE -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} before"
+            AppConstants.ALARM_MODE_AFTER -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} after"
+            AppConstants.ALARM_MODE_BETWEEN -> "Between"
+            else -> "Alarm"
+        }
+    }
+
+    private fun calculateMarkerTime(event1TimeResolver: (String) -> Long, event2TimeResolver: (String) -> Long): Long {
+        return when (sunTimingMode) {
+            AppConstants.ALARM_MODE_AT -> event1TimeResolver(solarEvent1)
+            AppConstants.ALARM_MODE_BEFORE -> event1TimeResolver(solarEvent1) - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+            AppConstants.ALARM_MODE_AFTER -> event1TimeResolver(solarEvent1) + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
+            AppConstants.ALARM_MODE_BETWEEN -> {
+                val t1 = event1TimeResolver(solarEvent1)
+                val t2 = event2TimeResolver(solarEvent2)
+                (t1 + t2) / 2
+            }
+            else -> 0L
+        }
+    }
+
     private fun updateSunCourseVisualization() {
         activityScope.launch(Dispatchers.IO) {
             try {
-                // Get astronomy data from ViewModel (which uses Repository)
                 editorViewModel.getAstronomyData(forceRefresh = false)
-                // Wait a bit for the data to load
                 kotlinx.coroutines.delay(100)
                 val astronomyData = editorViewModel.astronomyData.value
-                
+
                 if (astronomyData != null) {
                     launch(Dispatchers.Main) {
-                        // Set all sun times for full visualization
                         sunCourseView.setAllSunTimes(
                             astronomyData.astroDawn, astronomyData.nauticalDawn, astronomyData.civilDawn,
                             astronomyData.sunrise, astronomyData.solarNoon, astronomyData.sunset,
                             astronomyData.civilDusk, astronomyData.nauticalDusk, astronomyData.astroDusk
                         )
-                        
-                        // Set marker based on current alarm configuration
+
                         if (currentMode == "sun") {
-                            val markerTime = when (sunTimingMode) {
-                                AppConstants.ALARM_MODE_AT -> getSolarEventTime(solarEvent1, astronomyData)
-                                AppConstants.ALARM_MODE_BEFORE -> getSolarEventTime(solarEvent1, astronomyData) - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-                                AppConstants.ALARM_MODE_AFTER -> getSolarEventTime(solarEvent1, astronomyData) + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-                                AppConstants.ALARM_MODE_BETWEEN -> {
-                                    val time1 = getSolarEventTime(solarEvent1, astronomyData)
-                                    val time2 = getSolarEventTime(solarEvent2, astronomyData)
-                                    (time1 + time2) / 2
-                                }
-                                else -> 0L
-                            }
-                            
-                            val markerLabel = when (sunTimingMode) {
-                                AppConstants.ALARM_MODE_AT -> "Alarm"
-                                AppConstants.ALARM_MODE_BEFORE -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} before"
-                                AppConstants.ALARM_MODE_AFTER -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} after"
-                                AppConstants.ALARM_MODE_BETWEEN -> "Between"
-                                else -> "Alarm"
-                            }
-                            
-                            sunCourseView.setMarker(markerTime, markerLabel)
+                            val markerTime = calculateMarkerTime(
+                                { getSolarEventTime(it, astronomyData) },
+                                { getSolarEventTime(it, astronomyData) }
+                            )
+                            sunCourseView.setMarker(markerTime, getMarkerLabel())
                         }
                     }
                 } else {
-                    // Fallback to SharedPreferences if not in database
                     launch(Dispatchers.Main) {
-                        val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-                        val astroDawn = sharedPreferences.getLong("astroDawn", 0)
-                        val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
-                        val civilDawn = sharedPreferences.getLong("civilDawn", 0)
-                        val sunrise = sharedPreferences.getLong("sunrise", 0)
-                        val solarNoon = sharedPreferences.getLong("solarNoon", 0)
-                        val sunset = sharedPreferences.getLong("sunset", 0)
-                        val civilDusk = sharedPreferences.getLong("civilDusk", 0)
-                        val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
-                        val astroDusk = sharedPreferences.getLong("astroDusk", 0)
-                        
-                        sunCourseView.setAllSunTimes(
-                            astroDawn, nauticalDawn, civilDawn,
-                            sunrise, solarNoon, sunset,
-                            civilDusk, nauticalDusk, astroDusk
-                        )
-                        
+                        loadSunTimesFromSharedPreferences()
                         if (currentMode == "sun") {
-                            val markerTime = when (sunTimingMode) {
-                                AppConstants.ALARM_MODE_AT -> getSolarEventTime(solarEvent1, sharedPreferences)
-                                AppConstants.ALARM_MODE_BEFORE -> getSolarEventTime(solarEvent1, sharedPreferences) - (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-                                AppConstants.ALARM_MODE_AFTER -> getSolarEventTime(solarEvent1, sharedPreferences) + (offsetMinutes * AppConstants.MILLIS_PER_MINUTE)
-                                AppConstants.ALARM_MODE_BETWEEN -> {
-                                    val time1 = getSolarEventTime(solarEvent1, sharedPreferences)
-                                    val time2 = getSolarEventTime(solarEvent2, sharedPreferences)
-                                    (time1 + time2) / 2
-                                }
-                                else -> 0L
-                            }
-                            
-                            val markerLabel = when (sunTimingMode) {
-                                AppConstants.ALARM_MODE_AT -> "Alarm"
-                                AppConstants.ALARM_MODE_BEFORE -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} before"
-                                AppConstants.ALARM_MODE_AFTER -> "${TimeUtils.formatMinutesAsHours(offsetMinutes)} after"
-                                AppConstants.ALARM_MODE_BETWEEN -> "Between"
-                                else -> "Alarm"
-                            }
-                            
-                            sunCourseView.setMarker(markerTime, markerLabel)
+                            val prefs = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                            val markerTime = calculateMarkerTime(
+                                { getSolarEventTime(it, prefs) },
+                                { getSolarEventTime(it, prefs) }
+                            )
+                            sunCourseView.setMarker(markerTime, getMarkerLabel())
                         }
                     }
                 }
             } catch (e: Exception) {
                 Log.e("AlarmEditorActivity", "Error loading astronomy data", e)
-                // Fallback to SharedPreferences on error
                 launch(Dispatchers.Main) {
-                    val sharedPreferences = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
-                    val astroDawn = sharedPreferences.getLong("astroDawn", 0)
-                    val nauticalDawn = sharedPreferences.getLong("nauticalDawn", 0)
-                    val civilDawn = sharedPreferences.getLong("civilDawn", 0)
-                    val sunrise = sharedPreferences.getLong("sunrise", 0)
-                    val solarNoon = sharedPreferences.getLong("solarNoon", 0)
-                    val sunset = sharedPreferences.getLong("sunset", 0)
-                    val civilDusk = sharedPreferences.getLong("civilDusk", 0)
-                    val nauticalDusk = sharedPreferences.getLong("nauticalDusk", 0)
-                    val astroDusk = sharedPreferences.getLong("astroDusk", 0)
-                    
-                    sunCourseView.setAllSunTimes(
-                        astroDawn, nauticalDawn, civilDawn,
-                        sunrise, solarNoon, sunset,
-                        civilDusk, nauticalDusk, astroDusk
-                    )
+                    loadSunTimesFromSharedPreferences()
                 }
             }
         }
@@ -1335,21 +1291,77 @@ class AlarmEditorActivity : AppCompatActivity() {
         saveAlarm(shouldFinish = false)
     }
     
-    private fun saveAlarm(shouldFinish: Boolean = true) {
-        val label = alarmLabelInput.text.toString().takeIf { it.isNotBlank() } ?: "Alarm"
-        
-        // Get day selections
-        val daysMap = dayButtons.mapValues { it.value.isSelected }
-        
-        // Comprehensive validation using ValidationHelper
-        val validationResult = ValidationHelper.validateAlarmEditorInputs(
-            label = label,
-            mode = currentMode,
-            sunTimingMode = sunTimingMode,
-            solarEvent1 = solarEvent1,
-            solarEvent2 = solarEvent2,
-            offsetMinutes = offsetMinutes,
-            selectedTime = selectedTime,
+    private fun showAlarmTimeToast(alarm: Alarm) {
+        pendingToastJob?.cancel()
+        pendingToastJob = activityScope.launch(Dispatchers.IO) {
+            try {
+                kotlinx.coroutines.delay(300) // Debounce
+                val nextAlarmTime = calculateAlarmTimeUseCase.execute(alarm)
+                launch(Dispatchers.Main) {
+                    val alarmCalendar = Calendar.getInstance().apply { timeInMillis = nextAlarmTime }
+                    val formattedTime = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(alarmCalendar.time)
+                    val today = Calendar.getInstance()
+                    val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, 1) }
+
+                    val timeString = when {
+                        alarmCalendar.isSameDay(today) -> "today at $formattedTime"
+                        alarmCalendar.isSameDay(tomorrow) -> "tomorrow at $formattedTime"
+                        else -> "${SimpleDateFormat("EEEE", Locale.getDefault()).format(alarmCalendar.time)} at $formattedTime"
+                    }
+                    toast("Alarm will ring $timeString")
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
+            }
+        }
+    }
+
+    private fun Calendar.isSameDay(other: Calendar): Boolean {
+        return get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
+                get(Calendar.MONTH) == other.get(Calendar.MONTH) &&
+                get(Calendar.DAY_OF_MONTH) == other.get(Calendar.DAY_OF_MONTH)
+    }
+
+    private fun scheduleAlarmAfterSave(targetAlarmId: Long) {
+        activityScope.launch(Dispatchers.IO) {
+            try {
+                kotlinx.coroutines.delay(500) // Wait for DB update
+                val savedAlarm = alarmRepository.getAlarmById(targetAlarmId)
+                if (savedAlarm == null) {
+                    Log.e("AlarmEditorActivity", "Could not find alarm $targetAlarmId after save")
+                    return@launch
+                }
+                if (!savedAlarm.enabled) {
+                    Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
+                    return@launch
+                }
+                val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
+                result.fold(
+                    onSuccess = { Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled") },
+                    onFailure = { e -> Log.e("AlarmEditorActivity", "Error scheduling alarm ${savedAlarm.id}", e) }
+                )
+            } catch (e: Exception) {
+                Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
+            }
+        }
+    }
+
+    private fun buildAlarmFromUI(id: Long, sanitizedLabel: String, mode: String, ringtoneUri: String,
+                                  relative1: String, relative2: String, time1: Long, time2: Long,
+                                  daysMap: Map<String, Boolean>): Alarm {
+        return Alarm(
+            id = id,
+            label = sanitizedLabel,
+            enabled = true,
+            mode = mode,
+            ringtoneUri = ringtoneUri,
+            relative1 = relative1,
+            relative2 = relative2,
+            time1 = time1,
+            time2 = time2,
+            calculatedTime = 0L,
             monday = daysMap["monday"] ?: false,
             tuesday = daysMap["tuesday"] ?: false,
             wednesday = daysMap["wednesday"] ?: false,
@@ -1357,337 +1369,88 @@ class AlarmEditorActivity : AppCompatActivity() {
             friday = daysMap["friday"] ?: false,
             saturday = daysMap["saturday"] ?: false,
             sunday = daysMap["sunday"] ?: false,
+            vibrate = vibrateEnabled,
+            snoozeEnabled = snoozeEnabled,
             snoozeDuration = snoozeDuration,
             snoozeCount = snoozeCount,
-            volume = alarmVolume
+            volume = alarmVolume,
+            gradualVolume = gradualVolumeEnabled
         )
-        
-        // If validation fails, show error messages and return
+    }
+
+    private fun saveAlarm(shouldFinish: Boolean = true) {
+        val label = alarmLabelInput.text.toString().takeIf { it.isNotBlank() } ?: "Alarm"
+        val daysMap = dayButtons.mapValues { it.value.isSelected }
+
+        val validationResult = ValidationHelper.validateAlarmEditorInputs(
+            label = label, mode = currentMode, sunTimingMode = sunTimingMode,
+            solarEvent1 = solarEvent1, solarEvent2 = solarEvent2,
+            offsetMinutes = offsetMinutes, selectedTime = selectedTime,
+            monday = daysMap["monday"] ?: false, tuesday = daysMap["tuesday"] ?: false,
+            wednesday = daysMap["wednesday"] ?: false, thursday = daysMap["thursday"] ?: false,
+            friday = daysMap["friday"] ?: false, saturday = daysMap["saturday"] ?: false,
+            sunday = daysMap["sunday"] ?: false,
+            snoozeDuration = snoozeDuration, snoozeCount = snoozeCount, volume = alarmVolume
+        )
+
         if (validationResult.isError()) {
             HapticFeedbackHelper.performErrorFeedback(this)
-            val errorMessage = validationResult.getErrorMessage()
             com.google.android.material.snackbar.Snackbar.make(
-                findViewById(android.R.id.content),
-                errorMessage,
+                findViewById(android.R.id.content), validationResult.getErrorMessage(),
                 com.google.android.material.snackbar.Snackbar.LENGTH_LONG
             ).show()
             return
         }
-        
-        // Sanitize label using ValidationHelper
+
         val sanitizedLabel = ValidationHelper.sanitizeLabel(label)
-        
-        // Determine time values based on mode
-        val time1: Long
-        val time2: Long
+
         val mode: String
         val relative1: String
         val relative2: String
-        
+        val time1: Long
+        val time2: Long
+
         if (currentMode == "sun") {
-            // Sun mode
             mode = sunTimingMode
             relative1 = solarEvent1
             relative2 = if (sunTimingMode == AppConstants.ALARM_MODE_BETWEEN) solarEvent2 else ""
             time1 = if (sunTimingMode == AppConstants.ALARM_MODE_BEFORE || sunTimingMode == AppConstants.ALARM_MODE_AFTER) {
                 offsetMinutes * AppConstants.MILLIS_PER_MINUTE
-            } else {
-                0L
-            }
+            } else 0L
             time2 = 0L
         } else {
-            // Classic mode
             mode = AppConstants.ALARM_MODE_AT
             relative1 = AppConstants.RELATIVE_TIME_PICK_TIME
             relative2 = ""
             time1 = selectedTime
             time2 = 0L
         }
-        
-        // Get ringtone URI from current alarm or use default
-        val existingAlarm = currentAlarm
-        val ringtoneUri = existingAlarm?.ringtoneUri ?: AppConstants.DEFAULT_RINGTONE_URI
-        
-        if (alarmId != -1L && existingAlarm != null) {
-            // Update existing alarm - enable it when changes are made
-            val updatedAlarm = existingAlarm.copy(
-                label = sanitizedLabel,
-                mode = mode,
-                relative1 = relative1,
-                relative2 = relative2,
-                time1 = time1,
-                time2 = time2,
-                monday = daysMap["monday"] ?: false,
-                tuesday = daysMap["tuesday"] ?: false,
-                wednesday = daysMap["wednesday"] ?: false,
-                thursday = daysMap["thursday"] ?: false,
-                friday = daysMap["friday"] ?: false,
-                saturday = daysMap["saturday"] ?: false,
-                sunday = daysMap["sunday"] ?: false,
-                enabled = true, // Enable alarm when changes are made
-                vibrate = vibrateEnabled,
-                snoozeEnabled = snoozeEnabled,
-                snoozeDuration = snoozeDuration,
-                snoozeCount = snoozeCount,
-                volume = alarmVolume,
-                gradualVolume = gradualVolumeEnabled
-            )
-            
-            // Set flag to prevent observer updates during save
-            isSavingAlarm = true
-            
-            // Cancel any pending toast calculation to prevent delayed toasts
-            pendingToastJob?.cancel()
-            
-            // Calculate next alarm time and show toast (debounced to prevent confusion)
-            pendingToastJob = activityScope.launch(Dispatchers.IO) {
-                try {
-                    // Debounce: wait a bit before calculating to avoid showing toast for intermediate saves
-                    kotlinx.coroutines.delay(300)
-                    
-                    val nextAlarmTime = calculateAlarmTimeUseCase.execute(updatedAlarm)
-                    launch(Dispatchers.Main) {
-                        // Format the time for display
-                        val alarmCalendar = Calendar.getInstance()
-                        alarmCalendar.timeInMillis = nextAlarmTime
-                        val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                        val formattedTime = sdf.format(alarmCalendar.time)
-                        
-                        // Determine if it's today, tomorrow, or a specific day by comparing dates
-                        val today = Calendar.getInstance()
-                        val tomorrow = Calendar.getInstance().apply {
-                            add(Calendar.DAY_OF_MONTH, 1)
-                        }
-                        
-                        val alarmYear = alarmCalendar.get(Calendar.YEAR)
-                        val alarmMonth = alarmCalendar.get(Calendar.MONTH)
-                        val alarmDay = alarmCalendar.get(Calendar.DAY_OF_MONTH)
-                        
-                        val todayYear = today.get(Calendar.YEAR)
-                        val todayMonth = today.get(Calendar.MONTH)
-                        val todayDay = today.get(Calendar.DAY_OF_MONTH)
-                        
-                        val tomorrowYear = tomorrow.get(Calendar.YEAR)
-                        val tomorrowMonth = tomorrow.get(Calendar.MONTH)
-                        val tomorrowDay = tomorrow.get(Calendar.DAY_OF_MONTH)
-                        
-                        val timeString = when {
-                            alarmYear == todayYear && alarmMonth == todayMonth && alarmDay == todayDay -> "today at $formattedTime"
-                            alarmYear == tomorrowYear && alarmMonth == tomorrowMonth && alarmDay == tomorrowDay -> "tomorrow at $formattedTime"
-                            else -> {
-                                val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-                                "${dayFormat.format(alarmCalendar.time)} at $formattedTime"
-                            }
-                        }
-                        
-                        toast("Alarm will ring $timeString")
-                    }
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    // Expected when cancelled - just return
-                    throw e
-                } catch (e: Exception) {
-                    Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
-                    // Still save the alarm even if toast fails
-                }
-            }
-            
-            // Use ViewModel to update alarm (which uses Repository and recalculates time)
+
+        val ringtoneUri = currentAlarm?.ringtoneUri ?: AppConstants.DEFAULT_RINGTONE_URI
+        isSavingAlarm = true
+
+        if (alarmId != -1L && currentAlarm != null) {
+            val updatedAlarm = buildAlarmFromUI(alarmId, sanitizedLabel, mode, ringtoneUri, relative1, relative2, time1, time2, daysMap)
+            showAlarmTimeToast(updatedAlarm)
             viewModel.updateAlarm(updatedAlarm)
-            
-            // Schedule the alarm with AlarmManager after saving
-            // Wait for the database update to complete, then fetch and schedule the alarm
-            activityScope.launch(Dispatchers.IO) {
-                try {
-                    Log.d("AlarmEditorActivity", "Waiting for alarm update to complete...")
-                    // Wait a bit for the database update to complete
-                    kotlinx.coroutines.delay(500)
-                    
-                    // Fetch the updated alarm from the repository
-                    val savedAlarm = alarmRepository.getAlarmById(updatedAlarm.id)
-                    if (savedAlarm == null) {
-                        Log.e("AlarmEditorActivity", "Could not find alarm ${updatedAlarm.id} after save")
-                        return@launch
-                    }
-                    
-                    Log.d("AlarmEditorActivity", "Fetched alarm ${savedAlarm.id} after save, enabled=${savedAlarm.enabled}, calculatedTime=${savedAlarm.calculatedTime}")
-                    
-                    if (!savedAlarm.enabled) {
-                        Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
-                        return@launch
-                    }
-                    
-                    // Schedule the specific alarm
-                    val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
-                    result.fold(
-                        onSuccess = {
-                            Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled successfully")
-                        },
-                        onFailure = { e ->
-                            Log.e("AlarmEditorActivity", "Error scheduling alarm '${savedAlarm.label}' (ID: ${savedAlarm.id})", e)
-                        }
-                    )
-                } catch (e: Exception) {
-                    Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
-                }
-            }
-            
-            // Clear flag after a brief delay to allow observer updates again
-            // The delay gives time for the save to complete and observer to process
-            alarmLabelInput.postDelayed({
-                isSavingAlarm = false
-            }, 500)
+            scheduleAlarmAfterSave(updatedAlarm.id)
+            alarmLabelInput.postDelayed({ isSavingAlarm = false }, 500)
         } else {
-            // Create new alarm
-            // First, create a basic AlarmCreation to insert
             val alarmCreation = AlarmCreation(
-                label = sanitizedLabel,
-                enabled = true,
-                mode = mode,
-                ringtoneUri = ringtoneUri,
-                relative1 = relative1,
-                relative2 = relative2,
-                time1 = time1,
-                time2 = time2,
-                calculatedTime = 0L // Will be calculated by ViewModel
+                label = sanitizedLabel, enabled = true, mode = mode, ringtoneUri = ringtoneUri,
+                relative1 = relative1, relative2 = relative2, time1 = time1, time2 = time2, calculatedTime = 0L
             )
-            
-            // Set flag to prevent observer updates during save
-            isSavingAlarm = true
-            
-            // Insert the alarm and get its ID, then update it with all fields
+
             viewModel.insertAlarm(alarmCreation) { newAlarmId ->
-                // Update the local alarmId so future saves work correctly
                 alarmId = newAlarmId
-                
-                // After insertion, create a full Alarm with all settings and update it
-                val fullAlarm = Alarm(
-                    id = newAlarmId,
-                    label = sanitizedLabel,
-                    enabled = true,
-                    mode = mode,
-                    ringtoneUri = ringtoneUri,
-                    relative1 = relative1,
-                    relative2 = relative2,
-                    time1 = time1,
-                    time2 = time2,
-                    calculatedTime = 0L, // Will be calculated by ViewModel
-                    monday = daysMap["monday"] ?: false,
-                    tuesday = daysMap["tuesday"] ?: false,
-                    wednesday = daysMap["wednesday"] ?: false,
-                    thursday = daysMap["thursday"] ?: false,
-                    friday = daysMap["friday"] ?: false,
-                    saturday = daysMap["saturday"] ?: false,
-                    sunday = daysMap["sunday"] ?: false,
-                    vibrate = vibrateEnabled,
-                    snoozeEnabled = snoozeEnabled,
-                    snoozeDuration = snoozeDuration,
-                    snoozeCount = snoozeCount,
-                    volume = alarmVolume,
-                    gradualVolume = gradualVolumeEnabled
-                )
-                
-                // Cancel any pending toast calculation to prevent delayed toasts
-                pendingToastJob?.cancel()
-                
-                // Calculate next alarm time and show toast (debounced to prevent confusion)
-                pendingToastJob = activityScope.launch(Dispatchers.IO) {
-                    try {
-                        // Debounce: wait a bit before calculating to avoid showing toast for intermediate saves
-                        kotlinx.coroutines.delay(300)
-                        
-                        val nextAlarmTime = calculateAlarmTimeUseCase.execute(fullAlarm)
-                        launch(Dispatchers.Main) {
-                            // Format the time for display
-                            val alarmCalendar = Calendar.getInstance()
-                            alarmCalendar.timeInMillis = nextAlarmTime
-                            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
-                            val formattedTime = sdf.format(alarmCalendar.time)
-                            
-                            // Determine if it's today, tomorrow, or a specific day by comparing dates
-                            val today = Calendar.getInstance()
-                            val tomorrow = Calendar.getInstance().apply {
-                                add(Calendar.DAY_OF_MONTH, 1)
-                            }
-                            
-                            val alarmYear = alarmCalendar.get(Calendar.YEAR)
-                            val alarmMonth = alarmCalendar.get(Calendar.MONTH)
-                            val alarmDay = alarmCalendar.get(Calendar.DAY_OF_MONTH)
-                            
-                            val todayYear = today.get(Calendar.YEAR)
-                            val todayMonth = today.get(Calendar.MONTH)
-                            val todayDay = today.get(Calendar.DAY_OF_MONTH)
-                            
-                            val tomorrowYear = tomorrow.get(Calendar.YEAR)
-                            val tomorrowMonth = tomorrow.get(Calendar.MONTH)
-                            val tomorrowDay = tomorrow.get(Calendar.DAY_OF_MONTH)
-                            
-                            val timeString = when {
-                                alarmYear == todayYear && alarmMonth == todayMonth && alarmDay == todayDay -> "today at $formattedTime"
-                                alarmYear == tomorrowYear && alarmMonth == tomorrowMonth && alarmDay == tomorrowDay -> "tomorrow at $formattedTime"
-                                else -> {
-                                    val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-                                    "${dayFormat.format(alarmCalendar.time)} at $formattedTime"
-                                }
-                            }
-                            
-                            toast("Alarm will ring $timeString")
-                        }
-                    } catch (e: kotlinx.coroutines.CancellationException) {
-                        // Expected when cancelled - just return
-                        throw e
-                    } catch (e: Exception) {
-                        Log.e("AlarmEditorActivity", "Error calculating alarm time for toast", e)
-                        // Still save the alarm even if toast fails
-                    }
-                }
-                
-                // Update with all fields (this will also recalculate the time)
+                val fullAlarm = buildAlarmFromUI(newAlarmId, sanitizedLabel, mode, ringtoneUri, relative1, relative2, time1, time2, daysMap)
+                showAlarmTimeToast(fullAlarm)
                 viewModel.updateAlarm(fullAlarm)
-                
-                // Schedule the alarm with AlarmManager after saving
-                // Wait for the database update to complete, then fetch and schedule the alarm
-                activityScope.launch(Dispatchers.IO) {
-                    try {
-                        Log.d("AlarmEditorActivity", "Waiting for alarm update to complete...")
-                        // Wait a bit for the database update to complete
-                        kotlinx.coroutines.delay(500)
-                        
-                        // Fetch the updated alarm from the repository
-                        val savedAlarm = alarmRepository.getAlarmById(newAlarmId)
-                        if (savedAlarm == null) {
-                            Log.e("AlarmEditorActivity", "Could not find alarm $newAlarmId after save")
-                            return@launch
-                        }
-                        
-                        Log.d("AlarmEditorActivity", "Fetched alarm ${savedAlarm.id} after save, enabled=${savedAlarm.enabled}, calculatedTime=${savedAlarm.calculatedTime}")
-                        
-                        if (!savedAlarm.enabled) {
-                            Log.w("AlarmEditorActivity", "Alarm ${savedAlarm.id} is disabled, not scheduling")
-                            return@launch
-                        }
-                        
-                        // Schedule the specific alarm
-                        val result = scheduleAlarmUseCase.scheduleAlarm(savedAlarm)
-                        result.fold(
-                            onSuccess = {
-                                Log.i("AlarmEditorActivity", "Alarm '${savedAlarm.label}' (ID: ${savedAlarm.id}) scheduled successfully")
-                            },
-                            onFailure = { e ->
-                                Log.e("AlarmEditorActivity", "Error scheduling alarm '${savedAlarm.label}' (ID: ${savedAlarm.id})", e)
-                            }
-                        )
-                    } catch (e: Exception) {
-                        Log.e("AlarmEditorActivity", "Error scheduling alarm after save", e)
-                    }
-                }
-                
-                // Clear flag after a brief delay
-                alarmLabelInput.postDelayed({
-                    isSavingAlarm = false
-                }, 500)
+                scheduleAlarmAfterSave(newAlarmId)
+                alarmLabelInput.postDelayed({ isSavingAlarm = false }, 500)
             }
         }
-        
+
         if (shouldFinish) {
             finish()
         }
