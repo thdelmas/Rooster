@@ -9,7 +9,7 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
 import android.os.Build
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -162,9 +162,9 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
                     """.trimIndent())
                 }
                 
-                Log.d("AlarmDbHelper", "Migration 4→5 completed: Boolean values normalized to INTEGER (0/1)")
+                Logger.d("AlarmDbHelper", "Migration 4→5 completed: Boolean values normalized to INTEGER (0/1)")
             } catch (e: Exception) {
-                Log.e("AlarmDbHelper", "Error during migration 4→5: ${e.message}", e)
+                Logger.e("AlarmDbHelper", "Error during migration 4→5: ${e.message}", e)
                 // Don't throw - allow migration to continue
             }
         }
@@ -173,7 +173,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // Handle downgrade gracefully - in most cases for development,
         // we'll just maintain compatibility with the current schema
-        Log.w("AlarmDbHelper", "Downgrading database from version $oldVersion to $newVersion")
+        Logger.w("AlarmDbHelper", "Downgrading database from version $oldVersion to $newVersion")
         // No action needed as schema is compatible
     }
 
@@ -265,7 +265,7 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             alarm.time2 = getRelativeTime(alarm.relative2)
         }
         alarm.calculatedTime = calculateTime(alarm)
-        Log.e("Update Alarm", alarm.calculatedTime.toString())
+        Logger.e("Update Alarm", alarm.calculatedTime.toString())
         // Use INTEGER (0/1) for boolean values to match Room schema
         val values = ContentValues().apply {
             put("label", alarm.label)
@@ -296,14 +296,14 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
     }
 
     internal fun calculateTime(alarm: Alarm): Long {
-        Log.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
+        Logger.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
         alarm.calculatedTime = calculateTimeInner(alarm)
         alarm.calculatedTime = addDays(alarm, alarm.calculatedTime)
         val calendar = Calendar.getInstance()
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm")
         calendar.timeInMillis = alarm.calculatedTime
         var formattedDate = fullDateFormat.format(calendar.time)
-        Log.d("Rooster", "Next Iteration: $formattedDate\n---")
+        Logger.d("Rooster", "Next Iteration: $formattedDate\n---")
         return alarm.calculatedTime
     }
 
@@ -356,9 +356,9 @@ class AlarmDbHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME,
             }
             // Print the hours and minutes
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            Log.d("TIME1", "@ ${timeFormat.format(calendar1.time)}")
-            Log.d("TIME2", "@ ${timeFormat.format(calendar2.time)}")
-            Log.d("CALCULATED_TIME", "@ ${timeFormat.format(calculatedCalendar.time)}")
+            Logger.d("TIME1", "@ ${timeFormat.format(calendar1.time)}")
+            Logger.d("TIME2", "@ ${timeFormat.format(calendar2.time)}")
+            Logger.d("CALCULATED_TIME", "@ ${timeFormat.format(calculatedCalendar.time)}")
 
             return calculatedCalendar.timeInMillis
         }

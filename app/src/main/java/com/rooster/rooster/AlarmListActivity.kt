@@ -1,7 +1,7 @@
 package com.rooster.rooster
 
 import android.os.Bundle
-import android.util.Log
+import com.rooster.rooster.util.Logger
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -41,7 +41,7 @@ class AlarmListActivity : AppCompatActivity() {
 
     private fun observeAlarms() {
         viewModel.allAlarms.observe(this) { alarms ->
-            Log.d("AlarmListActivity", "Alarms updated: ${alarms.size} alarms")
+            Logger.d("AlarmListActivity", "Alarms updated: ${alarms.size} alarms")
             updateAlarmList(alarms)
             updateEmptyState(alarms.isEmpty())
         }

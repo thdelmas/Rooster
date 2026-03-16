@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.icu.util.TimeZone
-import android.util.Log
 import com.rooster.rooster.Alarm
 import com.rooster.rooster.data.repository.AstronomyRepository
 import com.rooster.rooster.data.repository.AstronomyDataResult
@@ -33,7 +32,7 @@ class CalculateAlarmTimeUseCase @Inject constructor(
      * For alarms based on astral events, this will fetch fresh astronomy data
      */
     suspend fun execute(alarm: Alarm): Long {
-        Log.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
+        Logger.d("Rooster", "---\nAlarm: ${alarm.label} - id: ${alarm.id}")
         
         // If alarm uses astral events, ensure we have fresh astronomy data
         if (usesAstralEvents(alarm)) {
@@ -47,7 +46,7 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
         calendar.timeInMillis = finalTime
         val formattedDate = fullDateFormat.format(calendar.time)
-        Log.d("Rooster", "Next Iteration: $formattedDate\n---")
+        Logger.d("Rooster", "Next Iteration: $formattedDate\n---")
         
         return finalTime
     }
