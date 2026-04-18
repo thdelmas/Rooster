@@ -69,12 +69,13 @@ We warmly welcome contributions from everyone! For a detailed guide, refer to ou
 
 ## Sponsorship
 
-We appreciate your support! Here are ways to contribute financially:
+Rooster is free and open source. If it helps you, consider supporting the work:
 
-* **Become a sponsor:** Support the entire project's development by becoming a sponsor on GitHub. This provides ongoing support and helps us prioritize features and bug fixes.
-* **Sponsor specific issues:**  See an issue you care deeply about? You can directly sponsor that specific issue on [Bount.ing](https://bount.ing). This allows you to incentivize a fix or feature addition.
+* 💛 [**theophile.world/sponsor**](https://theophile.world/sponsor) — one-off tip or recurring support.
+* 🪙 **Sponsor a specific issue** on [Bount.ing](https://bount.ing) to incentivize a fix or feature.
+* ⭐ **Star the repo** — it's free and it helps.
 
-By sponsoring, you directly help us improve and maintain this project. Thank you for your contribution!
+Thank you for your contribution!
 
 ## License
 
