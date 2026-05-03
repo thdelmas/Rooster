@@ -16,3 +16,6 @@
 keystore.properties
 *.jks
 *.keystore
+
+# Local agent config
+.claude/

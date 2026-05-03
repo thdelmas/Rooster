@@ -9,75 +9,46 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.rooster.rooster.R
 
 /**
- * Drives the monthly support cascade: Buy Me a Coffee → Play Store review → feedback survey.
+ * Single monthly contribution popup with three parallel actions: donate, review, feedback.
  *
- * Each rung exposes three actions:
- *  - Primary CTA  → opens the relevant URL and records the click.
- *  - "Maybe later" → dismisses; the cascade does NOT advance, prompt returns next month.
- *  - "No thanks"  → advances to the next rung within this same session, OR opts out on the last rung.
+ * Hard constraints (see android-apps-contribution-popup-guide.md):
+ *  - All three actions are presented at once. No sequential cascade.
+ *  - The app does not record which action the user picked, only that the popup was shown.
+ *  - There is no "don't ask again" — the popup re-appears on the next cadence regardless.
+ *  - Donate hands off to the external donation URL; the app never learns whether the user paid.
  */
 object SupportPromptDialog {
 
     fun showIfEligible(activity: Activity) {
         if (!SupportPromptHelper.shouldShowPrompt(activity)) return
         SupportPromptHelper.markPromptShown(activity)
-        show(activity, SupportPromptHelper.nextRung(activity))
+        show(activity)
     }
 
     fun showFromSettings(activity: Activity) {
-        show(activity, SupportPromptHelper.nextRung(activity))
+        show(activity)
     }
 
-    private fun show(activity: Activity, rung: SupportPromptHelper.Rung) {
+    private fun show(activity: Activity) {
         if (activity.isFinishing || activity.isDestroyed) return
-        when (rung) {
-            SupportPromptHelper.Rung.DONATE -> showDonate(activity)
-            SupportPromptHelper.Rung.REVIEW -> showReview(activity)
-            SupportPromptHelper.Rung.SURVEY -> showSurvey(activity)
-        }
-    }
-
-    private fun showDonate(activity: Activity) {
         AlertDialog.Builder(activity)
-            .setTitle(R.string.support_donate_title)
-            .setMessage(R.string.support_donate_message)
-            .setPositiveButton(R.string.support_donate_cta) { dialog, _ ->
-                SupportPromptHelper.markDonateClicked(activity)
+            .setTitle(R.string.support_prompt_title)
+            .setMessage(R.string.support_prompt_message)
+            .setPositiveButton(R.string.support_prompt_donate) { dialog, _ ->
                 openUrl(activity, activity.getString(R.string.support_donate_url))
                 dialog.dismiss()
             }
-            .setNeutralButton(R.string.support_maybe_later) { dialog, _ -> dialog.dismiss() }
-            .setNegativeButton(R.string.support_no_thanks) { dialog, _ ->
-                dialog.dismiss()
-                advance(activity, SupportPromptHelper.Rung.DONATE)
-            }
-            .show()
-    }
-
-    private fun showReview(activity: Activity) {
-        AlertDialog.Builder(activity)
-            .setTitle(R.string.support_review_title)
-            .setMessage(R.string.support_review_message)
-            .setPositiveButton(R.string.support_review_cta) { dialog, _ ->
-                SupportPromptHelper.markReviewClicked(activity)
+            .setNeutralButton(R.string.support_prompt_review) { dialog, _ ->
                 launchInAppReview(activity)
                 dialog.dismiss()
             }
-            .setNeutralButton(R.string.support_maybe_later) { dialog, _ -> dialog.dismiss() }
-            .setNegativeButton(R.string.support_no_thanks) { dialog, _ ->
+            .setNegativeButton(R.string.support_prompt_feedback) { dialog, _ ->
+                openUrl(activity, activity.getString(R.string.support_feedback_url))
                 dialog.dismiss()
-                advance(activity, SupportPromptHelper.Rung.REVIEW)
             }
             .show()
     }
 
-    /**
-     * Triggers Google's in-app review overlay. The flow may silently no-op when quota
-     * is exceeded or the user has already reviewed — Google's API gives us no way to
-     * tell. On failure to obtain a ReviewInfo (no Play Store, no network on first call,
-     * sideloaded build), we fall back to the Play Store deep link so the user always
-     * gets *somewhere* useful from clicking the CTA.
-     */
     private fun launchInAppReview(activity: Activity) {
         val manager = ReviewManagerFactory.create(activity)
         manager.requestReviewFlow().addOnCompleteListener { request ->
@@ -87,32 +58,6 @@ object SupportPromptDialog {
                 Logger.w("SupportPromptDialog", "In-app review unavailable, falling back to Play Store", request.exception)
                 openPlayStore(activity)
             }
-        }
-    }
-
-    private fun showSurvey(activity: Activity) {
-        AlertDialog.Builder(activity)
-            .setTitle(R.string.support_survey_title)
-            .setMessage(R.string.support_survey_message)
-            .setPositiveButton(R.string.support_survey_cta) { dialog, _ ->
-                SupportPromptHelper.markSurveyClicked(activity)
-                openUrl(activity, activity.getString(R.string.support_survey_url))
-                dialog.dismiss()
-            }
-            .setNeutralButton(R.string.support_maybe_later) { dialog, _ -> dialog.dismiss() }
-            .setNegativeButton(R.string.support_dont_ask_again) { dialog, _ ->
-                SupportPromptHelper.setOptedOut(activity, true)
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-    private fun advance(activity: Activity, current: SupportPromptHelper.Rung) {
-        val next = SupportPromptHelper.rungAfter(activity, current)
-        if (next != null) {
-            show(activity, next)
-        } else {
-            SupportPromptHelper.setOptedOut(activity, true)
         }
     }
 
