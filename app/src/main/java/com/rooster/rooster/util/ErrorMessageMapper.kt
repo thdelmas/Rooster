@@ -1,8 +1,5 @@
 package com.rooster.rooster.util
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import java.io.FileNotFoundException
 import java.net.UnknownHostException
 import java.net.SocketTimeoutException
@@ -233,17 +230,6 @@ object ErrorMessageMapper {
                 )
             }
         }
-    }
-    
-    /**
-     * Check if device has internet connection
-     */
-    fun hasInternetConnection(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
-        val network = connectivityManager?.activeNetwork ?: return false
-        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
     
     /**

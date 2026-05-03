@@ -4,7 +4,6 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import com.rooster.rooster.util.Logger
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -157,15 +156,6 @@ class RingtoneActivity : AppCompatActivity() {
             }
         }
         handler.postDelayed(checkPreview, 500)
-    }
-
-    private fun checkAndRequestPermission() {
-        if (!Settings.System.canWrite(this)) {
-            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
-                data = Uri.parse("package:$packageName")
-            }
-            startActivity(intent)
-        }
     }
 
     private fun updateAlarmRingtone(alarmId: Long, ringtoneUri: String) {
