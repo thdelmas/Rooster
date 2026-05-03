@@ -147,11 +147,6 @@ class MainActivity() : ComponentActivity() {
     }
 
     private fun getPermissions() {
-        // Check and request overlay permission
-        if (!PermissionHelper.isOverlayPermissionGranted(this)) {
-            showOverlayPermissionPopup()
-        }
-        
         // Check and request exact alarm permission (Android 12+)
         if (!PermissionHelper.isExactAlarmPermissionGranted(this)) {
             showExactAlarmPermissionDialog()
@@ -399,20 +394,6 @@ class MainActivity() : ComponentActivity() {
                 )
             }
         }
-    }
-
-    private fun showOverlayPermissionPopup() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Display Over Other Apps Permission")
-        builder.setMessage("Rooster needs this permission to:\n\n  • Display alarm screen when device is locked\n  • Show alarm controls\n  • Ensure you can dismiss alarms")
-        builder.setPositiveButton("Grant Permission") { dialog, _ ->
-            PermissionHelper.openOverlaySettings(this)
-            dialog.dismiss()
-        }
-        builder.setNegativeButton("Skip") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
     }
 
     override fun onDestroy() {

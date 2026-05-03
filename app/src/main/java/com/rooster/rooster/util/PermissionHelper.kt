@@ -66,25 +66,13 @@ object PermissionHelper {
     }
     
     /**
-     * Check if overlay permission is granted
-     */
-    fun isOverlayPermissionGranted(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Settings.canDrawOverlays(context)
-        } else {
-            true // Not required for older versions
-        }
-    }
-    
-    /**
      * Get list of required permissions for the current Android version
      */
     fun getRequiredPermissions(): List<String> {
         val permissions = mutableListOf(
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.USE_FULL_SCREEN_INTENT,
-            Manifest.permission.WAKE_LOCK,
-            Manifest.permission.FOREGROUND_SERVICE
+            Manifest.permission.WAKE_LOCK
         )
         
         // Add version-specific permissions
@@ -116,7 +104,7 @@ object PermissionHelper {
         
         // Filter out permissions that cannot be requested via requestPermissions():
         // - SCHEDULE_EXACT_ALARM: Must be granted via Settings (Android 12+)
-        // - USE_FULL_SCREEN_INTENT, WAKE_LOCK, FOREGROUND_SERVICE: Typically granted via manifest
+        // - USE_FULL_SCREEN_INTENT, WAKE_LOCK: Typically granted via manifest
         return allMissing.filter { permission ->
             when (permission) {
                 Manifest.permission.SCHEDULE_EXACT_ALARM -> {
@@ -127,8 +115,7 @@ object PermissionHelper {
                     false
                 }
                 Manifest.permission.USE_FULL_SCREEN_INTENT,
-                Manifest.permission.WAKE_LOCK,
-                Manifest.permission.FOREGROUND_SERVICE -> {
+                Manifest.permission.WAKE_LOCK -> {
                     // These are typically granted via manifest, not runtime permissions
                     false
                 }
@@ -214,24 +201,6 @@ object PermissionHelper {
     }
     
     /**
-     * Open settings to grant overlay permission
-     */
-    fun openOverlaySettings(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            try {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:${context.packageName}")
-                )
-                context.startActivity(intent)
-            } catch (e: Exception) {
-                Logger.e(TAG, "Error opening overlay settings", e)
-                openAppSettings(context)
-            }
-        }
-    }
-    
-    /**
      * Open app settings
      */
     fun openAppSettings(context: Context) {
@@ -251,8 +220,7 @@ object PermissionHelper {
     fun areAllCriticalPermissionsGranted(context: Context): Boolean {
         return isLocationPermissionGranted(context) &&
                isNotificationPermissionGranted(context) &&
-               isExactAlarmPermissionGranted(context) &&
-               isOverlayPermissionGranted(context)
+               isExactAlarmPermissionGranted(context)
     }
     
     /**
@@ -288,7 +256,6 @@ object PermissionHelper {
             Manifest.permission.SCHEDULE_EXACT_ALARM -> "Exact Alarms"
             Manifest.permission.USE_FULL_SCREEN_INTENT -> "Full Screen Intent"
             Manifest.permission.WAKE_LOCK -> "Wake Lock"
-            Manifest.permission.FOREGROUND_SERVICE -> "Foreground Service"
             else -> permission.substringAfterLast('.')
         }
     }
