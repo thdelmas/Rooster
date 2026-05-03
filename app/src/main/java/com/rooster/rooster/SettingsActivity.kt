@@ -29,6 +29,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.rooster.rooster.presentation.viewmodel.SettingsViewModel
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.SleepProfileHelper
+import com.rooster.rooster.util.SupportPromptDialog
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.AstronomyUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
@@ -77,6 +78,11 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<MaterialCardView>(R.id.creditsSetting).setOnClickListener {
             HapticFeedbackHelper.performClick(it)
             startActivity(Intent(this, CreditsActivity::class.java))
+        }
+
+        findViewById<MaterialCardView>(R.id.supportSetting).setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            SupportPromptDialog.showFromSettings(this)
         }
     }
     

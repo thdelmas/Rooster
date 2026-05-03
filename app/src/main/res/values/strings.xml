@@ -21,4 +21,27 @@
         <item>Astronomical Dusk</item>
     </string-array>
     <string name="widget_solar_ring_description">Solar Ring Widget - Shows hours in a ring with gradient colors representing solar events throughout the day</string>
+
+    <!-- Support cascade: donation → review → feedback survey -->
+    <string name="support_donate_title">Enjoying Rooster?</string>
+    <string name="support_donate_message">Rooster is free and ad-free. If it helps you wake up better, you can support development with a one-time tip on Buy Me a Coffee — any amount helps keep the app independent.</string>
+    <string name="support_donate_cta">Buy me a coffee</string>
+
+    <string name="support_review_title">Mind sharing a review?</string>
+    <string name="support_review_message">No worries on the tip — a quick review on the Play Store helps other early risers find Rooster. It takes less than a minute.</string>
+    <string name="support_review_cta">Rate on Play Store</string>
+
+    <string name="support_survey_title">Help us improve</string>
+    <string name="support_survey_message">Sorry Rooster isn\'t hitting the mark. We\'d love to hear what would make it better — your feedback shapes the next version.</string>
+    <string name="support_survey_cta">Share feedback</string>
+
+    <string name="support_maybe_later">Maybe later</string>
+    <string name="support_no_thanks">No thanks</string>
+    <string name="support_dont_ask_again">Don\'t ask again</string>
+
+    <!-- URLs (override in your fork if you self-publish) -->
+    <!-- Donate URL points at theophile.world/sponsor (Netlify redirect to Buy Me a Coffee).
+         Platform-portable: switching BMC → Ko-fi/Patreon only requires updating the redirect. -->
+    <string name="support_donate_url" translatable="false">https://theophile.world/sponsor</string>
+    <string name="support_survey_url" translatable="false">mailto:contact@theophile.world?subject=Rooster%20feedback</string>
 </resources>
