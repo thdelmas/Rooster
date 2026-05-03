@@ -18,6 +18,7 @@ import com.rooster.rooster.util.Logger
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.google.android.material.card.MaterialCardView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -71,6 +72,11 @@ class SettingsActivity : AppCompatActivity() {
             HapticFeedbackHelper.performClick(it)
             Logger.i("SettingsActivity", "Manual Sync GPS")
             getLastKnownPosition()
+        }
+
+        findViewById<MaterialCardView>(R.id.creditsSetting).setOnClickListener {
+            HapticFeedbackHelper.performClick(it)
+            startActivity(Intent(this, CreditsActivity::class.java))
         }
     }
     

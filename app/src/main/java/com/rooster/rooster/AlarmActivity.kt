@@ -227,17 +227,17 @@ class AlarmActivity : FragmentActivity() {
         }
         
         val uri = if (useDefault) {
-            Uri.parse("android.resource://$packageName/raw/alarmclock")
+            Uri.parse("android.resource://$packageName/raw/rooster_crow")
         } else {
             when {
                 ringtoneUri.isEmpty() || ringtoneUri.equals("default", ignoreCase = true) || ringtoneUri == "Default" -> 
-                    Uri.parse("android.resource://$packageName/raw/alarmclock")
+                    Uri.parse("android.resource://$packageName/raw/rooster_crow")
                 else -> {
                     try {
                         Uri.parse(ringtoneUri)
                     } catch (e: Exception) {
                         ErrorHandler.logWarning("AlarmActivity", "Invalid ringtone URI: $ringtoneUri, using default")
-                        Uri.parse("android.resource://$packageName/raw/alarmclock")
+                        Uri.parse("android.resource://$packageName/raw/rooster_crow")
                     }
                 }
             }
@@ -271,7 +271,7 @@ class AlarmActivity : FragmentActivity() {
                     // Fallback to default ringtone if not already using it
                     if (!useDefault) {
                         try {
-                            val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                            val defaultUri = Uri.parse("android.resource://$packageName/raw/rooster_crow")
                             setDataSource(applicationContext, defaultUri)
                             dataSourceSet = true
                             Logger.i("AlarmActivity", "Using default ringtone as fallback")
@@ -299,7 +299,7 @@ class AlarmActivity : FragmentActivity() {
                     if (!useDefault && playbackRetryCount < maxRetryAttempts) {
                         try {
                             mp?.reset()
-                            val defaultUri = Uri.parse("android.resource://$packageName/raw/alarmclock")
+                            val defaultUri = Uri.parse("android.resource://$packageName/raw/rooster_crow")
                             mp?.setDataSource(applicationContext, defaultUri)
                             mp?.prepareAsync()
                             playbackRetryCount++
