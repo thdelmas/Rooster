@@ -1,45 +1,40 @@
 package com.rooster.rooster
 
+import android.Manifest
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.icu.text.SimpleDateFormat
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.view.MenuItem
-import com.rooster.rooster.util.Logger
-import android.view.MotionEvent
-import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.os.Looper
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
-import java.util.Calendar
-import java.util.Date
-import android.Manifest
-import android.app.Activity
-import android.app.AlertDialog
-import android.content.Context
-import android.net.Uri
-import android.os.Build
-import android.os.Looper
-import android.provider.Settings
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.rooster.rooster.util.PermissionHelper
+import com.rooster.rooster.presentation.compose.MainScreen
+import com.rooster.rooster.presentation.viewmodel.MainViewModel
+import com.rooster.rooster.ui.theme.RoosterTheme
 import com.rooster.rooster.util.HapticFeedbackHelper
-import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.Logger
+import com.rooster.rooster.util.PermissionHelper
 import com.rooster.rooster.util.SupportPromptDialog
 import com.rooster.rooster.util.SupportPromptHelper
 import com.rooster.rooster.worker.WorkManagerHelper
-import com.rooster.rooster.presentation.viewmodel.MainViewModel
-import androidx.activity.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import com.rooster.rooster.ui.SolarRingView
 
 
 @AndroidEntryPoint
@@ -52,38 +47,65 @@ class MainActivity() : ComponentActivity() {
     val fullScreenIntentPermissionRequestCode = 3
     
     private val handler = Handler(Looper.getMainLooper())
-    private var updateRunnable: Runnable? = null
-    private var solarRingView: SolarRingView? = null
+
+    private val astronomyState = MutableStateFlow<com.rooster.rooster.data.local.entity.AstronomyDataEntity?>(null)
+    private val refreshTickState = MutableStateFlow(0L)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Logger.d("MainActivity", "onCreate started")
-        
-        // Check critical permissions first - app cannot function without them
+
         if (!checkCriticalPermissions()) {
-            // App will exit after showing dialog
             return
         }
-        
-        // USE FIXED MAIN LAYOUT
-        setContentView(R.layout.activity_main)
-        Logger.d("MainActivity", "Layout set")
-        
-        solarRingView = findViewById(R.id.solarRingView)
-        
-        // Observe astronomy data and update solar ring
+
         lifecycleScope.launch {
-            viewModel.getAstronomyDataFlow().collect { astronomyData ->
-                solarRingView?.setAstronomyData(astronomyData)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.getAstronomyDataFlow().collect { astronomyData ->
+                    astronomyState.value = astronomyData
+                }
             }
         }
-        
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    refreshTickState.value = System.currentTimeMillis()
+                    delay(1000L)
+                }
+            }
+        }
+
+        setContent {
+            RoosterTheme {
+                val astronomy by astronomyState.collectAsState()
+                val tick by refreshTickState.collectAsState()
+                MainScreen(
+                    astronomyData = astronomy,
+                    refreshTick = tick,
+                    onOpenAlarms = ::openAlarms,
+                    onOpenSettings = ::openSettings,
+                )
+            }
+        }
+
         getPermissions()
-        linkButtons()
-        refreshCycle()
-        animateViews()
         SupportPromptHelper.recordFirstSeenIfNeeded(this)
         Logger.d("MainActivity", "onCreate completed")
+    }
+
+    @Suppress("DEPRECATION")
+    private fun openAlarms() {
+        HapticFeedbackHelper.performClick(window.decorView)
+        startActivity(Intent(this, AlarmListActivity::class.java))
+        overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun openSettings() {
+        HapticFeedbackHelper.performClick(window.decorView)
+        startActivity(Intent(this, SettingsActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
     
     /**
@@ -232,72 +254,6 @@ class MainActivity() : ComponentActivity() {
     }
 
 
-    private fun linkButtons() {
-        val settingsButton = findViewById<View>(R.id.settingsButton)
-        settingsButton?.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            AnimationHelper.scaleWithBounce(it)
-            it.postDelayed({
-                val settingsActivity = Intent(this, SettingsActivity::class.java)
-                startActivity(settingsActivity)
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
-            }, 150)
-        }
-        
-        val alarmsButton = findViewById<View>(R.id.alarmButton)
-        alarmsButton?.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            AnimationHelper.scaleWithBounce(it)
-            it.postDelayed({
-                val alarmsListActivity = Intent(this, AlarmListActivity::class.java)
-                startActivity(alarmsListActivity)
-                overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-            }, 150)
-        }
-    }
-    
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_settings -> {
-                val settingsActivity = Intent(this, SettingsActivity::class.java)
-                startActivity(settingsActivity)
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    fun getPercentageOfDay(): Float {
-        val now = Calendar.getInstance()
-        val midnight = Calendar.getInstance()
-        midnight.set(Calendar.HOUR_OF_DAY, 0)
-        midnight.set(Calendar.MINUTE, 0)
-        midnight.set(Calendar.SECOND, 0)
-        midnight.set(Calendar.MILLISECOND, 0)
-
-        val totalSeconds = ((now.timeInMillis - midnight.timeInMillis) / com.rooster.rooster.util.AppConstants.MILLIS_PER_SECOND).toFloat()
-        val percentage = (totalSeconds / com.rooster.rooster.util.AppConstants.SECONDS_PER_DAY) * 100
-        return percentage.toFloat()
-    }
-    private fun refreshCycle() {
-        val progressBar = findViewById<ProgressBar>(R.id.progress_cycle)
-        val delayMillis = 1000L
-
-        updateRunnable = object : Runnable {
-            override fun run() {
-                val percentage = getPercentageOfDay().toLong()
-                progressBar.progress = percentage.toInt()
-                
-                // Refresh solar ring view to update current time marker and time display
-                solarRingView?.invalidate()
-                
-                handler.postDelayed(this, delayMillis)
-            }
-        }
-
-        updateRunnable?.let { handler.post(it) }
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         Logger.i("MainActivity", "Permission callback for request code: $requestCode")
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -399,69 +355,22 @@ class MainActivity() : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        // Clean up handler to prevent memory leaks
-        updateRunnable?.let { handler.removeCallbacks(it) }
-        updateRunnable = null
-    }
-    
-    override fun onPause() {
-        super.onPause()
-        // Stop updates when app is in background
-        updateRunnable?.let { handler.removeCallbacks(it) }
-    }
-    
     override fun onResume() {
         super.onResume()
-        
-        // Check critical permissions again in case user granted them in settings
+
         if (!PermissionHelper.areCriticalPermissionsGranted(this)) {
-            // If still missing, show dialog again
             val missingPermissions = PermissionHelper.getMissingCriticalPermissions(this)
-            val permissionNames = missingPermissions.joinToString(", ") { 
-                PermissionHelper.getPermissionName(it) 
+            val permissionNames = missingPermissions.joinToString(", ") {
+                PermissionHelper.getPermissionName(it)
             }
             showCriticalPermissionDialog(permissionNames)
             return
         }
-        
-        // Resume updates when app comes to foreground
-        updateRunnable?.let { handler.post(it) }
 
-        // Defer the monthly support prompt so any pending permission dialogs settle first.
         handler.postDelayed({
             if (!isFinishing && !isDestroyed) {
                 SupportPromptDialog.showIfEligible(this)
             }
         }, 1500L)
-    }
-    
-    private fun animateViews() {
-        val timeCard = findViewById<View>(R.id.timeCard)
-        val infoCard = findViewById<View>(R.id.infoCard)
-        
-        timeCard?.let {
-            it.alpha = 0f
-            it.translationY = 30f
-            it.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(400)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
-                .start()
-        }
-        
-        infoCard?.let {
-            it.alpha = 0f
-            it.translationY = 30f
-            it.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(400)
-                .setStartDelay(100)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
-                .start()
-        }
     }
 }
