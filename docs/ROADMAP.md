@@ -31,7 +31,7 @@ Rooster is a functional solar alarm clock with location-based sunrise/sunset sch
 ## Medium-term (v2.0)
 
 ### Full Compose Migration
-- [ ] Migrate alarm editor to Jetpack Compose
+- [x] Migrate alarm editor to Jetpack Compose
 - [x] Migrate alarm list to Compose with LazyColumn
 - [x] Migrate settings screen to Compose
 - [ ] Replace XML layouts progressively
