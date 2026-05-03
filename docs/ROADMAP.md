@@ -10,7 +10,7 @@ Rooster is a functional solar alarm clock with location-based sunrise/sunset sch
 
 ### Code Health
 - [x] Refactor `AlarmEditorActivity` (1,695 → 1,458 lines) — extracted 6 shared helper methods
-- [ ] Refactor `SolarRingWidgetProvider` (864 lines) — split rendering and data logic
+- [x] Refactor `SolarRingWidgetProvider` (864 lines) — split rendering and data logic
 - [x] Remove legacy `AlarmHandler` + `AlarmDbHelper` — all scheduling through `ScheduleAlarmUseCase`
 - [x] Fix remaining audit issues: WakeLock, snooze, memory leak — all already fixed in v1.2-1.4
 - [x] Standardize logging — migrated all `Log.*` to `Logger.*` (11 files, ~112 calls)
@@ -72,7 +72,7 @@ Rooster is a functional solar alarm clock with location-based sunrise/sunset sch
 ### Security & Privacy
 - [ ] Encrypted backup files
 - [ ] Backup password protection
-- [ ] On-device astronomy calculation (remove API dependency)
+- [x] On-device astronomy calculation (remove API dependency)
 
 ---
 
