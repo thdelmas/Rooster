@@ -143,6 +143,12 @@
                 <category android:name="android.intent.category.PREFERENCE" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".CreditsActivity"
+            android:exported="false"
+            android:label="Credits &amp; Licenses"
+            android:parentActivityName=".SettingsActivity"
+            android:theme="@style/Theme.MyApplication"/>
     </application>
 
 </manifest>

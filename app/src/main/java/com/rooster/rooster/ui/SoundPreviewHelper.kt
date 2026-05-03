@@ -66,7 +66,7 @@ class SoundPreviewHelper(private val context: Context) {
         
         // Fall back to MediaPlayer for custom URIs or if RingtoneManager fails
         try {
-            val actualUri = uri ?: Uri.parse("android.resource://${context.packageName}/raw/alarmclock")
+            val actualUri = uri ?: Uri.parse("android.resource://${context.packageName}/raw/rooster_crow")
             Logger.d("SoundPreviewHelper", "Using MediaPlayer with URI: $actualUri")
             
             val player = MediaPlayer().apply {
