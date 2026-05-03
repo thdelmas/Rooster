@@ -71,6 +71,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import android.widget.NumberPicker
 import com.rooster.rooster.SunCourseView
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorUiState
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel.DayPreset
@@ -128,7 +129,6 @@ fun AlarmEditorScreen(
     onAdjustSnoozeCount: (Int) -> Unit,
     onGradualVolumeChange: (Boolean) -> Unit,
     onPickClassicTime: () -> Unit,
-    onPickOffsetDuration: () -> Unit,
     onPreviewRingtone: () -> Unit,
     onPickRingtone: () -> Unit,
     onDelete: () -> Unit,
@@ -185,7 +185,6 @@ fun AlarmEditorScreen(
                         onSolarEvent2Click = { showSolarEventPicker = 2 },
                         onOffsetChange = onOffsetChange,
                         onSolarRingTimeSelected = onSolarRingTimeSelected,
-                        onPickOffsetDuration = onPickOffsetDuration,
                         onPresetSolarEvent = onSolarEvent1Change,
                         onTimingMode = onSunTimingChange,
                     )
@@ -387,7 +386,6 @@ private fun SunModeCard(
     onSolarEvent2Click: () -> Unit,
     onOffsetChange: (Int) -> Unit,
     onSolarRingTimeSelected: (Long) -> Unit,
-    onPickOffsetDuration: () -> Unit,
     onPresetSolarEvent: (String) -> Unit,
     onTimingMode: (String) -> Unit,
 ) {
@@ -465,7 +463,6 @@ private fun SunModeCard(
                     state = state,
                     onOffsetChange = onOffsetChange,
                     onSolarRingTimeSelected = onSolarRingTimeSelected,
-                    onPickOffsetDuration = onPickOffsetDuration,
                 )
             }
 
@@ -571,8 +568,9 @@ private fun OffsetEditor(
     state: AlarmEditorUiState,
     onOffsetChange: (Int) -> Unit,
     onSolarRingTimeSelected: (Long) -> Unit,
-    onPickOffsetDuration: () -> Unit,
 ) {
+    var showDurationPicker by remember { mutableStateOf(false) }
+
     Column {
         SectionLabel("Select Time Offset")
         Spacer(Modifier.height(12.dp))
@@ -593,7 +591,7 @@ private fun OffsetEditor(
                 modifier = Modifier.weight(1f),
             )
             Button(
-                onClick = onPickOffsetDuration,
+                onClick = { showDurationPicker = true },
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -647,6 +645,17 @@ private fun OffsetEditor(
                 }
             }
         }
+    }
+
+    if (showDurationPicker) {
+        DurationPickerDialog(
+            initialMinutes = state.offsetMinutes,
+            onConfirm = { minutes ->
+                onOffsetChange(minutes)
+                showDurationPicker = false
+            },
+            onDismiss = { showDurationPicker = false },
+        )
     }
 }
 
@@ -1065,6 +1074,98 @@ private fun SolarEventPickerDialog(
             }
         },
         confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
+}
+
+@Composable
+private fun DurationPickerDialog(
+    initialMinutes: Int,
+    minMinutes: Int = 5,
+    maxMinutes: Int = 720,
+    onConfirm: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var hours by remember { mutableStateOf((initialMinutes / 60).coerceIn(0, 12)) }
+    var minutes by remember { mutableStateOf((initialMinutes % 60).coerceIn(0, 59)) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Select Duration",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        },
+        text = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            NumberPicker(ctx).apply {
+                                minValue = 0
+                                maxValue = 12
+                                wrapSelectorWheel = false
+                                value = hours
+                                setOnValueChangedListener { _, _, newVal -> hours = newVal }
+                            }
+                        },
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "Hours",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    text = ":",
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            NumberPicker(ctx).apply {
+                                minValue = 0
+                                maxValue = 59
+                                wrapSelectorWheel = false
+                                value = minutes
+                                setOnValueChangedListener { _, _, newVal -> minutes = newVal }
+                            }
+                        },
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "Minutes",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val total = (hours * 60 + minutes).coerceIn(minMinutes, maxMinutes)
+                onConfirm(total)
+            }) { Text("Set") }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },

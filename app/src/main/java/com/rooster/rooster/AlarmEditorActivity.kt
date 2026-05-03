@@ -75,7 +75,6 @@ class AlarmEditorActivity : AppCompatActivity() {
                     onAdjustSnoozeCount = viewModel::adjustSnoozeCount,
                     onGradualVolumeChange = viewModel::setGradualVolume,
                     onPickClassicTime = { showTimePicker(state.selectedTime) },
-                    onPickOffsetDuration = { showOffsetDurationPicker(state.offsetMinutes) },
                     onPreviewRingtone = { previewRingtone(state.ringtoneUri) },
                     onPickRingtone = { openRingtonePicker(state.alarmId) },
                     onDelete = viewModel::deleteAlarm,
@@ -116,15 +115,6 @@ class AlarmEditorActivity : AppCompatActivity() {
             viewModel.setSelectedTime(cal.timeInMillis)
         }
         picker.show(supportFragmentManager, "MaterialTimePicker")
-    }
-
-    private fun showOffsetDurationPicker(currentMinutes: Int) {
-        DurationPickerDialog(
-            initialMinutes = currentMinutes,
-            minMinutes = 5,
-            maxMinutes = 720,
-            onDurationSelected = viewModel::setOffsetMinutes,
-        ).show(supportFragmentManager, "DurationPickerDialog")
     }
 
     private fun previewRingtone(ringtoneUri: String) {
