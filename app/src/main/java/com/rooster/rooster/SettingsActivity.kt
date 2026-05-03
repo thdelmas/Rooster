@@ -2,226 +2,172 @@ package com.rooster.rooster
 
 import android.Manifest
 import android.app.Activity
-import android.app.AlertDialog
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.icu.text.SimpleDateFormat
-import android.icu.util.TimeZone
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import com.rooster.rooster.util.Logger
-import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
-import com.google.android.material.card.MaterialCardView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.switchmaterial.SwitchMaterial
+import com.rooster.rooster.presentation.compose.AstronomyTimes
+import com.rooster.rooster.presentation.compose.CoordinatesUi
+import com.rooster.rooster.presentation.compose.SettingsScreen
 import com.rooster.rooster.presentation.viewmodel.SettingsViewModel
+import com.rooster.rooster.ui.theme.RoosterTheme
 import com.rooster.rooster.util.HapticFeedbackHelper
-import com.rooster.rooster.util.SleepProfileHelper
+import com.rooster.rooster.util.Logger
 import com.rooster.rooster.util.SupportPromptDialog
 import com.rooster.rooster.util.ThemeHelper
 import com.rooster.rooster.worker.AstronomyUpdateWorker
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.activity.viewModels
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Calendar
 
 @AndroidEntryPoint
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : ComponentActivity() {
 
     private val viewModel: SettingsViewModel by viewModels()
-    
+
     private var locationManager: LocationManager? = null
     private val activityJob = SupervisorJob()
     private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
 
+    private val coordinatesState = MutableStateFlow(CoordinatesUi(null, null, null))
+    private val astronomyState = MutableStateFlow(emptyAstronomy())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setTheme(androidx.appcompat.R.style.Theme_AppCompat_NoActionBar)
-        setContentView(R.layout.activity_settings)
-        
-        // Setup toolbar navigation
-        val toolbar = findViewById<MaterialToolbar>(R.id.topAppBar)
-        toolbar.setNavigationOnClickListener {
-            onBackPressed()
-        }
-        
-        linkButtons()
-        setupThemeSettings()
-        setupSleepProfileSettings()
-        updateValues()
-    }
+        refreshState()
 
-    private fun linkButtons() {
-        val syncGPSButton = findViewById<TextView>(R.id.syncGpsTitle)
-        syncGPSButton.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            Logger.i("SettingsActivity", "Manual Sync GPS")
-            getLastKnownPosition()
-        }
+        setContent {
+            RoosterTheme {
+                val coordinates by coordinatesState.asStateFlow().collectAsState()
+                val astronomy by astronomyState.asStateFlow().collectAsState()
 
-        findViewById<MaterialCardView>(R.id.creditsSetting).setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            startActivity(Intent(this, CreditsActivity::class.java))
-        }
-
-        findViewById<MaterialCardView>(R.id.supportSetting).setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            SupportPromptDialog.showFromSettings(this)
-        }
-    }
-    
-    private fun setupThemeSettings() {
-        // Theme mode selector
-        val themeModeSetting = findViewById<LinearLayout>(R.id.themeModeSetting)
-        val themeModeValue = findViewById<TextView>(R.id.themeModeValue)
-        
-        val currentTheme = ThemeHelper.getThemeMode(this)
-        themeModeValue.text = ThemeHelper.getThemeModeName(currentTheme)
-        
-        themeModeSetting.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            showThemeDialog()
-        }
-        
-        // Dynamic colors switch
-        val dynamicColorsSwitch = findViewById<SwitchMaterial>(R.id.dynamicColorsSwitch)
-        val dynamicColorsSetting = findViewById<LinearLayout>(R.id.dynamicColorsSetting)
-        
-        // Hide dynamic colors option if not supported
-        if (!ThemeHelper.supportsDynamicColors()) {
-            dynamicColorsSetting.visibility = View.GONE
-        } else {
-            dynamicColorsSwitch.isChecked = ThemeHelper.isDynamicColorsEnabled(this)
-            dynamicColorsSwitch.setOnCheckedChangeListener { view, isChecked ->
-                HapticFeedbackHelper.performToggleFeedback(view)
-                ThemeHelper.setDynamicColorsEnabled(this, isChecked)
-                // Restart activity to apply changes
-                recreate()
+                SettingsScreen(
+                    coordinates = coordinates,
+                    astronomy = astronomy,
+                    onNavigateBack = ::handleBack,
+                    onSyncGps = ::startGpsSync,
+                    onOpenCredits = ::openCredits,
+                    onOpenSupport = ::openSupport,
+                    onOpenLinkedIn = ::openLinkedIn,
+                    onOpenGitHub = ::openGitHub,
+                    onOpenEmail = ::openEmail,
+                    onDynamicColorsChanged = ::onDynamicColorsChanged,
+                )
             }
         }
     }
-    
-    private fun showThemeDialog() {
-        val themes = arrayOf("Auto (System)", "Light", "Dark")
-        val currentTheme = ThemeHelper.getThemeMode(this)
-        
-        AlertDialog.Builder(this)
-            .setTitle("Choose Theme")
-            .setSingleChoiceItems(themes, currentTheme) { dialog, which ->
-                HapticFeedbackHelper.performSuccessFeedback(this)
-                ThemeHelper.setThemeMode(this, which)
-                val themeModeValue = findViewById<TextView>(R.id.themeModeValue)
-                themeModeValue.text = ThemeHelper.getThemeModeName(which)
-                dialog.dismiss()
-                // Restart activity to apply theme
-                recreate()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-    
-    private fun setupSleepProfileSettings() {
-        val sleepProfileSetting = findViewById<LinearLayout>(R.id.sleepProfileSetting)
-        val sleepProfileValue = findViewById<TextView>(R.id.sleepProfileValue)
 
-        val currentProfile = SleepProfileHelper.getSleepProfile(this)
-        sleepProfileValue.text = SleepProfileHelper.getProfileName(currentProfile)
-
-        sleepProfileSetting.setOnClickListener {
-            HapticFeedbackHelper.performClick(it)
-            showSleepProfileDialog()
-        }
-    }
-
-    private fun showSleepProfileDialog() {
-        val profiles = arrayOf("None", "Early Bird (Sunrise)", "Night Owl (Sunset)")
-        val currentProfile = SleepProfileHelper.getSleepProfile(this)
-
-        AlertDialog.Builder(this)
-            .setTitle("Choose Sleep Profile")
-            .setSingleChoiceItems(profiles, currentProfile) { dialog, which ->
-                HapticFeedbackHelper.performSuccessFeedback(this)
-                SleepProfileHelper.setSleepProfile(this, which)
-                val sleepProfileValue = findViewById<TextView>(R.id.sleepProfileValue)
-                sleepProfileValue.text = SleepProfileHelper.getProfileName(which)
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    override fun onBackPressed() {
-        super.onBackPressed()
+    private fun handleBack() {
+        @Suppress("DEPRECATION")
+        onBackPressed()
+        @Suppress("DEPRECATION")
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
-    private val LOCATION_PERMISSION_REQUEST_CODE = 1001 // You can use any integer value
+    private fun openCredits() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        startActivity(Intent(this, CreditsActivity::class.java))
+    }
 
-    private fun getLastKnownPosition() {
-        // Check for location permission before requesting updates.
+    private fun openSupport() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        SupportPromptDialog.showFromSettings(this)
+    }
+
+    private fun openLinkedIn() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        startActivity(
+            Intent(
+                Intent.ACTION_VIEW,
+                Uri.parse("https://www.linkedin.com/in/th%C3%A9ophile-delmas-92275b16b/"),
+            ),
+        )
+    }
+
+    private fun openGitHub() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/thdelmas/Rooster")))
+    }
+
+    private fun openEmail() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        startActivity(
+            Intent(Intent.ACTION_SENDTO).apply { data = Uri.parse("mailto:contact@theophile.world") },
+        )
+    }
+
+    private fun onDynamicColorsChanged(enabled: Boolean) {
+        ThemeHelper.setDynamicColorsEnabled(this, enabled)
+        recreate()
+    }
+
+    private fun startGpsSync() {
+        HapticFeedbackHelper.performSuccessFeedback(this)
         if (isLocationPermissionGranted()) {
-            // Permission is granted
             requestLocationUpdates()
         } else {
-            // Permission is not granted, request it
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_PERMISSION_REQUEST_CODE
+                LOCATION_PERMISSION_REQUEST_CODE,
             )
         }
     }
 
-    private fun isLocationPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
+    private fun isLocationPermissionGranted(): Boolean =
+        ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
-    }
 
-    // Override onRequestPermissionsResult to handle the permission request result
+    @Deprecated("Deprecated in Java")
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Logger.i("SettingsActivity", "Location permission granted")
-                requestLocationUpdates()
-            } else {
-                Logger.w("SettingsActivity", "Location permission denied")
-            }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            Logger.i("SettingsActivity", "Location permission granted")
+            requestLocationUpdates()
+        } else if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            Logger.w("SettingsActivity", "Location permission denied")
         }
     }
 
-    // Method to start location updates
     private fun requestLocationUpdates() {
         try {
             locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
-            
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
                 locationManager?.requestLocationUpdates(
                     LocationManager.NETWORK_PROVIDER,
-                    0, 0f, networkLocationListener
+                    0,
+                    0f,
+                    networkLocationListener,
                 )
             }
         } catch (e: SecurityException) {
@@ -229,214 +175,79 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-
-    fun pickTime(view: View, tgt: String) {
-        // Request full screen intent permission
-        requestFullScreenIntentPermission(this) { granted ->
-            if (granted) {
-                // Full screen intent permission is granted, so show the PopTime dialog
-                Logger.i("SettingsActivity", "Full screen intent permission granted")
-                val popTime = PopTime(tgt)
-                val fm = supportFragmentManager
-                popTime.show(fm, "Select time")
-            } else {
-                // Full screen intent permission is not granted
-                Logger.w("SettingsActivity", "Full screen intent permission not granted")
-            }
-        }
-    }
-
-    fun requestFullScreenIntentPermission(activity: Activity, callback: (Boolean) -> Unit) {
-        // Check if full screen intent permission is granted
-        val granted = ActivityCompat.checkSelfPermission(
-            activity,
-            Manifest.permission.USE_FULL_SCREEN_INTENT
-        ) == PackageManager.PERMISSION_GRANTED
-
-        // If full screen intent permission is not granted, request it
-        if (!granted) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.USE_FULL_SCREEN_INTENT),
-                0
-            )
-        } else {
-            // Full screen intent permission is already granted
-            callback(true)
-        }
-    }
-
-    fun setTime(hour: Int, minute: Int, tgt: String) {
-        val sharedPrefs = applicationContext.getSharedPreferences("RoosterPrefs", MODE_PRIVATE)
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, hour)
-        calendar.set(Calendar.MINUTE, minute)
-        calendar.set(Calendar.SECOND, 0)
-        
-        sharedPrefs.edit().apply {
-            putLong(tgt, calendar.timeInMillis)
-            apply()
-        }
-        
-        val formattedTime = SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(calendar.time)
-        Logger.d("SettingsActivity", "Time set: $formattedTime (${calendar.timeInMillis})")
-    }
-
-    private fun updateValues() {
-        val sdf = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-        val sharedPrefs = applicationContext.getSharedPreferences("rooster_prefs", MODE_PRIVATE)
-        val astroSteps = arrayOf(
-            "astroDawn",
-            "nauticalDawn",
-            "civilDawn",
-            "sunrise",
-            "sunset",
-            "civilDusk",
-            "nauticalDusk",
-            "astroDusk",
-            "solarNoon"
-        )
-
-        sdf.timeZone = TimeZone.getDefault()
-        for (step in astroSteps) {
-            val tvId = resources.getIdentifier("${step}Value", "id", packageName)
-            val timeInMillis = sharedPrefs.getLong(step, 0)
-            val formattedTime = getFormattedTime(timeInMillis)
-            val tv = findViewById<TextView>(tvId)
-            tv?.text = formattedTime
-        }
-
-        val dayLength = sharedPrefs.getLong("dayLength", 0) / 1000
-        val tv = findViewById<TextView>(R.id.dayLengthValue)
-        val dlHours = dayLength / (60 * 60)
-        val dlMinutes = (dayLength / 60) % 60
-        tv?.text = String.format("%02d:%02d", dlHours, dlMinutes)
-
-        // Read location from ViewModel (which uses Repository)
-        activityScope.launch(Dispatchers.IO) {
-            try {
-                val location = viewModel.getLocation()
-                launch(Dispatchers.Main) {
-                    if (location != null) {
-                        val coordinates = mapOf(
-                            "altitude" to location.altitude,
-                            "latitude" to location.latitude,
-                            "longitude" to location.longitude
-                        )
-                        for ((coord, value) in coordinates) {
-                            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
-                            val coordTv = findViewById<TextView>(tvId)
-                            coordTv?.text = String.format("%.4f", value)
-                        }
-                    } else {
-                        // Fallback to SharedPreferences if no location in database
-                        val coordinates = arrayOf("altitude", "latitude", "longitude")
-                        for (coord in coordinates) {
-                            val coordinate = sharedPrefs.getFloat(coord, 0F)
-                            val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
-                            val coordTv = findViewById<TextView>(tvId)
-                            coordTv?.text = String.format("%.4f", coordinate)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Logger.e("SettingsActivity", "Error reading location from database", e)
-                // Fallback to SharedPreferences on error
-                launch(Dispatchers.Main) {
-                    val coordinates = arrayOf("altitude", "latitude", "longitude")
-                    for (coord in coordinates) {
-                        val coordinate = sharedPrefs.getFloat(coord, 0F)
-                        val tvId = resources.getIdentifier("${coord}Value", "id", packageName)
-                        val coordTv = findViewById<TextView>(tvId)
-                        coordTv?.text = String.format("%.4f", coordinate)
-                    }
-                }
-            }
-        }
-    }
-
     private val networkLocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             Logger.i("SettingsActivity", "Location updated: ${location.latitude}, ${location.longitude}")
-
-            // Store the location through ViewModel (which uses Repository)
             viewModel.saveLocation(location)
-            
-            // Trigger astronomy data update using WorkManager
             activityScope.launch(Dispatchers.Main) {
                 try {
                     val workRequest = OneTimeWorkRequestBuilder<AstronomyUpdateWorker>().build()
                     WorkManager.getInstance(applicationContext).enqueue(workRequest)
-                    
-                    // Update UI
-                    updateValues()
                 } catch (e: Exception) {
                     Logger.e("SettingsActivity", "Error triggering astronomy update", e)
-                    // Fallback to SharedPreferences if update fails
                     getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE).edit().apply {
                         putFloat("altitude", location.altitude.toFloat())
                         putFloat("longitude", location.longitude.toFloat())
                         putFloat("latitude", location.latitude.toFloat())
                         apply()
                     }
-                    updateValues()
                 }
+                refreshState()
             }
-            
-            // Remove location updates after successful update
             locationManager?.removeUpdates(this)
         }
-        
+
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
             Logger.d("SettingsActivity", "Provider status changed: $provider, status: $status")
         }
     }
-    fun getFormattedTime(timeInSec: Long): String {
-        if (timeInSec == 0L) return "--:--"
-        
-        val fullDateFormat = SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInSec
 
-        val defaultTimeZone = TimeZone.getDefault()
-        fullDateFormat.timeZone = defaultTimeZone
-
-        // Consider daylight saving time (DST)
-        if (defaultTimeZone.inDaylightTime(calendar.time)) {
-            val dstOffsetInMillis = defaultTimeZone.dstSavings
-            calendar.add(Calendar.MILLISECOND, dstOffsetInMillis)
+    private fun refreshState() {
+        astronomyState.value = readAstronomy()
+        activityScope.launch(Dispatchers.IO) {
+            val location = runCatching { viewModel.getLocation() }.getOrNull()
+            if (location != null) {
+                coordinatesState.value = CoordinatesUi(
+                    altitude = location.altitude.toDouble(),
+                    latitude = location.latitude.toDouble(),
+                    longitude = location.longitude.toDouble(),
+                )
+            } else {
+                val prefs = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+                coordinatesState.value = CoordinatesUi(
+                    altitude = prefs.getFloat("altitude", 0f).toDouble(),
+                    latitude = prefs.getFloat("latitude", 0f).toDouble(),
+                    longitude = prefs.getFloat("longitude", 0f).toDouble(),
+                )
+            }
         }
-
-        return fullDateFormat.format(calendar.time)
     }
-    
+
+    private fun readAstronomy(): AstronomyTimes {
+        val prefs = getSharedPreferences("rooster_prefs", Context.MODE_PRIVATE)
+        return AstronomyTimes(
+            astroDawn = prefs.getLong("astroDawn", 0),
+            nauticalDawn = prefs.getLong("nauticalDawn", 0),
+            civilDawn = prefs.getLong("civilDawn", 0),
+            sunrise = prefs.getLong("sunrise", 0),
+            solarNoon = prefs.getLong("solarNoon", 0),
+            sunset = prefs.getLong("sunset", 0),
+            civilDusk = prefs.getLong("civilDusk", 0),
+            nauticalDusk = prefs.getLong("nauticalDusk", 0),
+            astroDusk = prefs.getLong("astroDusk", 0),
+            dayLengthMillis = prefs.getLong("dayLength", 0),
+        )
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         locationManager?.removeUpdates(networkLocationListener)
         activityJob.cancel()
     }
 
-    fun redirectToGitHub(v: View?) {
-        v?.let { HapticFeedbackHelper.performClick(it) }
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/thdelmas/Rooster"))
-        startActivity(intent)
+    private companion object {
+        const val LOCATION_PERMISSION_REQUEST_CODE = 1001
     }
 
-    // Function to redirect to LinkedIn
-    fun redirectToLinkedIn(v: View?) {
-        v?.let { HapticFeedbackHelper.performClick(it) }
-        val intent = Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://www.linkedin.com/in/th%C3%A9ophile-delmas-92275b16b/")
-        )
-        startActivity(intent)
-    }
-
-    // Function to redirect to Email
-    fun redirectToEmail(v: View?) {
-        v?.let { HapticFeedbackHelper.performClick(it) }
-        val intent = Intent(Intent.ACTION_SENDTO)
-        intent.setData(Uri.parse("mailto:contact@theophile.world"))
-        startActivity(intent)
-    }
+    private fun emptyAstronomy() = AstronomyTimes(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }

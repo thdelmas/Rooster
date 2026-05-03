@@ -1,102 +1,67 @@
 package com.rooster.rooster
 
+import android.content.Intent
 import android.os.Bundle
-import com.rooster.rooster.util.Logger
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import com.rooster.rooster.presentation.compose.AlarmListScreen
+import com.rooster.rooster.presentation.compose.ringScheduleMessage
 import com.rooster.rooster.presentation.viewmodel.AlarmListViewModel
+import com.rooster.rooster.ui.theme.RoosterTheme
 import com.rooster.rooster.util.HapticFeedbackHelper
-import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.Logger
+import com.rooster.rooster.util.toast
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Calendar
 
 @AndroidEntryPoint
-class AlarmListActivity : AppCompatActivity() {
+class AlarmListActivity : ComponentActivity() {
 
     private val viewModel: AlarmListViewModel by viewModels()
-    private lateinit var alarmAdapter: AlarmAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_alarm_list)
-        setupRecyclerView()
-        linkButtons()
-        observeAlarms()
+        setContent {
+            RoosterTheme {
+                val alarms by viewModel.allAlarms.observeAsState(emptyList())
+                Logger.d("AlarmListActivity", "Alarms updated: ${alarms.size} alarms")
+
+                AlarmListScreen(
+                    viewModel = viewModel,
+                    onCreateAlarm = ::createNewAlarm,
+                    onEditAlarm = ::openAlarmEditor,
+                    onAlarmEnabledToggled = ::onAlarmEnabledToggled,
+                )
+            }
+        }
     }
-    
+
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         super.onBackPressed()
         overridePendingTransition(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
     }
 
-    private fun setupRecyclerView() {
-        val recyclerView = findViewById<RecyclerView>(R.id.alarmListView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        alarmAdapter = AlarmAdapter(emptyList(), viewModel)
-        recyclerView.adapter = alarmAdapter
-    }
-
-    private fun observeAlarms() {
-        viewModel.allAlarms.observe(this) { alarms ->
-            Logger.d("AlarmListActivity", "Alarms updated: ${alarms.size} alarms")
-            updateAlarmList(alarms)
-            updateEmptyState(alarms.isEmpty())
-        }
-    }
-
-    private fun linkButtons() {
-        val addAlarmButton = findViewById<com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton>(R.id.addAlarmButton)
-        addAlarmButton.setOnClickListener {
-            HapticFeedbackHelper.performHeavyClick(it)
-            HapticFeedbackHelper.performSuccessFeedback(this)
-            AnimationHelper.scaleWithBounce(it)
-            createNewAlarm()
-        }
-        
-        // Empty state button
-        findViewById<com.google.android.material.button.MaterialButton>(R.id.emptyStateButton)?.setOnClickListener {
-            HapticFeedbackHelper.performHeavyClick(it)
-            HapticFeedbackHelper.performSuccessFeedback(this)
-            AnimationHelper.scaleWithBounce(it)
-            createNewAlarm()
-        }
-    }
-    
     private fun createNewAlarm() {
-        // Open time picker activity instead of directly creating alarm
-        val intent = android.content.Intent(this, TimePickerActivity::class.java)
-        startActivity(intent)
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        startActivity(Intent(this, TimePickerActivity::class.java))
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
-    private fun updateAlarmList(alarms: List<Alarm>) {
-        val recyclerView = findViewById<RecyclerView>(R.id.alarmListView)
-        // Sort alarms by time only (ignoring date)
-        val sortedAlarms = alarms.sortedBy { alarm ->
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = alarm.calculatedTime
-            // Calculate minutes since midnight for comparison
-            calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
+    private fun openAlarmEditor(alarmId: Long) {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        val intent = Intent(this, AlarmEditorActivity::class.java).apply {
+            putExtra("alarm_id", alarmId)
         }
-        recyclerView.adapter = ImprovedAlarmAdapter(sortedAlarms, viewModel)
+        startActivity(intent)
     }
 
-    private fun updateEmptyState(isEmpty: Boolean) {
-        val emptyStateCard = findViewById<android.view.View>(R.id.emptyStateCard)
-        if (isEmpty) {
-            emptyStateCard?.let {
-                it.visibility = android.view.View.VISIBLE
-                AnimationHelper.fadeIn(it, 300)
-            }
-        } else {
-            emptyStateCard?.let {
-                AnimationHelper.fadeOut(it, 200) {
-                    it.visibility = android.view.View.GONE
-                }
-            }
-        }
+    private fun onAlarmEnabledToggled(alarm: Alarm, isChecked: Boolean) {
+        HapticFeedbackHelper.performSuccessFeedback(this)
+        alarm.enabled = isChecked
+        viewModel.updateAlarm(alarm)
+        toast(if (isChecked) ringScheduleMessage(alarm) else "Alarm disabled")
     }
 }
