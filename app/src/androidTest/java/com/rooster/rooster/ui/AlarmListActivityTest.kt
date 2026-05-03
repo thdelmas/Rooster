@@ -35,7 +35,7 @@ class AlarmListActivityTest {
         ActivityScenario.launch(AlarmListActivity::class.java)
         
         // Verify that the activity is displayed
-        onView(withId(R.id.alarmsList))
+        onView(withId(R.id.alarmListView))
             .check(matches(isDisplayed()))
     }
     

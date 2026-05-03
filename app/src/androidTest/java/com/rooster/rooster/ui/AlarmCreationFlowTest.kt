@@ -37,7 +37,7 @@ class AlarmCreationFlowTest {
         ActivityScenario.launch(AlarmListActivity::class.java)
         
         // Then - verify main elements are displayed
-        onView(withId(R.id.alarmsList))
+        onView(withId(R.id.alarmListView))
             .check(matches(isDisplayed()))
     }
     
