@@ -125,6 +125,9 @@ dependencies {
     implementation 'androidx.work:work-runtime-ktx:2.9.0'
     implementation 'androidx.hilt:hilt-work:1.1.0'
     kapt 'androidx.hilt:hilt-compiler:1.1.0'
+
+    // Play In-App Review (smoother prompt than deep-linking to the store; Google rate-limits)
+    implementation 'com.google.android.play:review:2.0.2'
     
     // Testing dependencies
     testImplementation 'junit:junit:4.13.2'

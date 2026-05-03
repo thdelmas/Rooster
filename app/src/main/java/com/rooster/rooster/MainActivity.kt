@@ -31,6 +31,8 @@ import com.google.android.gms.location.LocationServices
 import com.rooster.rooster.util.PermissionHelper
 import com.rooster.rooster.util.HapticFeedbackHelper
 import com.rooster.rooster.util.AnimationHelper
+import com.rooster.rooster.util.SupportPromptDialog
+import com.rooster.rooster.util.SupportPromptHelper
 import com.rooster.rooster.worker.WorkManagerHelper
 import com.rooster.rooster.presentation.viewmodel.MainViewModel
 import androidx.activity.viewModels
@@ -80,6 +82,7 @@ class MainActivity() : ComponentActivity() {
         linkButtons()
         refreshCycle()
         animateViews()
+        SupportPromptHelper.recordFirstSeenIfNeeded(this)
         Logger.d("MainActivity", "onCreate completed")
     }
     
@@ -425,6 +428,13 @@ class MainActivity() : ComponentActivity() {
         
         // Resume updates when app comes to foreground
         updateRunnable?.let { handler.post(it) }
+
+        // Defer the monthly support prompt so any pending permission dialogs settle first.
+        handler.postDelayed({
+            if (!isFinishing && !isDestroyed) {
+                SupportPromptDialog.showIfEligible(this)
+            }
+        }, 1500L)
     }
     
     private fun animateViews() {
