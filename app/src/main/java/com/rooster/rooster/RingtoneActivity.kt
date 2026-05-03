@@ -1,94 +1,73 @@
 package com.rooster.rooster
-import android.app.Activity
-import android.content.Intent
+
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import com.rooster.rooster.util.Logger
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.rooster.rooster.R
+import androidx.lifecycle.repeatOnLifecycle
+import com.rooster.rooster.presentation.compose.RingtoneItemUi
+import com.rooster.rooster.presentation.compose.RingtoneScreen
 import com.rooster.rooster.presentation.viewmodel.RingtoneViewModel
 import com.rooster.rooster.ui.SoundPreviewHelper
+import com.rooster.rooster.ui.theme.RoosterTheme
+import com.rooster.rooster.util.HapticFeedbackHelper
+import com.rooster.rooster.util.Logger
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.activity.viewModels
-import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class RingtoneActivity : AppCompatActivity() {
-    
-    private val viewModel: RingtoneViewModel by viewModels()
+class RingtoneActivity : ComponentActivity() {
 
+    private val viewModel: RingtoneViewModel by viewModels()
     private lateinit var soundPreviewHelper: SoundPreviewHelper
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: RingtoneAdapter
-    private var currentlyPreviewingUri: Uri? = null
+    private val previewingUri = MutableStateFlow<Uri?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_ringtone)
-
         soundPreviewHelper = SoundPreviewHelper(this)
 
-        // Setup toolbar
-        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.topAppBar)
-        toolbar.setNavigationOnClickListener {
-            soundPreviewHelper.cleanup()
-            finish()
-        }
-
-        // Get alarm ID from intent
-        val alarmId = intent.getLongExtra("alarm_id", -1)
-
-        // Setup RecyclerView
-        recyclerView = findViewById(R.id.ringtoneRecyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Get available ringtones
+        val alarmId = intent.getLongExtra("alarm_id", -1L)
         val ringtones = getAvailableRingtones()
 
-        // Create adapter
-        adapter = RingtoneAdapter(
-            ringtones,
-            onRingtoneSelect = { ringtoneItem ->
-                // Select ringtone
-                val uriString = ringtoneItem.uri?.toString() ?: "Default"
-                updateAlarmRingtone(alarmId, uriString)
-            },
-            onRingtonePreview = { ringtoneItem ->
-                // Preview ringtone
-                previewRingtone(ringtoneItem)
-            },
-            isCurrentlyPreviewing = { ringtoneItem ->
-                currentlyPreviewingUri == ringtoneItem.uri && soundPreviewHelper.isPreviewPlaying()
-            }
-        )
-
-        recyclerView.adapter = adapter
-        
-        // Observe update result
-        observeUpdateResult()
-    }
-    
-    private fun observeUpdateResult() {
         lifecycleScope.launch {
-            viewModel.updateResult.collectLatest { result ->
-                result?.let {
-                    when (it) {
-                        is RingtoneViewModel.UpdateResult.Success -> {
-                            Logger.i("RingtoneActivity", "Ringtone updated successfully")
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.updateResult.collectLatest { result ->
+                    if (result != null) {
+                        when (result) {
+                            is RingtoneViewModel.UpdateResult.Success ->
+                                Logger.i(TAG, "Ringtone updated successfully")
+                            is RingtoneViewModel.UpdateResult.Error ->
+                                Logger.e(TAG, "Error updating ringtone: ${result.message}")
                         }
-                        is RingtoneViewModel.UpdateResult.Error -> {
-                            Logger.e("RingtoneActivity", "Error updating ringtone: ${it.message}")
-                        }
+                        viewModel.resetUpdateResult()
+                        finish()
                     }
-                    viewModel.resetUpdateResult()
-                    finish()
                 }
+            }
+        }
+
+        setContent {
+            RoosterTheme {
+                val previewing by previewingUri.collectAsState()
+                RingtoneScreen(
+                    ringtones = ringtones,
+                    previewingUri = previewing,
+                    onBack = ::handleBack,
+                    onPreview = ::previewRingtone,
+                    onSelect = { item ->
+                        HapticFeedbackHelper.performClick(window.decorView)
+                        selectRingtone(alarmId, item)
+                    },
+                )
             }
         }
     }
@@ -98,77 +77,63 @@ class RingtoneActivity : AppCompatActivity() {
         soundPreviewHelper.cleanup()
     }
 
-    private fun getAvailableRingtones(): List<RingtoneItem> {
-        val ringtones = mutableListOf<RingtoneItem>()
+    private fun handleBack() {
+        soundPreviewHelper.cleanup()
+        finish()
+    }
 
-        // Add default option
-        ringtones.add(RingtoneItem("Default Ringtone", null))
-
-        // Get system alarm ringtones
-        val ringtoneManager = RingtoneManager(this)
-        ringtoneManager.setType(RingtoneManager.TYPE_ALARM)
-
+    private fun getAvailableRingtones(): List<RingtoneItemUi> {
+        val results = mutableListOf(RingtoneItemUi(title = "Default Ringtone", uri = null))
+        val ringtoneManager = RingtoneManager(this).apply { setType(RingtoneManager.TYPE_ALARM) }
         try {
             val cursor = ringtoneManager.cursor
             while (cursor.moveToNext()) {
                 val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
                 val uri = ringtoneManager.getRingtoneUri(cursor.position)
-                ringtones.add(RingtoneItem(title, uri))
+                results.add(RingtoneItemUi(title = title, uri = uri))
             }
         } catch (e: Exception) {
-            Logger.e("RingtoneActivity", "Error getting ringtones", e)
+            Logger.e(TAG, "Error getting ringtones", e)
         }
-
-        return ringtones
+        return results
     }
 
-    private fun previewRingtone(ringtoneItem: RingtoneItem) {
-        // Stop current preview if playing
+    private fun previewRingtone(item: RingtoneItemUi) {
+        HapticFeedbackHelper.performClick(window.decorView)
         if (soundPreviewHelper.isPreviewPlaying()) {
             soundPreviewHelper.stopPreview()
-            // If clicking the same ringtone again, just stop
-            if (currentlyPreviewingUri == ringtoneItem.uri) {
-                currentlyPreviewingUri = null
-                adapter.notifyDataSetChanged()
+            if (previewingUri.value == item.uri) {
+                previewingUri.value = null
                 return
             }
         }
-
-        // Start preview
-        currentlyPreviewingUri = ringtoneItem.uri
-        val uriString = ringtoneItem.uri?.toString() ?: "Default"
-        soundPreviewHelper.previewSound(uriString, durationMs = 5000) // Preview for 5 seconds
-        
-        // Notify adapter to update UI
-        adapter.notifyDataSetChanged()
-        
-        // Update UI when preview stops (check periodically)
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        val checkPreview = object : Runnable {
-            override fun run() {
-                if (!soundPreviewHelper.isPreviewPlaying() && currentlyPreviewingUri == ringtoneItem.uri) {
-                    currentlyPreviewingUri = null
-                    adapter.notifyDataSetChanged()
-                } else if (soundPreviewHelper.isPreviewPlaying() && currentlyPreviewingUri == ringtoneItem.uri) {
-                    // Check again in 500ms
-                    handler.postDelayed(this, 500)
-                }
+        previewingUri.value = item.uri
+        val uriString = item.uri?.toString() ?: "Default"
+        soundPreviewHelper.previewSound(uriString, durationMs = PREVIEW_DURATION_MS)
+        lifecycleScope.launch {
+            while (soundPreviewHelper.isPreviewPlaying() && previewingUri.value == item.uri) {
+                delay(POLL_INTERVAL_MS)
+            }
+            if (previewingUri.value == item.uri) {
+                previewingUri.value = null
             }
         }
-        handler.postDelayed(checkPreview, 500)
     }
 
-    private fun updateAlarmRingtone(alarmId: Long, ringtoneUri: String) {
+    private fun selectRingtone(alarmId: Long, item: RingtoneItemUi) {
         if (alarmId == -1L) {
-            Logger.w("RingtoneActivity", "Invalid alarm ID")
+            Logger.w(TAG, "Invalid alarm ID")
             finish()
             return
         }
-
         soundPreviewHelper.stopPreview()
-        Logger.i("RingtoneActivity", "Updating ringtone for alarm $alarmId")
-        
-        // Use ViewModel to update alarm ringtone
-        viewModel.updateAlarmRingtone(alarmId, ringtoneUri)
+        Logger.i(TAG, "Updating ringtone for alarm $alarmId")
+        viewModel.updateAlarmRingtone(alarmId, item.uri?.toString() ?: "Default")
+    }
+
+    companion object {
+        private const val TAG = "RingtoneActivity"
+        private const val PREVIEW_DURATION_MS = 5000L
+        private const val POLL_INTERVAL_MS = 500L
     }
 }
