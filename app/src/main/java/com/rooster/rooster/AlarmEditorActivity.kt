@@ -229,7 +229,7 @@ class AlarmEditorActivity : AppCompatActivity() {
                         solarEvent2 = alarm.relative2
                         // Load offset from time1 (stored in milliseconds)
                         if (alarm.mode == AppConstants.ALARM_MODE_BEFORE || alarm.mode == AppConstants.ALARM_MODE_AFTER) {
-                            offsetMinutes = (alarm.time1 / 1000 / 60).toInt()
+                            offsetMinutes = snapToOffsetStep((alarm.time1 / 1000 / 60).toInt())
                         }
                     } else {
                         currentMode = "classic"
@@ -732,8 +732,15 @@ class AlarmEditorActivity : AppCompatActivity() {
     private fun updateOffsetDisplay() {
         val offsetTimeButton = findViewById<MaterialButton>(R.id.offsetTimeButton)
         offsetTimeButton?.text = TimeUtils.formatMinutesAsHours(offsetMinutes)
-        // Update slider value without triggering listener
-        offsetTimeSlider.value = offsetMinutes.toFloat().coerceIn(5f, 720f)
+        // Slider has stepSize=5 (5,10,15...720). Setting an off-step value crashes
+        // BaseSlider.validateValues, which can happen when loading legacy alarms saved
+        // via the solar ring picker (which used to write raw minute differences).
+        offsetTimeSlider.value = snapToOffsetStep(offsetMinutes).toFloat()
+    }
+
+    private fun snapToOffsetStep(minutes: Int): Int {
+        val step = 5
+        return ((minutes + step / 2) / step * step).coerceIn(5, 720)
     }
     
     private fun setupOffsetPresetButton(buttonId: Int, minutes: Int) {
@@ -775,10 +782,8 @@ class AlarmEditorActivity : AppCompatActivity() {
                         // Update offset based on mode
                         // For "before", the selected time is before the solar event, so diffMs is negative
                         // For "after", the selected time is after the solar event, so diffMs is positive
-                        offsetMinutes = kotlin.math.abs(diffMinutes)
-                        
-                        // Constrain to valid range
-                        offsetMinutes = offsetMinutes.coerceIn(5, 720)
+                        // Snap to slider step so the offset is representable in the UI.
+                        offsetMinutes = snapToOffsetStep(kotlin.math.abs(diffMinutes))
                         
                         launch(Dispatchers.Main) {
                             updateOffsetDisplay()
