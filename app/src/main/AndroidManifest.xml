@@ -64,6 +64,15 @@
         </receiver>
 
         <receiver
+            android:name=".receiver.SolarEventReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.rooster.rooster.ACTION_SOLAR_EVENT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
             android:name=".widget.SolarRingWidgetProvider"
             android:enabled="true"
             android:exported="true">

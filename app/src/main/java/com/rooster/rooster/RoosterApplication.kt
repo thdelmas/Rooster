@@ -55,6 +55,18 @@ class RoosterApplication : Application(), Configuration.Provider {
         createNotificationChannels()
         migrateSharedPreferencesToRoom()
         scheduleBackgroundWork()
+        scheduleSolarEventCues()
+    }
+
+    /** Schedule per-event tone+vibration cues using cached astronomy data. */
+    private fun scheduleSolarEventCues() {
+        applicationScope.launch {
+            try {
+                com.rooster.rooster.util.SolarEventScheduler.scheduleUpcoming(this@RoosterApplication)
+            } catch (e: Exception) {
+                android.util.Log.e("RoosterApplication", "Error scheduling solar event cues", e)
+            }
+        }
     }
     
     /**
@@ -124,6 +136,14 @@ class RoosterApplication : Application(), Configuration.Provider {
     fun provideLocationRepository(): LocationRepository {
         return locationRepository
     }
+
+    /** Nullable variants used by [com.rooster.rooster.util.SolarEventScheduler], which
+     *  may be invoked very early (before Hilt has finished injection). */
+    fun provideAstronomyRepositoryOrNull(): AstronomyRepository? =
+        if (::astronomyRepository.isInitialized) astronomyRepository else null
+
+    fun provideLocationRepositoryOrNull(): LocationRepository? =
+        if (::locationRepository.isInitialized) locationRepository else null
     
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

@@ -71,24 +71,26 @@ class AstronomyUpdateWorker @AssistedInject constructor(
                 is AstronomyDataResult.Fresh -> {
                     // Fresh data successfully fetched
                     saveToSharedPreferences(result.data)
+                    rescheduleSolarEventCues()
                     Logger.i(TAG, "Astronomy data updated successfully (fresh)")
                     Result.success()
                 }
-                
+
                 is AstronomyDataResult.Cached -> {
                     // Using cached data (may be stale)
                     saveToSharedPreferences(result.data)
-                    
+                    rescheduleSolarEventCues()
+
                     if (result.isStale) {
                         val ageHours = result.ageMs / (1000 * 60 * 60)
                         Logger.w(TAG, "Using stale cached astronomy data (age: ${ageHours}h)")
-                        
+
                         // Show notification to user about stale data
                         showStaleDataNotification(result.ageMs)
                     } else {
                         Logger.i(TAG, "Using cached astronomy data (still valid, age: ${result.ageMs}ms)")
                     }
-                    
+
                     Result.success()
                 }
                 
@@ -131,6 +133,14 @@ class AstronomyUpdateWorker @AssistedInject constructor(
         }
     }
     
+    private suspend fun rescheduleSolarEventCues() {
+        try {
+            com.rooster.rooster.util.SolarEventScheduler.scheduleUpcoming(workerContext)
+        } catch (e: Exception) {
+            Logger.e(TAG, "Error rescheduling solar event cues", e)
+        }
+    }
+
     /**
      * Save astronomy data to SharedPreferences for backward compatibility
      */
