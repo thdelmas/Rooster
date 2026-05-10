@@ -51,7 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rooster.rooster.R
 import com.rooster.rooster.util.SleepProfileHelper
+import com.rooster.rooster.util.SolarEventPrefs
 import com.rooster.rooster.util.ThemeHelper
+import kotlinx.coroutines.launch
 
 data class CoordinatesUi(
     val altitude: Double?,
@@ -94,6 +96,9 @@ fun SettingsScreen(
     var themeMode by remember { mutableStateOf(ThemeHelper.getThemeMode(context)) }
     var dynamicColorsEnabled by remember { mutableStateOf(ThemeHelper.isDynamicColorsEnabled(context)) }
     var sleepProfile by remember { mutableStateOf(SleepProfileHelper.getSleepProfile(context)) }
+
+    var solarSoundEnabled by remember { mutableStateOf(SolarEventPrefs.isSoundEnabled(context)) }
+    var solarVibrationEnabled by remember { mutableStateOf(SolarEventPrefs.isVibrationEnabled(context)) }
 
     var showThemeDialog by remember { mutableStateOf(false) }
     var showSleepDialog by remember { mutableStateOf(false) }
@@ -177,6 +182,40 @@ fun SettingsScreen(
                 AstronomyRow("Nautical Dusk", astronomy.nauticalDusk)
                 Divider()
                 AstronomyRow("Astronomical Dusk", astronomy.astroDusk)
+            }
+            Spacer(Modifier.height(24.dp))
+
+            SectionHeader("Solar Event Cues")
+            GlassCard {
+                SettingRow(
+                    title = "Sound",
+                    description = "A short bell signature for each solar event",
+                    trailing = {
+                        Switch(
+                            checked = solarSoundEnabled,
+                            onCheckedChange = { checked ->
+                                solarSoundEnabled = checked
+                                SolarEventPrefs.setSoundEnabled(context, checked)
+                                rescheduleSolarEventCues(context)
+                            },
+                        )
+                    },
+                )
+                Divider()
+                SettingRow(
+                    title = "Vibration",
+                    description = "A distinct vibration pattern for each event",
+                    trailing = {
+                        Switch(
+                            checked = solarVibrationEnabled,
+                            onCheckedChange = { checked ->
+                                solarVibrationEnabled = checked
+                                SolarEventPrefs.setVibrationEnabled(context, checked)
+                                rescheduleSolarEventCues(context)
+                            },
+                        )
+                    },
+                )
             }
             Spacer(Modifier.height(24.dp))
 
@@ -609,6 +648,16 @@ private fun SingleChoiceDialog(
             TextButton(onClick = onDismiss) { Text("Cancel") }
         },
     )
+}
+
+private fun rescheduleSolarEventCues(context: android.content.Context) {
+    // Toggle changes need to take effect immediately: reschedule (or cancel)
+    // upcoming cues without waiting for the next astronomy worker run.
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        runCatching {
+            com.rooster.rooster.util.SolarEventScheduler.scheduleUpcoming(context.applicationContext)
+        }
+    }
 }
 
 private fun formatTimeOfDay(timeMillis: Long): String {
