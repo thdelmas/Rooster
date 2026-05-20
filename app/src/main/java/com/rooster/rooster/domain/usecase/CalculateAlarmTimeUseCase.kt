@@ -74,11 +74,10 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         
         if (alarm.relative1 in solarEvents || alarm.relative2 in solarEvents) return true
 
-        if (alarm.mode == AppConstants.ALARM_MODE_SMART) {
-            val anchor = SmartWakePrefs.get(sharedPreferences).solarAnchor
-            return anchor in solarEvents
-        }
-        return false
+        // Smart mode is always sunrise-anchored when enabled, so it needs fresh
+        // astronomy data. Polar regions degrade gracefully — getRelativeTime
+        // returns 0 and the use case falls back to mandatory wake.
+        return alarm.mode == AppConstants.ALARM_MODE_SMART
     }
     
     /**
@@ -204,9 +203,13 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         val snapshot = SmartWakePrefs.get(sharedPreferences)
         val now = System.currentTimeMillis()
 
-        val solarAnchorMillis = if (snapshot.solarAnchor != SmartWakePrefs.NO_SOLAR_ANCHOR) {
-            getRelativeTime(snapshot.solarAnchor).takeIf { it > 0L }?.let { rollIntoFuture(it, now) }
-        } else null
+        // Sunrise + offset. getRelativeTime returns 0 in polar regions or before
+        // astronomy has been fetched — we then fall back to mandatory wake.
+        val sunriseRaw = getRelativeTime(AppConstants.SOLAR_EVENT_SUNRISE)
+        val sunriseAnchorMillis = sunriseRaw.takeIf { it > 0L }?.let { base ->
+            val offset = snapshot.sunriseOffsetMinutes * 60_000L
+            rollIntoFuture(base + offset, now)
+        }
 
         val mandatoryMillis = if (snapshot.mandatoryWakeMinuteOfDay != SmartWakePrefs.NO_MANDATORY_WAKE) {
             nextOccurrenceOfMinuteOfDay(snapshot.mandatoryWakeMinuteOfDay, now)
@@ -217,7 +220,7 @@ class CalculateAlarmTimeUseCase @Inject constructor(
                 nowMillis = now,
                 targetSleepMinutes = snapshot.targetSleepMinutes,
                 mandatoryWakeMillis = mandatoryMillis,
-                solarAnchorMillis = solarAnchorMillis
+                sunriseAnchorMillis = sunriseAnchorMillis,
             )
         )
     }

@@ -89,12 +89,6 @@ object AppConstants {
     const val SOLAR_EVENT_NAUTICAL_DUSK = "Nautical Dusk"
     const val SOLAR_EVENT_ASTRONOMICAL_DUSK = "Astronomical Dusk"
     
-    // ========== Sleep Profile ==========
-    const val SLEEP_PROFILE_NONE = 0
-    const val SLEEP_PROFILE_EARLY_BIRD = 1
-    const val SLEEP_PROFILE_NIGHT_OWL = 2
-    const val DEFAULT_OFFSET_MINUTES_NIGHT_OWL = 30
-
     // ========== Validation ==========
     const val MAX_VALIDATION_TIME_MS = MILLIS_PER_YEAR // 1 year
 }

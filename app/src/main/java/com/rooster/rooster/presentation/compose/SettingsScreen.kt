@@ -52,8 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rooster.rooster.R
-import com.rooster.rooster.util.AppConstants
-import com.rooster.rooster.util.SleepProfileHelper
 import com.rooster.rooster.util.SmartWakePrefs
 import com.rooster.rooster.util.SmartWakeScheduler
 import com.rooster.rooster.util.SolarEventPrefs
@@ -103,28 +101,25 @@ fun SettingsScreen(
     val context = LocalContext.current
     var themeMode by remember { mutableStateOf(ThemeHelper.getThemeMode(context)) }
     var dynamicColorsEnabled by remember { mutableStateOf(ThemeHelper.isDynamicColorsEnabled(context)) }
-    var sleepProfile by remember { mutableStateOf(SleepProfileHelper.getSleepProfile(context)) }
-
     var solarSoundEnabled by remember { mutableStateOf(SolarEventPrefs.isSoundEnabled(context)) }
     var solarVibrationEnabled by remember { mutableStateOf(SolarEventPrefs.isVibrationEnabled(context)) }
 
     val coroutineScope = rememberCoroutineScope()
     var smartWake by remember { mutableStateOf(SmartWakePrefs.get(context)) }
     var smartWakeEnabled by remember { mutableStateOf(SmartWakePrefs.isEnabled(context)) }
-    var smartWakeNextMillis by remember { mutableStateOf<Long?>(null) }
+    var smartWakeStatus by remember { mutableStateOf(SmartWakeScheduler.Status(null, false)) }
 
     LaunchedEffect(Unit) {
-        smartWakeNextMillis = withContext(Dispatchers.IO) {
-            runCatching { SmartWakeScheduler.currentScheduledMillis(context.applicationContext) }
-                .getOrNull()
+        smartWakeStatus = withContext(Dispatchers.IO) {
+            runCatching { SmartWakeScheduler.currentStatus(context.applicationContext) }
+                .getOrElse { SmartWakeScheduler.Status(null, false) }
         }
     }
 
     var showThemeDialog by remember { mutableStateOf(false) }
-    var showSleepDialog by remember { mutableStateOf(false) }
     var showSmartSleepDialog by remember { mutableStateOf(false) }
     var showSmartWakeDialog by remember { mutableStateOf(false) }
-    var showSmartAnchorDialog by remember { mutableStateOf(false) }
+    var showSmartOffsetDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -269,29 +264,18 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
-            SectionHeader("Sleep Profile")
-            GlassCard {
-                SettingRow(
-                    title = "Sleep Profile",
-                    description = "Set defaults for new alarms",
-                    valueText = SleepProfileHelper.getProfileName(sleepProfile),
-                    onClick = { showSleepDialog = true },
-                )
-            }
-            Spacer(Modifier.height(24.dp))
-
             SectionHeader("Smart Wake")
             GlassCard {
                 SettingRow(
                     title = "Auto-schedule alarm",
-                    description = smartWakeRowDescription(smartWakeEnabled, smartWakeNextMillis),
+                    description = smartWakeRowDescription(smartWakeEnabled, smartWakeStatus),
                     trailing = {
                         Switch(
                             checked = smartWakeEnabled,
                             onCheckedChange = { checked ->
                                 smartWakeEnabled = checked
                                 SmartWakePrefs.setEnabled(context, checked)
-                                syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+                                syncSmartWake(coroutineScope, context) { status -> smartWakeStatus = status }
                             },
                         )
                     },
@@ -312,10 +296,10 @@ fun SettingsScreen(
                 )
                 Divider()
                 SettingRow(
-                    title = "Solar anchor",
-                    description = "Preferred solar event to wake with",
-                    valueText = labelForSolarAnchor(smartWake.solarAnchor),
-                    onClick = { showSmartAnchorDialog = true },
+                    title = "Sunrise offset",
+                    description = "Wake before or after sunrise — falls back to latest wake near the poles",
+                    valueText = formatSunriseOffset(smartWake.sunriseOffsetMinutes),
+                    onClick = { showSmartOffsetDialog = true },
                 )
             }
             Spacer(Modifier.height(24.dp))
@@ -355,19 +339,6 @@ fun SettingsScreen(
             },
         )
     }
-    if (showSleepDialog) {
-        SingleChoiceDialog(
-            title = "Choose Sleep Profile",
-            options = listOf("None", "Early Bird (Sunrise)", "Night Owl (Sunset)"),
-            selectedIndex = sleepProfile,
-            onDismiss = { showSleepDialog = false },
-            onSelected = { idx ->
-                SleepProfileHelper.setSleepProfile(context, idx)
-                sleepProfile = idx
-                showSleepDialog = false
-            },
-        )
-    }
     if (showSmartSleepDialog) {
         val minutesOptions = SMART_SLEEP_MINUTES_OPTIONS
         SingleChoiceDialog(
@@ -380,7 +351,7 @@ fun SettingsScreen(
                 SmartWakePrefs.setTargetSleepMinutes(context, chosen)
                 smartWake = smartWake.copy(targetSleepMinutes = chosen)
                 showSmartSleepDialog = false
-                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { status -> smartWakeStatus = status }
             },
         )
     }
@@ -396,23 +367,23 @@ fun SettingsScreen(
                 SmartWakePrefs.setMandatoryWake(context, chosen)
                 smartWake = smartWake.copy(mandatoryWakeMinuteOfDay = chosen)
                 showSmartWakeDialog = false
-                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { status -> smartWakeStatus = status }
             },
         )
     }
-    if (showSmartAnchorDialog) {
-        val anchorOptions = SMART_ANCHOR_OPTIONS
+    if (showSmartOffsetDialog) {
+        val offsetOptions = SMART_SUNRISE_OFFSET_OPTIONS
         SingleChoiceDialog(
-            title = "Solar anchor",
-            options = anchorOptions.map { labelForSolarAnchor(it) },
-            selectedIndex = anchorOptions.indexOf(smartWake.solarAnchor).coerceAtLeast(0),
-            onDismiss = { showSmartAnchorDialog = false },
+            title = "Sunrise offset",
+            options = offsetOptions.map { formatSunriseOffset(it) },
+            selectedIndex = offsetOptions.indexOf(smartWake.sunriseOffsetMinutes).coerceAtLeast(0),
+            onDismiss = { showSmartOffsetDialog = false },
             onSelected = { idx ->
-                val chosen = anchorOptions[idx]
-                SmartWakePrefs.setSolarAnchor(context, chosen)
-                smartWake = smartWake.copy(solarAnchor = chosen)
-                showSmartAnchorDialog = false
-                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+                val chosen = offsetOptions[idx]
+                SmartWakePrefs.setSunriseOffset(context, chosen)
+                smartWake = smartWake.copy(sunriseOffsetMinutes = chosen)
+                showSmartOffsetDialog = false
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { status -> smartWakeStatus = status }
             },
         )
     }
@@ -421,21 +392,23 @@ fun SettingsScreen(
 private fun syncSmartWake(
     scope: CoroutineScope,
     context: android.content.Context,
-    onResult: (Long?) -> Unit,
+    onResult: (SmartWakeScheduler.Status) -> Unit,
 ) {
     scope.launch {
-        val next = withContext(Dispatchers.IO) {
+        val status = withContext(Dispatchers.IO) {
             runCatching { SmartWakeScheduler.sync(context.applicationContext) }
-                .getOrNull()
+                .getOrElse { SmartWakeScheduler.Status(null, false) }
         }
-        onResult(next)
+        onResult(status)
     }
 }
 
-private fun smartWakeRowDescription(enabled: Boolean, nextMillis: Long?): String {
+private fun smartWakeRowDescription(enabled: Boolean, status: SmartWakeScheduler.Status): String {
     if (!enabled) return "Maintains one alarm from the settings below"
-    if (nextMillis == null || nextMillis <= 0L) return "Calculating…"
-    return "Next: ${formatNextWakeTime(nextMillis)}"
+    val next = status.nextMillis
+    if (next == null || next <= 0L) return "Calculating…"
+    val base = "Next: ${formatNextWakeTime(next)}"
+    return if (status.sunriseAnchored) base else "$base · no sunrise data, using latest wake"
 }
 
 private fun formatNextWakeTime(millis: Long): String {
@@ -468,14 +441,7 @@ private val SMART_WAKE_OPTIONS = listOf(
     6 * 60, 6 * 60 + 30, 7 * 60, 7 * 60 + 30, 8 * 60, 8 * 60 + 30, 9 * 60,
 )
 
-private val SMART_ANCHOR_OPTIONS = listOf(
-    SmartWakePrefs.NO_SOLAR_ANCHOR,
-    AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN,
-    AppConstants.SOLAR_EVENT_NAUTICAL_DAWN,
-    AppConstants.SOLAR_EVENT_CIVIL_DAWN,
-    AppConstants.SOLAR_EVENT_SUNRISE,
-    AppConstants.SOLAR_EVENT_SOLAR_NOON,
-)
+private val SMART_SUNRISE_OFFSET_OPTIONS = listOf(-60, -30, -15, 0, 15, 30, 60)
 
 private fun formatSleepDuration(minutes: Int): String {
     if (minutes <= 0) return "Off"
@@ -489,8 +455,11 @@ private fun formatMinuteOfDay(minuteOfDay: Int): String {
     return String.format("%02d:%02d", minuteOfDay / 60, minuteOfDay % 60)
 }
 
-private fun labelForSolarAnchor(anchor: String): String =
-    if (anchor.isEmpty()) "None" else anchor
+private fun formatSunriseOffset(minutes: Int): String = when {
+    minutes == 0 -> "At sunrise"
+    minutes < 0 -> "${-minutes} min before"
+    else -> "$minutes min after"
+}
 
 @Composable
 private fun SectionHeader(text: String) {

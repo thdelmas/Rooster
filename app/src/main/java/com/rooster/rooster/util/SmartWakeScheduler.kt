@@ -18,13 +18,25 @@ object SmartWakeScheduler {
     private const val SMART_ALARM_LABEL = "Smart Wake"
 
     /**
-     * Reconciles the DB and AlarmManager state with the current Smart Wake prefs.
-     * Returns the computed next-fire epoch millis, or null if disabled or scheduling failed.
+     * Status returned by [sync] and [currentStatus]. `sunriseAnchored` is
+     * false when astronomy reports no sunrise (polar night/midnight sun, or
+     * data not yet fetched) — in that case the alarm fell back to mandatory
+     * wake or now + target sleep.
      */
-    suspend fun sync(context: Context): Long? {
+    data class Status(
+        val nextMillis: Long?,
+        val sunriseAnchored: Boolean,
+    )
+
+    /**
+     * Reconciles the DB and AlarmManager state with the current Smart Wake prefs.
+     * Returns the computed next-fire millis and whether sunrise data was used.
+     */
+    suspend fun sync(context: Context): Status {
+        val empty = Status(nextMillis = null, sunriseAnchored = false)
         val app = context.applicationContext as? RoosterApplication ?: run {
             Logger.w(TAG, "RoosterApplication not available; skipping sync")
-            return null
+            return empty
         }
         val repo = app.provideAlarmRepository()
         val scheduler = app.provideScheduleAlarmUseCase()
@@ -38,7 +50,7 @@ object SmartWakeScheduler {
                 repo.deleteAlarm(it)
                 Logger.i(TAG, "Smart Wake disabled — removed managed alarm ${it.id}")
             }
-            return null
+            return empty
         }
 
         val alarm = existing ?: run {
@@ -46,7 +58,7 @@ object SmartWakeScheduler {
             repo.getAlarmById(newId)
                 ?: run {
                     Logger.e(TAG, "Failed to read back inserted Smart Wake alarm $newId")
-                    return null
+                    return empty
                 }
         }
 
@@ -55,27 +67,37 @@ object SmartWakeScheduler {
         }
 
         val toSchedule = alarm.copy(enabled = true)
-        val result = scheduler.scheduleAlarm(toSchedule)
-        return result.fold(
+        val nextMillis = scheduler.scheduleAlarm(toSchedule).fold(
             onSuccess = { repo.getAlarmById(alarm.id)?.calculatedTime },
             onFailure = {
                 Logger.e(TAG, "Failed to schedule Smart Wake alarm", it)
                 null
             }
         )
+        return Status(nextMillis, sunriseAnchored = isSunriseAvailable(app))
     }
 
     /**
-     * Returns the currently scheduled Smart Wake fire time, or null if no
-     * managed alarm exists. Used by Settings to render the preview.
+     * Returns the currently scheduled Smart Wake status, or an empty status if
+     * no managed alarm exists. Used by Settings to render the preview row.
      */
-    suspend fun currentScheduledMillis(context: Context): Long? {
-        val app = context.applicationContext as? RoosterApplication ?: return null
+    suspend fun currentStatus(context: Context): Status {
+        val app = context.applicationContext as? RoosterApplication
+            ?: return Status(null, false)
         val repo = app.provideAlarmRepository()
-        return repo.getAllAlarms()
+        val millis = repo.getAllAlarms()
             .firstOrNull { it.mode == AppConstants.ALARM_MODE_SMART && it.enabled }
             ?.calculatedTime
             ?.takeIf { it > 0L }
+        return Status(millis, sunriseAnchored = isSunriseAvailable(app))
+    }
+
+    private suspend fun isSunriseAvailable(app: RoosterApplication): Boolean {
+        val sunrise = app.provideAstronomyRepositoryOrNull()
+            ?.getAstronomyData(forceRefresh = false)
+            ?.sunrise
+            ?: 0L
+        return sunrise > 0L
     }
 
     private fun buildCreation(): AlarmCreation = AlarmCreation(
