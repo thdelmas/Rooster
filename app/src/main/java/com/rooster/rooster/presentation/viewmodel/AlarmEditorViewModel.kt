@@ -78,7 +78,7 @@ class AlarmEditorViewModel @Inject constructor(
     private var toastJob: Job? = null
     private var initialized = false
 
-    fun initialize(alarmId: Long, defaultMode: EditorDefaults) {
+    fun initialize(alarmId: Long) {
         if (initialized) return
         initialized = true
 
@@ -92,7 +92,7 @@ class AlarmEditorViewModel @Inject constructor(
         if (alarmId != -1L) {
             loadAlarm(alarmId)
         } else {
-            applyDefaults(defaultMode)
+            applyClassicDefaults()
         }
     }
 
@@ -152,40 +152,19 @@ class AlarmEditorViewModel @Inject constructor(
         }
     }
 
-    private fun applyDefaults(defaults: EditorDefaults) {
-        when (defaults) {
-            EditorDefaults.EARLY_BIRD -> _uiState.update {
-                it.copy(
-                    mode = "sun",
-                    sunTimingMode = AppConstants.ALARM_MODE_AT,
-                    solarEvent1 = AppConstants.SOLAR_EVENT_SUNRISE,
-                    days = weekdayPreset(),
-                )
-            }
-            EditorDefaults.NIGHT_OWL -> _uiState.update {
-                it.copy(
-                    mode = "sun",
-                    sunTimingMode = AppConstants.ALARM_MODE_BEFORE,
-                    solarEvent1 = AppConstants.SOLAR_EVENT_SUNSET,
-                    offsetMinutes = AppConstants.DEFAULT_OFFSET_MINUTES_NIGHT_OWL,
-                    days = weekdayPreset(),
-                )
-            }
-            EditorDefaults.CLASSIC -> {
-                val cal = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, 8)
-                    set(Calendar.MINUTE, 30)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                _uiState.update {
-                    it.copy(
-                        mode = "classic",
-                        sunTimingMode = AppConstants.ALARM_MODE_AT,
-                        selectedTime = cal.timeInMillis,
-                    )
-                }
-            }
+    private fun applyClassicDefaults() {
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 8)
+            set(Calendar.MINUTE, 30)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        _uiState.update {
+            it.copy(
+                mode = "classic",
+                sunTimingMode = AppConstants.ALARM_MODE_AT,
+                selectedTime = cal.timeInMillis,
+            )
         }
         refreshCalculatedTime()
     }
@@ -554,7 +533,6 @@ class AlarmEditorViewModel @Inject constructor(
         val time2: Long,
     )
 
-    enum class EditorDefaults { EARLY_BIRD, NIGHT_OWL, CLASSIC }
     enum class DayPreset { WEEKDAYS, WEEKENDS, EVERYDAY }
 
     companion object {

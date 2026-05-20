@@ -18,8 +18,6 @@ import com.rooster.rooster.presentation.compose.AlarmEditorScreen
 import com.rooster.rooster.presentation.viewmodel.AlarmEditorViewModel
 import com.rooster.rooster.ui.SoundPreviewHelper
 import com.rooster.rooster.ui.theme.RoosterTheme
-import com.rooster.rooster.util.AppConstants
-import com.rooster.rooster.util.SleepProfileHelper
 import com.rooster.rooster.util.toast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -36,7 +34,7 @@ class AlarmEditorActivity : AppCompatActivity() {
         soundPreviewHelper = SoundPreviewHelper(this)
 
         val alarmId = intent.getLongExtra("alarm_id", -1L)
-        viewModel.initialize(alarmId, defaultsForNewAlarm())
+        viewModel.initialize(alarmId)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -87,14 +85,6 @@ class AlarmEditorActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         soundPreviewHelper.cleanup()
-    }
-
-    private fun defaultsForNewAlarm(): AlarmEditorViewModel.EditorDefaults {
-        return when (SleepProfileHelper.getSleepProfile(this)) {
-            AppConstants.SLEEP_PROFILE_EARLY_BIRD -> AlarmEditorViewModel.EditorDefaults.EARLY_BIRD
-            AppConstants.SLEEP_PROFILE_NIGHT_OWL -> AlarmEditorViewModel.EditorDefaults.NIGHT_OWL
-            else -> AlarmEditorViewModel.EditorDefaults.CLASSIC
-        }
     }
 
     private fun showTimePicker(currentMillis: Long) {
