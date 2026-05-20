@@ -54,7 +54,12 @@ class AlarmSchedulingIntegrationTest {
             onBlocking { getEnabledAlarms() } doReturn emptyList()
         }
         
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(
+            sharedPreferences,
+            astronomyRepository,
+            locationRepository,
+            com.rooster.rooster.domain.usecase.ComputeSmartWakeUseCase()
+        )
         
         // Note: ScheduleAlarmUseCase requires Context and AlarmManager, so we'll test the flow differently
         // For integration tests, we focus on the business logic flow

@@ -99,7 +99,13 @@ object ValidationHelper {
      * Check if alarm mode is valid
      */
     private fun isValidMode(mode: String): Boolean {
-        return mode in listOf(AppConstants.ALARM_MODE_AT, AppConstants.ALARM_MODE_BETWEEN, AppConstants.ALARM_MODE_AFTER, AppConstants.ALARM_MODE_BEFORE)
+        return mode in listOf(
+            AppConstants.ALARM_MODE_AT,
+            AppConstants.ALARM_MODE_BETWEEN,
+            AppConstants.ALARM_MODE_AFTER,
+            AppConstants.ALARM_MODE_BEFORE,
+            AppConstants.ALARM_MODE_SMART,
+        )
     }
     
     /**

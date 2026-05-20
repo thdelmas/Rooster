@@ -73,6 +73,7 @@ object AppConstants {
     const val ALARM_MODE_BEFORE = "Before"
     const val ALARM_MODE_AFTER = "After"
     const val ALARM_MODE_BETWEEN = "Between"
+    const val ALARM_MODE_SMART = "Smart"
     
     // ========== Relative Time Strings ==========
     const val RELATIVE_TIME_PICK_TIME = "Pick Time"

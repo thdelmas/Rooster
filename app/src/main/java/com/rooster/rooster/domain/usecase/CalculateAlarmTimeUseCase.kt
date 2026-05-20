@@ -10,6 +10,7 @@ import com.rooster.rooster.data.repository.AstronomyDataResult
 import com.rooster.rooster.data.repository.LocationRepository
 import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.Logger
+import com.rooster.rooster.util.SmartWakePrefs
 import java.util.Locale
 import javax.inject.Inject
 
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class CalculateAlarmTimeUseCase @Inject constructor(
     private val sharedPreferences: SharedPreferences,
     private val astronomyRepository: AstronomyRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val computeSmartWakeUseCase: ComputeSmartWakeUseCase
 ) {
     
     companion object {
@@ -39,7 +41,11 @@ class CalculateAlarmTimeUseCase @Inject constructor(
         }
         
         val calculatedTime = calculateTimeInner(alarm)
-        val finalTime = addDays(alarm, calculatedTime)
+        val finalTime = if (alarm.mode == AppConstants.ALARM_MODE_SMART) {
+            calculatedTime
+        } else {
+            addDays(alarm, calculatedTime)
+        }
         
         val calendar = Calendar.getInstance()
         val fullDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -66,7 +72,13 @@ class CalculateAlarmTimeUseCase @Inject constructor(
             AppConstants.SOLAR_EVENT_ASTRONOMICAL_DUSK
         )
         
-        return alarm.relative1 in solarEvents || alarm.relative2 in solarEvents
+        if (alarm.relative1 in solarEvents || alarm.relative2 in solarEvents) return true
+
+        if (alarm.mode == AppConstants.ALARM_MODE_SMART) {
+            val anchor = SmartWakePrefs.get(sharedPreferences).solarAnchor
+            return anchor in solarEvents
+        }
+        return false
     }
     
     /**
@@ -183,8 +195,54 @@ class CalculateAlarmTimeUseCase @Inject constructor(
                 val time2 = alarm.time1
                 time1 - time2
             }
+            AppConstants.ALARM_MODE_SMART -> calculateSmartWakeTime()
             else -> 0L
         }
+    }
+
+    private suspend fun calculateSmartWakeTime(): Long {
+        val snapshot = SmartWakePrefs.get(sharedPreferences)
+        val now = System.currentTimeMillis()
+
+        val solarAnchorMillis = if (snapshot.solarAnchor != SmartWakePrefs.NO_SOLAR_ANCHOR) {
+            getRelativeTime(snapshot.solarAnchor).takeIf { it > 0L }?.let { rollIntoFuture(it, now) }
+        } else null
+
+        val mandatoryMillis = if (snapshot.mandatoryWakeMinuteOfDay != SmartWakePrefs.NO_MANDATORY_WAKE) {
+            nextOccurrenceOfMinuteOfDay(snapshot.mandatoryWakeMinuteOfDay, now)
+        } else null
+
+        return computeSmartWakeUseCase.execute(
+            ComputeSmartWakeUseCase.Input(
+                nowMillis = now,
+                targetSleepMinutes = snapshot.targetSleepMinutes,
+                mandatoryWakeMillis = mandatoryMillis,
+                solarAnchorMillis = solarAnchorMillis
+            )
+        )
+    }
+
+    private fun rollIntoFuture(timeMillis: Long, nowMillis: Long): Long {
+        if (timeMillis > nowMillis) return timeMillis
+        val cal = Calendar.getInstance().apply { timeInMillis = timeMillis }
+        while (cal.timeInMillis <= nowMillis) {
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return cal.timeInMillis
+    }
+
+    private fun nextOccurrenceOfMinuteOfDay(minuteOfDay: Int, nowMillis: Long): Long {
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = nowMillis
+            set(Calendar.HOUR_OF_DAY, minuteOfDay / 60)
+            set(Calendar.MINUTE, minuteOfDay % 60)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        if (cal.timeInMillis <= nowMillis) {
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+        }
+        return cal.timeInMillis
     }
     
     private fun calculateBetweenTime(time1: Long, time2: Long): Long {
