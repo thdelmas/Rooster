@@ -49,7 +49,12 @@ class CalculateAlarmTimeUseCaseTest {
             onBlocking { getLocation() } doReturn null
         }
         
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(
+            sharedPreferences,
+            astronomyRepository,
+            locationRepository,
+            ComputeSmartWakeUseCase()
+        )
     }
     
     @Test
@@ -345,7 +350,12 @@ class CalculateAlarmTimeUseCaseTest {
         astronomyRepository = mock {
             onBlocking { getAstronomyData(any()) } doReturn astronomyData
         }
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(
+            sharedPreferences,
+            astronomyRepository,
+            locationRepository,
+            ComputeSmartWakeUseCase()
+        )
         
         val alarm = createTestAlarm(
             mode = "At",
@@ -367,7 +377,12 @@ class CalculateAlarmTimeUseCaseTest {
         astronomyRepository = mock {
             onBlocking { getAstronomyData(any()) } doReturn astronomyData
         }
-        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(sharedPreferences, astronomyRepository, locationRepository)
+        calculateAlarmTimeUseCase = CalculateAlarmTimeUseCase(
+            sharedPreferences,
+            astronomyRepository,
+            locationRepository,
+            ComputeSmartWakeUseCase()
+        )
         
         val solarEvents = listOf(
             "Astronomical Dawn", "Nautical Dawn", "Civil Dawn", "Sunrise",

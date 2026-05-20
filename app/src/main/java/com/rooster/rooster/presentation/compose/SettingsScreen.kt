@@ -35,9 +35,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,10 +52,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rooster.rooster.R
+import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.SleepProfileHelper
+import com.rooster.rooster.util.SmartWakePrefs
+import com.rooster.rooster.util.SmartWakeScheduler
 import com.rooster.rooster.util.SolarEventPrefs
 import com.rooster.rooster.util.ThemeHelper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class CoordinatesUi(
     val altitude: Double?,
@@ -100,8 +108,23 @@ fun SettingsScreen(
     var solarSoundEnabled by remember { mutableStateOf(SolarEventPrefs.isSoundEnabled(context)) }
     var solarVibrationEnabled by remember { mutableStateOf(SolarEventPrefs.isVibrationEnabled(context)) }
 
+    val coroutineScope = rememberCoroutineScope()
+    var smartWake by remember { mutableStateOf(SmartWakePrefs.get(context)) }
+    var smartWakeEnabled by remember { mutableStateOf(SmartWakePrefs.isEnabled(context)) }
+    var smartWakeNextMillis by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(Unit) {
+        smartWakeNextMillis = withContext(Dispatchers.IO) {
+            runCatching { SmartWakeScheduler.currentScheduledMillis(context.applicationContext) }
+                .getOrNull()
+        }
+    }
+
     var showThemeDialog by remember { mutableStateOf(false) }
     var showSleepDialog by remember { mutableStateOf(false) }
+    var showSmartSleepDialog by remember { mutableStateOf(false) }
+    var showSmartWakeDialog by remember { mutableStateOf(false) }
+    var showSmartAnchorDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -257,6 +280,46 @@ fun SettingsScreen(
             }
             Spacer(Modifier.height(24.dp))
 
+            SectionHeader("Smart Wake")
+            GlassCard {
+                SettingRow(
+                    title = "Auto-schedule alarm",
+                    description = smartWakeRowDescription(smartWakeEnabled, smartWakeNextMillis),
+                    trailing = {
+                        Switch(
+                            checked = smartWakeEnabled,
+                            onCheckedChange = { checked ->
+                                smartWakeEnabled = checked
+                                SmartWakePrefs.setEnabled(context, checked)
+                                syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+                            },
+                        )
+                    },
+                )
+                Divider()
+                SettingRow(
+                    title = "Target sleep",
+                    description = "How long Rooster aims to let you sleep",
+                    valueText = formatSleepDuration(smartWake.targetSleepMinutes),
+                    onClick = { showSmartSleepDialog = true },
+                )
+                Divider()
+                SettingRow(
+                    title = "Latest wake",
+                    description = "Hard upper bound — alarm never fires later",
+                    valueText = formatMinuteOfDay(smartWake.mandatoryWakeMinuteOfDay),
+                    onClick = { showSmartWakeDialog = true },
+                )
+                Divider()
+                SettingRow(
+                    title = "Solar anchor",
+                    description = "Preferred solar event to wake with",
+                    valueText = labelForSolarAnchor(smartWake.solarAnchor),
+                    onClick = { showSmartAnchorDialog = true },
+                )
+            }
+            Spacer(Modifier.height(24.dp))
+
             SectionHeader("About")
             NavigationCard(
                 title = "Support Rooster",
@@ -305,7 +368,129 @@ fun SettingsScreen(
             },
         )
     }
+    if (showSmartSleepDialog) {
+        val minutesOptions = SMART_SLEEP_MINUTES_OPTIONS
+        SingleChoiceDialog(
+            title = "Target sleep duration",
+            options = minutesOptions.map { formatSleepDuration(it) },
+            selectedIndex = minutesOptions.indexOf(smartWake.targetSleepMinutes).coerceAtLeast(0),
+            onDismiss = { showSmartSleepDialog = false },
+            onSelected = { idx ->
+                val chosen = minutesOptions[idx]
+                SmartWakePrefs.setTargetSleepMinutes(context, chosen)
+                smartWake = smartWake.copy(targetSleepMinutes = chosen)
+                showSmartSleepDialog = false
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+            },
+        )
+    }
+    if (showSmartWakeDialog) {
+        val wakeOptions = SMART_WAKE_OPTIONS
+        SingleChoiceDialog(
+            title = "Latest wake time",
+            options = wakeOptions.map { formatMinuteOfDay(it) },
+            selectedIndex = wakeOptions.indexOf(smartWake.mandatoryWakeMinuteOfDay).coerceAtLeast(0),
+            onDismiss = { showSmartWakeDialog = false },
+            onSelected = { idx ->
+                val chosen = wakeOptions[idx]
+                SmartWakePrefs.setMandatoryWake(context, chosen)
+                smartWake = smartWake.copy(mandatoryWakeMinuteOfDay = chosen)
+                showSmartWakeDialog = false
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+            },
+        )
+    }
+    if (showSmartAnchorDialog) {
+        val anchorOptions = SMART_ANCHOR_OPTIONS
+        SingleChoiceDialog(
+            title = "Solar anchor",
+            options = anchorOptions.map { labelForSolarAnchor(it) },
+            selectedIndex = anchorOptions.indexOf(smartWake.solarAnchor).coerceAtLeast(0),
+            onDismiss = { showSmartAnchorDialog = false },
+            onSelected = { idx ->
+                val chosen = anchorOptions[idx]
+                SmartWakePrefs.setSolarAnchor(context, chosen)
+                smartWake = smartWake.copy(solarAnchor = chosen)
+                showSmartAnchorDialog = false
+                if (smartWakeEnabled) syncSmartWake(coroutineScope, context) { next -> smartWakeNextMillis = next }
+            },
+        )
+    }
 }
+
+private fun syncSmartWake(
+    scope: CoroutineScope,
+    context: android.content.Context,
+    onResult: (Long?) -> Unit,
+) {
+    scope.launch {
+        val next = withContext(Dispatchers.IO) {
+            runCatching { SmartWakeScheduler.sync(context.applicationContext) }
+                .getOrNull()
+        }
+        onResult(next)
+    }
+}
+
+private fun smartWakeRowDescription(enabled: Boolean, nextMillis: Long?): String {
+    if (!enabled) return "Maintains one alarm from the settings below"
+    if (nextMillis == null || nextMillis <= 0L) return "Calculating…"
+    return "Next: ${formatNextWakeTime(nextMillis)}"
+}
+
+private fun formatNextWakeTime(millis: Long): String {
+    val now = java.util.Calendar.getInstance()
+    val target = java.util.Calendar.getInstance().apply { timeInMillis = millis }
+
+    val time = String.format("%02d:%02d", target.get(java.util.Calendar.HOUR_OF_DAY), target.get(java.util.Calendar.MINUTE))
+    val sameDay = now.get(java.util.Calendar.YEAR) == target.get(java.util.Calendar.YEAR) &&
+        now.get(java.util.Calendar.DAY_OF_YEAR) == target.get(java.util.Calendar.DAY_OF_YEAR)
+    val tomorrow = java.util.Calendar.getInstance().apply {
+        add(java.util.Calendar.DAY_OF_YEAR, 1)
+    }
+    val isTomorrow = tomorrow.get(java.util.Calendar.YEAR) == target.get(java.util.Calendar.YEAR) &&
+        tomorrow.get(java.util.Calendar.DAY_OF_YEAR) == target.get(java.util.Calendar.DAY_OF_YEAR)
+
+    val dayLabel = when {
+        sameDay -> "today"
+        isTomorrow -> "tomorrow"
+        else -> java.text.SimpleDateFormat("EEE", java.util.Locale.getDefault()).format(target.time)
+    }
+    return "$time $dayLabel"
+}
+
+private val SMART_SLEEP_MINUTES_OPTIONS = listOf(
+    6 * 60, 7 * 60, 7 * 60 + 30, 8 * 60, 8 * 60 + 30, 9 * 60, 10 * 60,
+)
+
+private val SMART_WAKE_OPTIONS = listOf(
+    SmartWakePrefs.NO_MANDATORY_WAKE,
+    6 * 60, 6 * 60 + 30, 7 * 60, 7 * 60 + 30, 8 * 60, 8 * 60 + 30, 9 * 60,
+)
+
+private val SMART_ANCHOR_OPTIONS = listOf(
+    SmartWakePrefs.NO_SOLAR_ANCHOR,
+    AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN,
+    AppConstants.SOLAR_EVENT_NAUTICAL_DAWN,
+    AppConstants.SOLAR_EVENT_CIVIL_DAWN,
+    AppConstants.SOLAR_EVENT_SUNRISE,
+    AppConstants.SOLAR_EVENT_SOLAR_NOON,
+)
+
+private fun formatSleepDuration(minutes: Int): String {
+    if (minutes <= 0) return "Off"
+    val h = minutes / 60
+    val m = minutes % 60
+    return if (m == 0) "${h}h" else "${h}h ${m}m"
+}
+
+private fun formatMinuteOfDay(minuteOfDay: Int): String {
+    if (minuteOfDay !in 0..1439) return "None"
+    return String.format("%02d:%02d", minuteOfDay / 60, minuteOfDay % 60)
+}
+
+private fun labelForSolarAnchor(anchor: String): String =
+    if (anchor.isEmpty()) "None" else anchor
 
 @Composable
 private fun SectionHeader(text: String) {

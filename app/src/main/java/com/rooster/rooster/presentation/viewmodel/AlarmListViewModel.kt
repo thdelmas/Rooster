@@ -9,12 +9,14 @@ import com.rooster.rooster.AlarmCreation
 import com.rooster.rooster.data.repository.AlarmRepository
 import com.rooster.rooster.domain.usecase.CalculateAlarmTimeUseCase
 import com.rooster.rooster.domain.usecase.ScheduleAlarmUseCase
+import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.ErrorMessageMapper
 import com.rooster.rooster.util.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,8 +27,12 @@ class AlarmListViewModel @Inject constructor(
     private val scheduleAlarmUseCase: ScheduleAlarmUseCase
 ) : ViewModel() {
     
-    // Expose alarms as LiveData for easy observation in Activities
+    // Expose alarms as LiveData for easy observation in Activities.
+    // The auto-managed Smart Wake alarm is intentionally hidden from this list:
+    // it lives in Settings → Smart Wake and would desync if the user could
+    // edit or delete it directly.
     val allAlarms: LiveData<List<Alarm>> = alarmRepository.getAllAlarmsFlow()
+        .map { alarms -> alarms.filter { it.mode != AppConstants.ALARM_MODE_SMART } }
         .asLiveData(viewModelScope.coroutineContext + Dispatchers.IO)
     
     private val _isLoading = MutableStateFlow(false)
