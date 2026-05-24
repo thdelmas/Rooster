@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -973,11 +972,15 @@ private fun StepperRow(
 
 @Composable
 private fun StepperButton(text: String, onClick: () -> Unit) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
         modifier = Modifier.size(40.dp),
-        shape = CircleShape,
+        shape = RoundedCornerShape(8.dp),
         contentPadding = PaddingValues(0.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
     ) {
         Text(text = text, fontSize = 16.sp)
     }

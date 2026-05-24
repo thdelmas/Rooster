@@ -45,7 +45,7 @@
 
         <!-- Button Row: Snooze and Stop -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
@@ -54,9 +54,9 @@
             <!-- Snooze Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/snoozeButton"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="64dp"
-                android:layout_weight="1"
+                android:minWidth="140dp"
                 android:text="Snooze"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -71,9 +71,9 @@
             <!-- Stop Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dismissButton"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="64dp"
-                android:layout_weight="1"
+                android:minWidth="140dp"
                 android:text="Stop"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -81,7 +81,6 @@
                 app:backgroundTint="@color/md_theme_dark_primary"
                 app:cornerRadius="8dp"
                 app:elevation="0dp"
-                android:layout_marginStart="12dp"
                 style="@style/Widget.Rooster.Button.Filled"/>
 
         </LinearLayout>
