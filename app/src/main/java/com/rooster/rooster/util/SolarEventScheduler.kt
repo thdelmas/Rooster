@@ -101,6 +101,19 @@ object SolarEventScheduler {
         for ((event, time) in upcoming) {
             schedule(context, alarmManager, event, time)
         }
+
+        // If the zenith gong is enabled, also schedule the notification +
+        // tactile signature for ZENITH_WINDOW_HALF_MS before solar noon.
+        if (SolarEventPrefs.isZenithGongEnabled(context)) {
+            val noonTime = upcoming.firstOrNull { it.first == AppConstants.SOLAR_EVENT_SOLAR_NOON }?.second
+            if (noonTime != null) {
+                val windowStart = noonTime - AppConstants.ZENITH_WINDOW_HALF_MS
+                if (windowStart > now) {
+                    scheduleZenithWindow(context, alarmManager, windowStart)
+                }
+            }
+        }
+
         Logger.i(TAG, "Scheduled ${upcoming.size} upcoming solar event cue(s)")
     }
 
@@ -110,6 +123,10 @@ object SolarEventScheduler {
             val pi = pendingIntentFor(context, event, mutableFlag = false) ?: continue
             alarmManager.cancel(pi)
             pi.cancel()
+        }
+        zenithWindowPendingIntent(context, mutableFlag = false)?.let {
+            alarmManager.cancel(it)
+            it.cancel()
         }
     }
 
@@ -162,6 +179,43 @@ object SolarEventScheduler {
 
     private fun requestCodeFor(event: String): Int = REQUEST_CODE_BASE + EVENTS.indexOf(event)
 
+    private fun scheduleZenithWindow(
+        context: Context,
+        alarmManager: AlarmManager,
+        triggerAt: Long
+    ) {
+        val pi = zenithWindowPendingIntent(context, mutableFlag = true) ?: return
+        try {
+            val canExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                alarmManager.canScheduleExactAlarms()
+            } else {
+                true
+            }
+            if (canExact) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            } else {
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            }
+            Logger.d(TAG, "Scheduled zenith window start at $triggerAt")
+        } catch (e: SecurityException) {
+            Logger.w(TAG, "Cannot schedule zenith window — permission denied", e)
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to schedule zenith window", e)
+        }
+    }
+
+    private fun zenithWindowPendingIntent(context: Context, mutableFlag: Boolean): PendingIntent? {
+        val intent = Intent(context, SolarEventReceiver::class.java).apply {
+            action = SolarEventReceiver.ACTION_ZENITH_WINDOW_START
+        }
+        val flags = if (mutableFlag) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        } else {
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        }
+        return PendingIntent.getBroadcast(context, ZENITH_WINDOW_REQUEST_CODE, intent, flags)
+    }
+
     private fun eventTimes(data: AstronomyDataEntity): List<Pair<String, Long>> = listOf(
         AppConstants.SOLAR_EVENT_ASTRONOMICAL_DAWN to data.astroDawn,
         AppConstants.SOLAR_EVENT_NAUTICAL_DAWN     to data.nauticalDawn,
@@ -175,4 +229,5 @@ object SolarEventScheduler {
     )
 
     private const val REQUEST_CODE_BASE = 9_500
+    private const val ZENITH_WINDOW_REQUEST_CODE = 9_600
 }

@@ -78,6 +78,13 @@ object AppConstants {
     // ========== Relative Time Strings ==========
     const val RELATIVE_TIME_PICK_TIME = "Pick Time"
     
+    // ========== Zenith Window ==========
+    // 432 seconds before to 432 seconds after solar noon — a 14m24s window
+    // for the zenith notification.
+    const val ZENITH_WINDOW_HALF_SECONDS = 432L
+    const val ZENITH_WINDOW_HALF_MS = ZENITH_WINDOW_HALF_SECONDS * MILLIS_PER_SECOND
+    const val ZENITH_WINDOW_TOTAL_MS = 2 * ZENITH_WINDOW_HALF_MS
+
     // ========== Solar Event Strings ==========
     const val SOLAR_EVENT_ASTRONOMICAL_DAWN = "Astronomical Dawn"
     const val SOLAR_EVENT_NAUTICAL_DAWN = "Nautical Dawn"

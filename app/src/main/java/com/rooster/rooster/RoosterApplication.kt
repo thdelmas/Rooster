@@ -167,10 +167,24 @@ class RoosterApplication : Application(), Configuration.Provider {
                 description = "Notifications for background location and astronomy updates"
                 setShowBadge(false)
             }
-            
+
+            // Zenith window notification channel — silent (the gong handles audio,
+            // we trigger the unique vibration ourselves).
+            val zenithChannel = NotificationChannel(
+                ZENITH_CHANNEL_ID,
+                "Zenith Window",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Notification shown around solar noon"
+                enableVibration(false)
+                setShowBadge(false)
+                setSound(null, null)
+            }
+
             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(alarmChannel)
             notificationManager.createNotificationChannel(workChannel)
+            notificationManager.createNotificationChannel(zenithChannel)
         }
     }
     
@@ -186,5 +200,6 @@ class RoosterApplication : Application(), Configuration.Provider {
     companion object {
         const val ALARM_CHANNEL_ID = "alarm_channel"
         const val WORK_CHANNEL_ID = "work_channel"
+        const val ZENITH_CHANNEL_ID = "zenith_channel"
     }
 }
