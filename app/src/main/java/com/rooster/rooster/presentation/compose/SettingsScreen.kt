@@ -56,6 +56,7 @@ import com.rooster.rooster.util.SmartWakePrefs
 import com.rooster.rooster.util.SmartWakeScheduler
 import com.rooster.rooster.util.SolarEventPrefs
 import com.rooster.rooster.util.ThemeHelper
+import com.rooster.rooster.util.ZenithGongTone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -238,7 +239,8 @@ fun SettingsScreen(
                 Divider()
                 SettingRow(
                     title = "Zenith Sun Gong",
-                    description = "A deep gong at solar noon, replacing the standard bell",
+                    description = "A deep gong at solar noon, replacing the standard bell · tap to preview",
+                    onClick = { previewZenithGong() },
                     trailing = {
                         Switch(
                             checked = zenithGongEnabled,
@@ -246,6 +248,7 @@ fun SettingsScreen(
                                 zenithGongEnabled = checked
                                 SolarEventPrefs.setZenithGongEnabled(context, checked)
                                 rescheduleSolarEventCues(context)
+                                if (checked) previewZenithGong()
                             },
                         )
                     },
@@ -827,6 +830,14 @@ private fun rescheduleSolarEventCues(context: android.content.Context) {
         runCatching {
             com.rooster.rooster.util.SolarEventScheduler.scheduleUpcoming(context.applicationContext)
         }
+    }
+}
+
+private fun previewZenithGong() {
+    // Play one strike off the main thread so the UI stays responsive while
+    // the ~6s gong rings out — same synthesis the receiver uses at noon.
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        runCatching { ZenithGongTone.play() }
     }
 }
 
