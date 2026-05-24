@@ -170,7 +170,25 @@
         <item name="fontFamily">sans-serif</item>
         <item name="android:letterSpacing">0.01</item>
     </style>
-    
+
+    <!-- Instrument readout (Bios-ecosystem cross-app mandate).
+         Apply to data-bearing text only: times, durations, quantities. Never body copy. -->
+    <style name="TextAppearance.Rooster.Instrument" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">monospace</item>
+        <item name="fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/md_theme_dark_onBackground</item>
+    </style>
+
+    <style name="TextAppearance.Rooster.Instrument.Small" parent="TextAppearance.Rooster.Instrument">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_on_glass_secondary</item>
+    </style>
+
+    <style name="TextAppearance.Rooster.Instrument.Large" parent="TextAppearance.Rooster.Instrument">
+        <item name="android:textSize">16sp</item>
+    </style>
+
     <!-- Spinner Style -->
     <style name="mySpinnerItemStyle" parent="@android:style/Widget.Material.DropDownItem.Spinner">
         <item name="android:textColor">@color/primary</item>
