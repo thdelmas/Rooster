@@ -1,6 +1,5 @@
 package com.rooster.rooster.presentation.compose
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,12 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -32,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,15 +74,10 @@ fun AlarmListScreen(
                     Icon(
                         painter = painterResource(R.drawable.add_alarm_button),
                         contentDescription = null,
+                        modifier = Modifier.size(24.dp),
                     )
                 },
-                text = {
-                    Text(
-                        text = "New Alarm",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
+                text = { Text(text = "New Alarm") },
             )
         },
     ) { innerPadding ->
@@ -96,10 +88,9 @@ fun AlarmListScreen(
         ) {
             if (sortedAlarms.isEmpty()) {
                 EmptyAlarmState(
-                    onCreateAlarm = onCreateAlarm,
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(40.dp),
+                        .padding(horizontal = 24.dp),
                 )
             } else {
                 AlarmList(
@@ -133,55 +124,26 @@ private fun AlarmList(
 }
 
 @Composable
-private fun EmptyAlarmState(
-    onCreateAlarm: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun EmptyAlarmState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = Color.Transparent,
-                shape = RoundedCornerShape(8.dp),
-            )
-            .padding(64.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = "🌅", fontSize = 64.sp)
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "No Alarms Yet",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
+        Text(text = "🌅", fontSize = 40.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Create your first alarm to wake up naturally with the sun",
-            style = MaterialTheme.typography.bodyLarge,
+            text = "No Alarms Yet",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Tap New Alarm to wake up naturally with the sun",
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.alpha(0.9f),
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = onCreateAlarm,
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.add_alarm_button),
-                contentDescription = null,
-            )
-            Spacer(modifier = Modifier.height(0.dp))
-            Text(
-                text = "  Create Alarm",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
     }
 }
