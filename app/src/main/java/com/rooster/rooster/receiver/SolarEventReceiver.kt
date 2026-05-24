@@ -3,11 +3,13 @@ package com.rooster.rooster.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.rooster.rooster.util.AppConstants
 import com.rooster.rooster.util.Logger
 import com.rooster.rooster.util.SolarEventPrefs
 import com.rooster.rooster.util.SolarEventScheduler
 import com.rooster.rooster.util.SolarEventTone
 import com.rooster.rooster.util.SolarEventVibration
+import com.rooster.rooster.util.ZenithGongTone
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +31,9 @@ class SolarEventReceiver : BroadcastReceiver() {
 
         val soundOn = SolarEventPrefs.isSoundEnabled(context)
         val vibrateOn = SolarEventPrefs.isVibrationEnabled(context)
-        Logger.i(TAG, "Solar event fired: $event (sound=$soundOn, vibrate=$vibrateOn)")
+        val gongOn = SolarEventPrefs.isZenithGongEnabled(context) &&
+            event == AppConstants.SOLAR_EVENT_SOLAR_NOON
+        Logger.i(TAG, "Solar event fired: $event (sound=$soundOn, vibrate=$vibrateOn, gong=$gongOn)")
 
         // Reschedule the next event regardless of whether anything plays —
         // we want the chain to keep advancing even if the user has muted.
@@ -39,17 +43,16 @@ class SolarEventReceiver : BroadcastReceiver() {
                 .onFailure { Logger.e(TAG, "Failed to reschedule after event", it) }
         }
 
-        if (!soundOn && !vibrateOn) return
-
-        val toneMs = if (soundOn) SolarEventTone.durationMsFor(event) else 0L
-        val vibMs = if (vibrateOn) SolarEventVibration.durationMsFor(event) else 0L
-        if (toneMs == 0L && vibMs == 0L) return
+        // At noon, the gong takes the place of the bell so the two don't overlap.
+        val playBell = soundOn && !gongOn
+        if (!playBell && !vibrateOn && !gongOn) return
 
         val pendingResult = goAsync()
         scope.launch {
             try {
                 if (vibrateOn) SolarEventVibration.vibrate(appContext, event)
-                if (soundOn) SolarEventTone.play(event)
+                if (gongOn) ZenithGongTone.play()
+                else if (playBell) SolarEventTone.play(event)
             } catch (e: Exception) {
                 Logger.e(TAG, "Error playing solar event cue", e)
             } finally {
