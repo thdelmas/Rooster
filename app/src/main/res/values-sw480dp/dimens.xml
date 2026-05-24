@@ -5,9 +5,9 @@
     <dimen name="emoji_size_xlarge">48sp</dimen>
     <dimen name="emoji_size_large">40sp</dimen>
     <dimen name="card_padding_xlarge">32dp</dimen>
-    <dimen name="card_padding_large">20dp</dimen>
+    <dimen name="card_padding_large">24dp</dimen>
     <dimen name="card_height_large">140dp</dimen>
-    <dimen name="screen_padding_large">20dp</dimen>
+    <dimen name="screen_padding_large">24dp</dimen>
 </resources>
 
 
