@@ -103,6 +103,7 @@ fun SettingsScreen(
     var dynamicColorsEnabled by remember { mutableStateOf(ThemeHelper.isDynamicColorsEnabled(context)) }
     var solarSoundEnabled by remember { mutableStateOf(SolarEventPrefs.isSoundEnabled(context)) }
     var solarVibrationEnabled by remember { mutableStateOf(SolarEventPrefs.isVibrationEnabled(context)) }
+    var zenithGongEnabled by remember { mutableStateOf(SolarEventPrefs.isZenithGongEnabled(context)) }
 
     val coroutineScope = rememberCoroutineScope()
     var smartWake by remember { mutableStateOf(SmartWakePrefs.get(context)) }
@@ -229,6 +230,21 @@ fun SettingsScreen(
                             onCheckedChange = { checked ->
                                 solarVibrationEnabled = checked
                                 SolarEventPrefs.setVibrationEnabled(context, checked)
+                                rescheduleSolarEventCues(context)
+                            },
+                        )
+                    },
+                )
+                Divider()
+                SettingRow(
+                    title = "Zenith Sun Gong",
+                    description = "A deep gong at solar noon, replacing the standard bell",
+                    trailing = {
+                        Switch(
+                            checked = zenithGongEnabled,
+                            onCheckedChange = { checked ->
+                                zenithGongEnabled = checked
+                                SolarEventPrefs.setZenithGongEnabled(context, checked)
                                 rescheduleSolarEventCues(context)
                             },
                         )

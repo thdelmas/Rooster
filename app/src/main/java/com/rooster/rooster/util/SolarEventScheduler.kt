@@ -45,9 +45,15 @@ object SolarEventScheduler {
         cancelAll(context)
 
         if (!SolarEventPrefs.isAnyEnabled(context)) {
-            Logger.d(TAG, "Both sound and vibration disabled — nothing to schedule")
+            Logger.d(TAG, "All solar cues disabled — nothing to schedule")
             return
         }
+
+        // When only the Zenith Sun Gong is on (no general sound/vibration), we
+        // only need solar noon scheduled — skip the other eight events entirely.
+        val gongOnlyMode = SolarEventPrefs.isZenithGongEnabled(context) &&
+            !SolarEventPrefs.isSoundEnabled(context) &&
+            !SolarEventPrefs.isVibrationEnabled(context)
 
         val today = astronomyRepository?.getAstronomyData(forceRefresh = false)
         val now = System.currentTimeMillis()
@@ -55,7 +61,9 @@ object SolarEventScheduler {
 
         if (today != null) {
             for ((event, time) in eventTimes(today)) {
-                if (time > now) upcoming += event to time
+                if (time <= now) continue
+                if (gongOnlyMode && event != AppConstants.SOLAR_EVENT_SOLAR_NOON) continue
+                upcoming += event to time
             }
         }
 
@@ -72,7 +80,9 @@ object SolarEventScheduler {
                     Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
                 )
                 for ((event, time) in eventTimes(tomorrow)) {
-                    if (time > now) upcoming += event to time
+                    if (time <= now) continue
+                    if (gongOnlyMode && event != AppConstants.SOLAR_EVENT_SOLAR_NOON) continue
+                    upcoming += event to time
                 }
             }
         }
