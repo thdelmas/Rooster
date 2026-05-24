@@ -58,6 +58,7 @@ Stay tuned – it's coming soon to the Play Store!
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | Codebase structure, tech stack, key components |
+| [Design](docs/DESIGN.md) | Visual, audio, and interaction design language |
 | [Roadmap](docs/ROADMAP.md) | Planned features and priorities |
 | [Changelog](docs/CHANGELOG.md) | Version history and release notes |
 | [Contributing](docs/CONTRIBUTING.md) | How to build, test, and submit PRs |
