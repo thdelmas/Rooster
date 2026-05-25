@@ -19,7 +19,10 @@ object ZenithGongTone {
     private const val SAMPLE_RATE = 44100
     private const val DURATION_SEC = 6.0
     private const val ATTACK_SEC = 0.12
-    private const val GAIN = 0.22f
+    // Sum of partial amplitudes is ~2.55; worst-case envelope just after the
+    // 0.12 s attack is ~2.38, so 0.40 stays safely below the clip ceiling
+    // (1.0 / 2.38 ≈ 0.42) while running ~5 dB hotter than the previous 0.22.
+    private const val GAIN = 0.40f
 
     private val partials = listOf(
         Partial(ratio = 1.000, amp = 1.00, tau = 2.8),
