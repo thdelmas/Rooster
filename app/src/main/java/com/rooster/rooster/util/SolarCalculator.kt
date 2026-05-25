@@ -32,21 +32,22 @@ object SolarCalculator {
 
         val jd = julianDay(year, month, day)
         val jc = julianCentury(jd)
+        val dateMs = date.timeInMillis
 
-        val solarNoonLST = solarNoonLocal(jc, longitude.toDouble(), timezone)
+        val solarNoonLST = solarNoonLocal(jc, longitude.toDouble(), timezone, dateMs)
         val solarNoonMs = timeToMillis(date, solarNoonLST)
 
-        val sunrise = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_OFFICIAL, true)
-        val sunset = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_OFFICIAL, false)
+        val sunrise = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_OFFICIAL, true)
+        val sunset = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_OFFICIAL, false)
 
-        val civilDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_CIVIL, true)
-        val civilDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_CIVIL, false)
+        val civilDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_CIVIL, true)
+        val civilDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_CIVIL, false)
 
-        val nauticalDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_NAUTICAL, true)
-        val nauticalDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_NAUTICAL, false)
+        val nauticalDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_NAUTICAL, true)
+        val nauticalDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_NAUTICAL, false)
 
-        val astroDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_ASTRONOMICAL, true)
-        val astroDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, ZENITH_ASTRONOMICAL, false)
+        val astroDawn = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_ASTRONOMICAL, true)
+        val astroDusk = sunriseSet(jc, latitude.toDouble(), longitude.toDouble(), timezone, dateMs, ZENITH_ASTRONOMICAL, false)
 
         val sunriseMs = timeToMillis(date, sunrise)
         val sunsetMs = timeToMillis(date, sunset)
@@ -187,9 +188,9 @@ object SolarCalculator {
     /**
      * Calculate solar noon in local decimal hours.
      */
-    private fun solarNoonLocal(t: Double, longitude: Double, tz: TimeZone): Double {
+    private fun solarNoonLocal(t: Double, longitude: Double, tz: TimeZone, dateMillis: Long): Double {
         val eqTime = equationOfTime(t)
-        val offset = tz.rawOffset / 3600000.0 // hours
+        val offset = tz.getOffset(dateMillis) / 3600000.0 // hours, includes DST when in effect
         return (720.0 - 4 * longitude - eqTime + offset * 60) / 60.0
     }
 
@@ -198,21 +199,19 @@ object SolarCalculator {
      * @param isSunrise true for sunrise, false for sunset
      */
     private fun sunriseSet(
-        t: Double, lat: Double, lng: Double, tz: TimeZone,
+        t: Double, lat: Double, lng: Double, tz: TimeZone, dateMillis: Long,
         zenith: Double, isSunrise: Boolean
     ): Double {
         val eqTime = equationOfTime(t)
         val declin = sunDeclination(t)
         val ha = hourAngle(lat, declin, zenith)
+        val offset = tz.getOffset(dateMillis) / 3600000.0 // hours, includes DST when in effect
 
         if (ha.isNaN()) {
             // Polar day/night fallback: return solar noon ± 0 (event doesn't occur)
-            val offset = tz.rawOffset / 3600000.0
-            val noon = (720.0 - 4 * lng - eqTime + offset * 60) / 60.0
-            return noon
+            return (720.0 - 4 * lng - eqTime + offset * 60) / 60.0
         }
 
-        val offset = tz.rawOffset / 3600000.0 // hours
         return if (isSunrise) {
             (720.0 - 4 * (lng + ha) - eqTime + offset * 60) / 60.0
         } else {
