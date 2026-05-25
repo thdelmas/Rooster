@@ -11,8 +11,7 @@ import java.util.TimeZone
  */
 class SolarCalculatorTest {
 
-    // Tolerance: 15 minutes in milliseconds (accounts for equation-of-time drift
-    // and the fact that SolarCalculator uses rawOffset, ignoring DST)
+    // Tolerance: 15 minutes in milliseconds (covers equation-of-time drift across a year)
     private val TOLERANCE_MS = 15 * 60 * 1000L
 
     private fun calendarFor(year: Int, month: Int, day: Int, tz: TimeZone): Calendar {
@@ -69,9 +68,8 @@ class SolarCalculatorTest {
         val date = calendarFor(2025, 6, 21, tz)
         val result = SolarCalculator.calculate(40.7128f, -74.006f, date)
 
-        // Note: SolarCalculator uses rawOffset (EST=-5) not EDT=-4, so times are 1h earlier
-        val expectedSunrise = millisForTime(date, 4, 25) // ~5:25 EDT - 1h DST offset
-        val expectedSunset = millisForTime(date, 19, 31)  // ~20:31 EDT - 1h DST offset
+        val expectedSunrise = millisForTime(date, 5, 25) // ~5:25 EDT
+        val expectedSunset = millisForTime(date, 20, 31)  // ~20:31 EDT
 
         assertEquals("NYC summer solstice sunrise", expectedSunrise.toDouble(), result.sunrise.toDouble(), TOLERANCE_MS.toDouble())
         assertEquals("NYC summer solstice sunset", expectedSunset.toDouble(), result.sunset.toDouble(), TOLERANCE_MS.toDouble())
