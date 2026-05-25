@@ -19,10 +19,11 @@ object ZenithGongTone {
     private const val SAMPLE_RATE = 44100
     private const val DURATION_SEC = 6.0
     private const val ATTACK_SEC = 0.12
-    // Sum of partial amplitudes is ~2.55; worst-case envelope just after the
-    // 0.12 s attack is ~2.38, so 0.40 stays safely below the clip ceiling
-    // (1.0 / 2.38 ≈ 0.42) while running ~5 dB hotter than the previous 0.22.
-    private const val GAIN = 0.40f
+    // Peak-normalize each strike to this fraction of PCM full-scale. Hand-tuning
+    // a static GAIN against the partial sum left ~5 dB on the table; normalizing
+    // post-synthesis pins every strike to the digital ceiling regardless of how
+    // the partial table evolves.
+    private const val TARGET_PEAK = 0.95
 
     private val partials = listOf(
         Partial(ratio = 1.000, amp = 1.00, tau = 2.8),
@@ -57,6 +58,8 @@ object ZenithGongTone {
         val buffer = ShortArray(totalSamples)
         val attackSamples = (SAMPLE_RATE * ATTACK_SEC).toInt().coerceAtLeast(1)
 
+        val shaped = DoubleArray(totalSamples)
+        var peak = 0.0
         for (i in 0 until totalSamples) {
             val t = i.toDouble() / SAMPLE_RATE
             var sample = 0.0
@@ -71,7 +74,15 @@ object ZenithGongTone {
             } else {
                 1.0
             }
-            buffer[i] = (sample * attack * GAIN * Short.MAX_VALUE).toInt()
+            val v = sample * attack
+            shaped[i] = v
+            val abs = if (v < 0) -v else v
+            if (abs > peak) peak = abs
+        }
+
+        val scale = if (peak > 0) TARGET_PEAK / peak else 0.0
+        for (i in 0 until totalSamples) {
+            buffer[i] = (shaped[i] * scale * Short.MAX_VALUE).toInt()
                 .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
                 .toShort()
         }
