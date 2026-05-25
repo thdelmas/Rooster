@@ -845,11 +845,7 @@ private fun formatTimeOfDay(timeMillis: Long): String {
     if (timeMillis == 0L) return "--:--"
     val sdf = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
     sdf.timeZone = java.util.TimeZone.getDefault()
-    val cal = java.util.Calendar.getInstance().apply { timeInMillis = timeMillis }
-    if (sdf.timeZone.inDaylightTime(cal.time)) {
-        cal.add(java.util.Calendar.MILLISECOND, sdf.timeZone.dstSavings)
-    }
-    return sdf.format(cal.time)
+    return sdf.format(java.util.Date(timeMillis))
 }
 
 private fun formatDayLength(dayLengthMillis: Long): String {
