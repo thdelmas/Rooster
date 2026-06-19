@@ -19,3 +19,6 @@ keystore.properties
 
 # Local agent config
 .claude/
+
+# local SDK path — must never be in VCS
+local.properties
